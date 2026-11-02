@@ -1,0 +1,106 @@
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes drift {
+    to {
+      transform: translate(6vw, 4vh) scale(1.15) rotate(20deg);
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .aurora i {
+    animation: drift 22s var(--ease) infinite alternate;
+  }
+
+  .aurora i:nth-child(2) {
+    animation-duration: 28s;
+  }
+
+  .aurora i:nth-child(3) {
+    animation-duration: 34s;
+  }
+
+  .aurora i:nth-child(4) {
+    animation-duration: 18s;
+  }
+
+  .skeleton {
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  .page-enter {
+    animation: page-in 300ms var(--ease) both;
+  }
+
+  .dialog-content[data-state="open"] {
+    animation: dialog-in 200ms var(--ease) both;
+  }
+
+  .dialog-overlay[data-state="open"] {
+    animation: overlay-in 200ms var(--ease) both;
+  }
+
+  .lift {
+    transition:
+      transform 250ms var(--ease),
+      box-shadow 250ms var(--ease);
+  }
+
+  .lift:hover {
+    transform: translateY(-4px);
+  }
+
+  .press {
+    transition: transform 150ms var(--ease);
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

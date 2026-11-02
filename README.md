@@ -16,6 +16,26 @@ docker compose exec api .venv/bin/python -m app.criar_admin admin@exemplo.com "A
 
 As migrações rodam sozinhas quando a API sobe.
 
+## Frontend
+
+Com a API no ar, o serviço `web` sobe a interface em produção (nginx):
+
+```sh
+docker compose up -d --build web
+```
+
+- Interface: http://localhost:5173
+- O servidor de desenvolvimento (`npm run dev` em `frontend/`) usa a mesma porta 5173: rode um ou o outro.
+- A imagem chama a API em `http://localhost:8000` (argumento `VITE_API_URL` no `compose.yaml`).
+
+Testes do frontend (com a API e o banco no ar):
+
+```sh
+cd frontend
+npm run test
+npm run e2e        # exige E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD
+```
+
 ## Desenvolver o backend
 
 Com o serviço `db` no ar e o [uv](https://docs.astral.sh/uv/) instalado:

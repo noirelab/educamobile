@@ -1,0 +1,78 @@
+:root {
+  --background: 33 36% 95%;
+  --foreground: 215 55% 13%;
+  --card: 36 100% 99%;
+  --card-foreground: 215 55% 13%;
+  --popover: 36 100% 99%;
+  --popover-foreground: 215 55% 13%;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --secondary: 34 33% 91%;
+  --secondary-foreground: 215 55% 13%;
+  --muted: 34 33% 91%;
+  --muted-foreground: 215 29% 24%;
+  --accent: #0f766e;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: 33 24% 82%;
+  --input: 33 24% 82%;
+  --ring: #0f766e;
+  --radius: 0.875rem;
+  --chart-1: 175 77% 26%;
+  --chart-2: 38 92% 50%;
+  --chart-3: 193 82% 31%;
+  --chart-4: 353 96% 82%;
+  --chart-5: 215 55% 13%;
+  --sidebar: 12 6% 15%;
+  --sidebar-foreground: 33 36% 95%;
+  --sidebar-primary: 175 77% 26%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 20 8% 21%;
+  --sidebar-accent-foreground: 33 36% 95%;
+  --sidebar-border: 24 9% 22%;
+  --sidebar-ring: 175 77% 26%;
+
+  --bg-start: #f7f3ee;
+  --bg-end: #efe8df;
+  --aurora-1: #0f766e;
+  --aurora-2: #0e7490;
+  --aurora-3: #f59e0b;
+  --aurora-4: #fda4af;
+  --aurora-opacity: 0.45;
+
+  --accent-hover: #115e59;
+  --accent-soft: rgba(15, 118, 110, 0.12);
+  --on-sidebar: #f7f3ee;
+  --sidebar-glass: rgba(41, 37, 36, 0.82);
+
+  --ink: #0f1e33;
+  --ink-muted: #2c3b50;
+  --line: rgba(15, 30, 51, 0.1);
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --warning-text: #92400e;
+  --success: #16a34a;
+  --success-text: #166534;
+  --heat-low: #facc15;
+  --heat-high: #dc2626;
+
+  --glass: rgba(255, 255, 255, 0.42);
+  --glass-dense: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.62);
+  --rim: rgba(255, 255, 255, 0.55);
+  --sheen: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0) 70%,
+    rgba(255, 255, 255, 0.18)
+  );
+  --shadow-glass: 0 10px 30px rgba(11, 42, 74, 0.12);
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.35);
+
+  --radius-panel: 22px;
+  --radius-field: 14px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-sans: Inter, system-ui, sans-serif;
+}
