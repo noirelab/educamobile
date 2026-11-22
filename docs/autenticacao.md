@@ -62,9 +62,30 @@ Um estudante é da escola em que tem matrícula ativa.
 
 ## Proteção do login
 
-Depois de 10 falhas seguidas para o mesmo e-mail e IP, novas tentativas recebem 429 por 15 minutos. A contagem fica em memória, por processo (`app/limite.py`). Com vários workers, troque pela implementação em Redis, que tem a mesma interface.
+Três contadores, todos com janela de 15 minutos (`app/limite.py`):
 
-Atrás de um proxy reverso, defina `CONFIAR_PROXY=true` para o IP vir de `X-Forwarded-For`. Sem proxy, deixe `false`: senão qualquer cliente escolhe o próprio IP.
+| Contador | Limite | Contra o quê |
+| --- | --- | --- |
+| mesmo IP e mesmo e-mail | 10 falhas | adivinhar a senha de uma conta |
+| mesmo IP, qualquer e-mail | 30 falhas | testar uma senha comum em muitas contas |
+| mesmo e-mail, qualquer IP | 50 falhas | ataque à mesma conta vindo de muitos IPs |
+
+Passado o limite, a resposta é 429, inclusive com a senha certa. Login bem-sucedido zera os contadores da conta, mas não o do IP: senão um atacante com uma conta válida intercalaria logins próprios para continuar tentando senhas alheias. O contador por conta tem um custo conhecido: quem souber o e-mail de alguém consegue bloquear o login dessa pessoa por 15 minutos. Fica registrado na auditoria.
+
+Quando a memória enche, saem primeiro os contadores expirados e os que ainda não bloquearam; inundar o login com e-mails inventados não libera uma conta bloqueada.
+
+A contagem é por processo. Com vários workers, troque pela implementação em Redis, que tem a mesma interface.
+
+### IP do cliente
+
+- Rode o uvicorn com `--no-proxy-headers` (já está no Dockerfile). Sem isso, o uvicorn aceita `X-Forwarded-For` de conexões locais e qualquer um troca de IP só mudando o cabeçalho.
+- Atrás de um proxy reverso, defina `CONFIAR_PROXY=true`. A API usa o **último** IP de `X-Forwarded-For`, que é o que o proxy acrescentou; os anteriores vêm do cliente.
+
+## Limites de entrada
+
+- Corpo da requisição até 1 MB (`MAX_CORPO_BYTES`); acima disso, 413 antes de ler o corpo.
+- Erros 422 trazem só `loc`, `msg` e `type`. O valor enviado não volta na resposta (antes, uma senha fora do padrão voltava no corpo do erro).
+- `JWT_SECRET` com o valor do `.env.example`, ou com menos de 12 caracteres diferentes, impede a API de subir. Em produção, a senha de banco do exemplo também.
 
 ## Auditoria
 

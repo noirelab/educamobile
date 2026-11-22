@@ -17,10 +17,11 @@ from app.models import Auditoria, Estudante, Parada, Perfil, Sessao
 from app.security import ALGORITMO, criar_token
 
 SENHA = "senha-forte-1"
+SEGREDO_FORTE = "Gq7-pX2_vL9wRt4ZkM8nB3cYh6JdF1sA"
 
 
-def _login(client, usuario, senha=SENHA):
-    return client.post("/auth/login", data={"username": usuario.email, "password": senha})
+def _login(client, usuario, senha=SENHA, **kw):
+    return client.post("/auth/login", data={"username": usuario.email, "password": senha}, **kw)
 
 
 def _bearer(token: str) -> dict[str, str]:
@@ -154,7 +155,7 @@ def test_token_sem_tipo_ou_de_outro_tipo_rejeitado(client, criar_usuario):
 
 def test_validade_do_token_nao_passa_de_uma_hora():
     with pytest.raises(ValidationError):
-        Settings(database_url="x", jwt_secret="s" * 32, jwt_expire_minutes=600)
+        Settings(database_url="x", jwt_secret=SEGREDO_FORTE, jwt_expire_minutes=600)
 
 
 # Perfis novos: nada das rotas de cadastro sem liberação explícita
@@ -397,6 +398,125 @@ def test_producao_recusa_cors_sem_https():
         Settings(
             ambiente="producao",
             database_url="x",
-            jwt_secret="s" * 32,
+            jwt_secret=SEGREDO_FORTE,
             cors_origins=["http://localhost:5173"],
         )
+
+
+# Achados da revisão de segurança (pentest de 21/11/2026)
+
+
+def test_segredo_de_exemplo_ou_fraco_recusado():
+    for segredo in ("troque-por-um-segredo-com-pelo-menos-32-caracteres", "ab" * 20):
+        with pytest.raises(ValidationError):
+            Settings(database_url="x", jwt_secret=segredo)
+
+
+def test_producao_recusa_senha_de_banco_de_exemplo():
+    with pytest.raises(ValidationError):
+        Settings(
+            ambiente="producao",
+            database_url="postgresql+psycopg://u:troque-esta-senha@db/x",
+            jwt_secret=SEGREDO_FORTE,
+            cors_origins=["https://educamobile.exemplo"],
+        )
+
+
+def test_limite_por_ip_barra_pulverizacao_de_senha(client, criar_usuario):
+    alvo = criar_usuario()
+    for i in range(30):
+        client.post("/auth/login", data={"username": f"conta{i}@exemplo.com", "password": SENHA})
+    assert _login(client, alvo).status_code == 429
+
+
+def test_limite_por_conta_vale_para_qualquer_ip(client, criar_usuario, monkeypatch):
+    monkeypatch.setattr(settings, "confiar_proxy", True)
+    alvo = criar_usuario()
+    for i in range(50):
+        _login(client, alvo, "errada-12345", headers={"X-Forwarded-For": f"10.0.{i // 250}.{i}"})
+    resposta = _login(client, alvo, headers={"X-Forwarded-For": "10.9.9.9"})
+    assert resposta.status_code == 429
+
+
+def test_x_forwarded_for_inventado_nao_troca_o_ip(client, criar_usuario, monkeypatch):
+    monkeypatch.setattr(settings, "confiar_proxy", True)
+    alvo = criar_usuario()
+    for i in range(10):
+        # O cliente inventa o primeiro IP; o proxy acrescenta o verdadeiro no fim.
+        _login(client, alvo, "errada-12345", headers={"X-Forwarded-For": f"1.1.1.{i}, 203.0.113.7"})
+    resposta = _login(client, alvo, headers={"X-Forwarded-For": "8.8.8.8, 203.0.113.7"})
+    assert resposta.status_code == 429
+
+
+def test_sem_proxy_x_forwarded_for_e_ignorado(client, criar_usuario):
+    alvo = criar_usuario()
+    for _ in range(10):
+        _login(client, alvo, "errada-12345")
+    resposta = _login(client, alvo, headers={"X-Forwarded-For": "10.9.9.9"})
+    assert resposta.status_code == 429
+
+
+def test_inundar_chaves_nao_zera_o_bloqueio():
+    from app.limite import LimiteEmMemoria
+
+    limite = LimiteEmMemoria(maximo=3, janela_s=900, max_chaves=5)
+    for _ in range(3):
+        limite.registrar_falha("alvo")
+    for i in range(1_000):
+        limite.registrar_falha(f"email-inventado-{i}@exemplo.com")
+    assert limite.bloqueado("alvo")
+    assert len(limite._falhas) <= 5
+
+
+@pytest.mark.parametrize(
+    "corpo",
+    [
+        '{"refresh_token": Infinity}',
+        '{"refresh_token": NaN}',
+        '{"refresh_token": "\\ud800"}',
+        '{"a":' * 3000 + "1" + "}" * 3000,
+        "{",
+    ],
+)
+def test_json_hostil_recebe_422_e_nao_500(client, corpo):
+    resposta = client.post(
+        "/auth/refresh", content=corpo, headers={"Content-Type": "application/json"}
+    )
+    assert resposta.status_code == 422
+
+
+def test_422_nao_repete_o_valor_enviado(client, cabecalhos):
+    novo = {"nome": "Ana", "email": "ana@exemplo.com", "senha": "segredo1", "perfil": "admin"}
+    resposta = client.post("/auth/usuarios", json=novo, headers=cabecalhos(Perfil.ADMIN))
+    assert resposta.status_code == 422
+    assert "segredo1" not in resposta.text
+    assert all(set(item) == {"loc", "msg", "type"} for item in resposta.json()["detail"])
+
+
+def test_corpo_grande_demais_recebe_413(client):
+    grande = '{"refresh_token": "' + "a" * 2_000_000 + '"}'
+    resposta = client.post(
+        "/auth/refresh", content=grande, headers={"Content-Type": "application/json"}
+    )
+    assert resposta.status_code == 413
+
+    def em_partes():
+        for _ in range(30):
+            yield b"a" * 100_000
+
+    resposta = client.post(
+        "/auth/refresh", content=em_partes(), headers={"Content-Type": "application/json"}
+    )
+    assert resposta.status_code == 413
+
+
+def test_escola_so_para_diretor(client, cabecalhos, criar_escola):
+    novo = {
+        "nome": "R",
+        "email": "r@exemplo.com",
+        "senha": SENHA,
+        "perfil": "responsavel",
+        "escola_id": criar_escola().id,
+    }
+    resposta = client.post("/auth/usuarios", json=novo, headers=cabecalhos(Perfil.ADMIN))
+    assert resposta.status_code == 422

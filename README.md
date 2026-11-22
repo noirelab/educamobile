@@ -42,7 +42,7 @@ Com o serviço `db` no ar e o [uv](https://docs.astral.sh/uv/) instalado:
 
 ```sh
 cd backend
-uv run uvicorn app.main:app --reload --port 8000   # pare o serviço api antes, ou troque a porta
+uv run uvicorn app.main:app --reload --port 8000 --no-proxy-headers   # pare o serviço api antes, ou troque a porta
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 uv run alembic revision --autogenerate -m "descrição"   # após mudar app/models.py

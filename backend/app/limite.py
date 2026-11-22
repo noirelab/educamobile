@@ -21,11 +21,28 @@ class LimiteEmMemoria:
         self.max_chaves = max_chaves
         self._falhas: dict[str, list[float]] = {}
 
+    def _podar(self) -> None:
+        """Mantém a memória limitada sem soltar quem está bloqueado.
+
+        Apagar tudo de uma vez, ou só as chaves mais antigas, permitiria zerar o bloqueio de uma
+        conta inundando o login com e-mails inventados. Por isso saem primeiro as expiradas,
+        depois as que ainda não chegaram ao limite (cada e-mail inventado tem uma falha só) e,
+        em último caso, as bloqueadas mais antigas.
+        """
+        limite = time.monotonic() - self.janela_s
+        for chave in [c for c, ts in self._falhas.items() if ts[-1] <= limite]:
+            del self._falhas[chave]
+        excesso = len(self._falhas) - self.max_chaves
+        if excesso > 0:
+            ordem = sorted(
+                self._falhas,
+                key=lambda c: (len(self._falhas[c]) >= self.maximo, self._falhas[c][-1]),
+            )
+            for chave in ordem[:excesso]:
+                del self._falhas[chave]
+
     def _recentes(self, chave: str) -> list[float]:
         limite = time.monotonic() - self.janela_s
-        if len(self._falhas) > self.max_chaves:
-            # Evita que chaves inventadas esgotem a memória.
-            self._falhas.clear()
         recentes = [t for t in self._falhas.get(chave, []) if t > limite]
         if recentes:
             self._falhas[chave] = recentes
@@ -37,7 +54,12 @@ class LimiteEmMemoria:
         return len(self._recentes(chave)) >= self.maximo
 
     def registrar_falha(self, chave: str) -> None:
-        self._falhas.setdefault(chave, []).append(time.monotonic())
+        falhas = self._falhas.setdefault(chave, [])
+        falhas.append(time.monotonic())
+        # Só as últimas `maximo` importam para decidir o bloqueio.
+        del falhas[: -self.maximo]
+        if len(self._falhas) > self.max_chaves:
+            self._podar()
 
     def limpar(self, chave: str) -> None:
         self._falhas.pop(chave, None)

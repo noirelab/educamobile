@@ -47,6 +47,17 @@ def banco_de_teste() -> Iterator[None]:
         admin.dispose()
 
 
+@pytest.fixture(autouse=True)
+def limites_zerados(monkeypatch) -> None:
+    """Todos os testes vêm do mesmo cliente; sem isso, o limite por IP vazaria entre eles."""
+    from app.limite import LimiteEmMemoria
+    from app.routers import auth
+
+    for nome in ("limite_login", "limite_login_ip", "limite_login_conta", "limite_troca_senha"):
+        atual = getattr(auth, nome)
+        monkeypatch.setattr(auth, nome, LimiteEmMemoria(atual.maximo, atual.janela_s))
+
+
 @pytest.fixture
 def db() -> Iterator[Session]:
     with app_db.engine.connect() as conexao:

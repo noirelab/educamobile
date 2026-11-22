@@ -18,8 +18,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 Db = Annotated[Session, Depends(get_db)]
 MAX_SENHA = 128
 MAX_FALHAS_LOGIN = 10
+# Um IP tentando muitas contas (pulverização de senha) e uma conta atacada de muitos IPs.
+MAX_FALHAS_POR_IP = 30
+MAX_FALHAS_POR_CONTA = 50
 JANELA_LOGIN_S = 900
 limite_login = LimiteEmMemoria(maximo=MAX_FALHAS_LOGIN, janela_s=JANELA_LOGIN_S)
+limite_login_ip = LimiteEmMemoria(maximo=MAX_FALHAS_POR_IP, janela_s=JANELA_LOGIN_S)
+limite_login_conta = LimiteEmMemoria(maximo=MAX_FALHAS_POR_CONTA, janela_s=JANELA_LOGIN_S)
 # Troca de senha por quem já está logado: a senha atual também não pode ser adivinhada.
 limite_troca_senha = LimiteEmMemoria(maximo=5, janela_s=JANELA_LOGIN_S)
 
@@ -43,9 +48,14 @@ def _emitir(db: Session, usuario: Usuario, request: Request) -> Token:
 
 @router.post("/login")
 def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Depends()], db: Db) -> Token:
-    email = form.username.lower()
-    chave = f"{auditoria.ip_do_cliente(request) or ''}|{email}"
-    if limite_login.bloqueado(chave):
+    email = form.username.strip().lower()
+    ip = auditoria.ip_do_cliente(request) or ""
+    chave = f"{ip}|{email}"
+    if (
+        limite_login.bloqueado(chave)
+        or limite_login_ip.bloqueado(ip)
+        or limite_login_conta.bloqueado(email)
+    ):
         raise _muitas_tentativas()
     # NUL não existe em e-mail e o Postgres o rejeitaria; senha gigante só gastaria CPU no hash.
     entrada_valida = "\x00" not in email and len(form.password) <= MAX_SENHA
@@ -55,6 +65,8 @@ def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Depends()
         usuario and not usuario.ativo
     ):
         limite_login.registrar_falha(chave)
+        limite_login_ip.registrar_falha(ip)
+        limite_login_conta.registrar_falha(email)
         # Só registra o id quando a conta existe: e-mails digitados errado não ficam guardados.
         auditoria.registrar(db, "login.falha", request=request, usuario=usuario)
         db.commit()
@@ -63,7 +75,10 @@ def login(request: Request, form: Annotated[OAuth2PasswordRequestForm, Depends()
             "E-mail ou senha incorretos",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    # O contador por IP não é zerado: senão um atacante com uma conta válida intercalaria
+    # logins próprios para continuar testando senhas de outras pessoas.
     limite_login.limpar(chave)
+    limite_login_conta.limpar(email)
     token = _emitir(db, usuario, request)
     auditoria.registrar(db, "login.ok", request=request, usuario=usuario)
     db.commit()

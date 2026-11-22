@@ -41,6 +41,8 @@ class UsuarioCriar(BaseModel):
     def diretor_tem_escola(self) -> Self:
         if self.perfil == Perfil.DIRETOR and self.escola_id is None:
             raise ValueError("Diretor precisa de escola_id")
+        if self.perfil != Perfil.DIRETOR and self.escola_id is not None:
+            raise ValueError("Só o diretor é ligado a uma escola")
         return self
 
 

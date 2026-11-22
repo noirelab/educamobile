@@ -13,10 +13,17 @@ _PROIBIDOS = {"senha", "senha_atual", "senha_nova", "password", "token", "refres
 
 
 def ip_do_cliente(request: Request) -> str | None:
+    """IP de quem fez a requisição.
+
+    Sem proxy, vale só o endereço da conexão. Atrás de um proxy confiável, vale o último item
+    de X-Forwarded-For, que é o que o proxy acrescentou; os anteriores vêm do cliente e podem
+    ser inventados. O uvicorn precisa rodar com --no-proxy-headers, senão ele mesmo reescreve
+    o endereço da conexão a partir desse cabeçalho.
+    """
     if settings.confiar_proxy:
         encaminhado = request.headers.get("x-forwarded-for")
         if encaminhado:
-            return encaminhado.split(",")[0].strip() or None
+            return encaminhado.split(",")[-1].strip() or None
     return request.client.host if request.client else None
 
 
