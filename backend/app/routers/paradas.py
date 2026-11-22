@@ -28,11 +28,11 @@ from app.schemas.paradas import (
     ParadaLer,
     ParadaProxima,
 )
-from app.security import UsuarioAtual, exigir_perfil
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/paradas", tags=["paradas"])
 Db = Annotated[Session, Depends(get_db)]
-PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.COORDENADOR)
+PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR, Perfil.COORDENADOR)
 RAIO_MAXIMO_M = 50_000
 
 
@@ -57,7 +57,7 @@ def _buscar_estudante(db: Session, estudante_id: int) -> Estudante:
 @router.get("")
 def listar_paradas(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Deslocamento = 0,
 ) -> list[ParadaLer]:
@@ -77,7 +77,7 @@ def criar_parada(dados: ParadaCriar, db: Db) -> ParadaLer:
 @router.get("/proximas")
 def paradas_proximas(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     latitude: Annotated[float, Query(ge=-90, le=90)],
     longitude: Annotated[float, Query(ge=-180, le=180)],
     raio_m: Annotated[float, Query(gt=0, le=RAIO_MAXIMO_M)] = 1_000,
@@ -99,7 +99,7 @@ def paradas_proximas(
 
 
 @router.get("/{parada_id}")
-def obter_parada(parada_id: IdRota, db: Db, _: UsuarioAtual) -> ParadaLer:
+def obter_parada(parada_id: IdRota, db: Db, _: UsuarioInterno) -> ParadaLer:
     return _ler(_buscar(db, parada_id))
 
 
@@ -135,7 +135,9 @@ def remover_parada(parada_id: IdRota, db: Db) -> None:
 
 
 @router.get("/{parada_id}/estudantes")
-def listar_estudantes(parada_id: IdRota, db: Db, usuario: UsuarioAtual) -> list[EstudanteDaParada]:
+def listar_estudantes(
+    parada_id: IdRota, db: Db, usuario: UsuarioInterno
+) -> list[EstudanteDaParada]:
     _buscar(db, parada_id)
     consulta = select(Estudante).where(Estudante.parada_id == parada_id).order_by(Estudante.id)
     if usuario.perfil == Perfil.DIRETOR:

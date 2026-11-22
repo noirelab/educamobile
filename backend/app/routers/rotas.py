@@ -12,11 +12,11 @@ from app.geo import de_ponto
 from app.models import Parada, Perfil, Rota, RotaParada
 from app.schemas.paradas import ParadaLer
 from app.schemas.rotas import RotaAtualizar, RotaCriar, RotaLer, RotaSequencia, TrajetoGeoJSON
-from app.security import UsuarioAtual, exigir_perfil
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/rotas", tags=["rotas"])
 Db = Annotated[Session, Depends(get_db)]
-PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.COORDENADOR)
+PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR, Perfil.COORDENADOR)
 
 _RECALCULAR = text(
     """
@@ -89,7 +89,7 @@ def _confirmar(db: Session) -> None:
 @router.get("")
 def listar_rotas(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     limit: Limite = 50,
     offset: Deslocamento = 0,
 ) -> list[RotaLer]:
@@ -106,7 +106,7 @@ def criar_rota(dados: RotaCriar, db: Db) -> RotaLer:
 
 
 @router.get("/{rota_id}")
-def obter_rota(rota_id: IdRota, db: Db, _: UsuarioAtual) -> RotaLer:
+def obter_rota(rota_id: IdRota, db: Db, _: UsuarioInterno) -> RotaLer:
     return _ler(db, [_buscar(db, rota_id)])[0]
 
 

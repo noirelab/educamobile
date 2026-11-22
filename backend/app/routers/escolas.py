@@ -5,7 +5,7 @@ from app.cadastros import Db, Deslocamento, IdFiltro, IdRota, Limite, buscar, sa
 from app.geo import para_ponto
 from app.models import Escola, Perfil
 from app.schemas.escolas import EscolaCriar, EscolaLer
-from app.security import UsuarioAtual, exigir_perfil
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/escolas", tags=["escolas"])
 CONFLITO = "Código INEP já cadastrado ou polo inexistente"
@@ -14,7 +14,7 @@ CONFLITO = "Código INEP já cadastrado ou polo inexistente"
 @router.get("")
 def listar(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     polo_id: IdFiltro = None,
     limit: Limite = 50,
     offset: Deslocamento = 0,
@@ -26,7 +26,7 @@ def listar(
 
 
 @router.get("/{escola_id}")
-def obter(escola_id: IdRota, db: Db, _: UsuarioAtual) -> EscolaLer:
+def obter(escola_id: IdRota, db: Db, _: UsuarioInterno) -> EscolaLer:
     return EscolaLer.model_validate(buscar(db, Escola, escola_id))
 
 

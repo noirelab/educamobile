@@ -10,7 +10,7 @@ from app.geo import para_ponto
 from app.models import Estudante, Matricula, Perfil, StatusMatricula, Turma, Usuario
 from app.routers.matriculas import carregar_turma, validar_ano_letivo
 from app.schemas.estudantes import EstudanteCadastrar, EstudanteCriar, EstudanteLer
-from app.security import UsuarioAtual, exigir_perfil, garantir_escola
+from app.security import UsuarioInterno, exigir_perfil, garantir_escola
 
 router = APIRouter(prefix="/estudantes", tags=["estudantes"])
 Editor = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.DIRETOR)]
@@ -42,7 +42,7 @@ def _garantir_parada_permitida(usuario: Usuario, atual: int | None, nova: int | 
 
 @router.get("")
 def listar(
-    db: Db, usuario: UsuarioAtual, limit: Limite = 50, offset: Deslocamento = 0
+    db: Db, usuario: UsuarioInterno, limit: Limite = 50, offset: Deslocamento = 0
 ) -> list[EstudanteLer]:
     consulta = select(Estudante).order_by(Estudante.id).limit(limit).offset(offset)
     if usuario.perfil == Perfil.DIRETOR:
@@ -51,7 +51,7 @@ def listar(
 
 
 @router.get("/{estudante_id}")
-def obter(estudante_id: IdRota, db: Db, usuario: UsuarioAtual) -> EstudanteLer:
+def obter(estudante_id: IdRota, db: Db, usuario: UsuarioInterno) -> EstudanteLer:
     return EstudanteLer.model_validate(_buscar_no_escopo(db, usuario, estudante_id))
 
 

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.cadastros import Db, Deslocamento, IdFiltro, IdRota, Limite, buscar, salvar
 from app.models import Matricula, Perfil, Turma, Usuario
 from app.schemas.turmas import TurmaCriar, TurmaLer
-from app.security import UsuarioAtual, exigir_perfil, garantir_escola
+from app.security import UsuarioInterno, exigir_perfil, garantir_escola
 
 router = APIRouter(prefix="/turmas", tags=["turmas"])
 Editor = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.DIRETOR)]
@@ -16,7 +16,7 @@ CONFLITO = "Turma já existe nesse ano letivo ou escola inexistente"
 @router.get("")
 def listar(
     db: Db,
-    usuario: UsuarioAtual,
+    usuario: UsuarioInterno,
     escola_id: IdFiltro = None,
     limit: Limite = 50,
     offset: Deslocamento = 0,
@@ -32,7 +32,7 @@ def listar(
 
 
 @router.get("/{turma_id}")
-def obter(turma_id: IdRota, db: Db, usuario: UsuarioAtual) -> TurmaLer:
+def obter(turma_id: IdRota, db: Db, usuario: UsuarioInterno) -> TurmaLer:
     turma = buscar(db, Turma, turma_id)
     garantir_escola(usuario, turma.escola_id)
     return TurmaLer.model_validate(turma)

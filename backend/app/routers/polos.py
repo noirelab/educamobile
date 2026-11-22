@@ -7,7 +7,7 @@ from app.cadastros import Db, Deslocamento, IdRota, Limite, buscar, salvar
 from app.models import SRID, Escola, Perfil, Polo
 from app.schemas.escolas import EscolaLer
 from app.schemas.polos import PoloCriar, PoloLer
-from app.security import UsuarioAtual, exigir_perfil
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/polos", tags=["polos"])
 CONFLITO = "Já existe um polo com esse nome"
@@ -18,18 +18,20 @@ def _area(dados: PoloCriar):
 
 
 @router.get("")
-def listar(db: Db, _: UsuarioAtual, limit: Limite = 50, offset: Deslocamento = 0) -> list[PoloLer]:
+def listar(
+    db: Db, _: UsuarioInterno, limit: Limite = 50, offset: Deslocamento = 0
+) -> list[PoloLer]:
     consulta = select(Polo).order_by(Polo.id).limit(limit).offset(offset)
     return [PoloLer.model_validate(p) for p in db.scalars(consulta)]
 
 
 @router.get("/{polo_id}")
-def obter(polo_id: IdRota, db: Db, _: UsuarioAtual) -> PoloLer:
+def obter(polo_id: IdRota, db: Db, _: UsuarioInterno) -> PoloLer:
     return PoloLer.model_validate(buscar(db, Polo, polo_id))
 
 
 @router.get("/{polo_id}/escolas-na-area")
-def escolas_na_area(polo_id: IdRota, db: Db, _: UsuarioAtual) -> list[EscolaLer]:
+def escolas_na_area(polo_id: IdRota, db: Db, _: UsuarioInterno) -> list[EscolaLer]:
     """Escolas dentro da área do polo, pela localização, mesmo sem vínculo por polo_id."""
     polo = buscar(db, Polo, polo_id)
     consulta = (
