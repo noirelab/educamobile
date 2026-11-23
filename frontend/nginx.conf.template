@@ -1,0 +1,36 @@
+server {
+    listen 80;
+    server_name _;
+    server_tokens off;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Política de conteúdo: segunda barreira se um dia entrar uma falha de XSS, já que o token
+    # fica em sessionStorage. ${API_ORIGIN} e ${WS_ORIGIN} vêm do ambiente do contêiner.
+    #   script-src 'self'            sem script inline nem eval (o build só gera arquivos).
+    #   style-src ... 'unsafe-inline' exigido por bibliotecas que injetam <style> (Sonner); o
+    #                                 Leaflet em si não precisa: ele usa element.style.
+    #   img-src                      os tiles do mapa vêm do OpenStreetMap.
+    #   connect-src                  só a API, por HTTP e por WebSocket.
+    set $csp "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' ${API_ORIGIN} ${WS_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'";
+
+    # Os cabeçalhos se repetem em cada location: lá dentro, um add_header descarta os de fora.
+    location / {
+        add_header Content-Security-Policy $csp always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "no-referrer" always;
+        add_header Permissions-Policy "camera=(), microphone=()" always;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri /index.html;
+    }
+
+    location ~* \.(js|css|woff2?|png|svg|ico)$ {
+        add_header Content-Security-Policy $csp always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "no-referrer" always;
+        add_header Cache-Control "public" always;
+        expires 7d;
+    }
+}
