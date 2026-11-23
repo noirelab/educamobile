@@ -42,3 +42,7 @@ Os limites mudam em `PUT /configuracao/alertas` (só administrador), sem novo de
 **Emergência:** a resposta é imediata (202). O alerta crítico (com a última posição conhecida) e as notificações são criados na hora, a mensagem sai no canal `frota` e o worker envia o push aos gestores. Os responsáveis só são avisados se a opção `emergencia_avisa_responsaveis` estiver ligada (decisão do grupo, ver issue #25); o texto não cita nenhuma criança.
 
 **Push:** o app registra o token com `POST /dispositivos` e lê as mensagens em `GET /notificacoes` (e `POST /notificacoes/{id}/lida`). O worker envia as pendentes pela API HTTP v1 do Firebase, tenta de novo com espera crescente (30 s, 1 min, 2 min... até 1 h, no máximo 5 tentativas) e apaga o token que o Firebase recusa. Sem `FCM_CREDENCIAIS` e `FCM_PROJETO`, o push só é registrado em log. Os textos citam apenas o primeiro nome do próprio filho.
+
+## Relatórios
+
+`GET /relatorios/viagens`, `/pontualidade`, `/ausencias` e `/ocorrencias` (administrador e gestor). Filtros: `de` e `ate` (padrão: últimos 30 dias, no máximo 366), `rota_id` e `escola_id`. `formato=csv` baixa o arquivo; cada exportação vai para a auditoria (`relatorio.exportar`, com filtros e número de linhas) e as células que começariam uma fórmula de planilha (`=`, `+`, `-`, `@`) saem protegidas com um apóstrofo. Na pontualidade, chegar até 5 minutos depois do previsto conta como no horário.
