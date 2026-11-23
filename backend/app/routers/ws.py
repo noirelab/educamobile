@@ -10,7 +10,6 @@ import asyncio
 import contextlib
 import json
 import time
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
@@ -30,6 +29,7 @@ from app.models import (
     ViagemAluno,
 )
 from app.security import autenticar_token
+from app.tempo import hoje
 
 router = APIRouter(tags=["tempo real"])
 
@@ -85,7 +85,7 @@ def pode_assinar(db: Session, usuario: Usuario, canal: str) -> bool:
             escalado = (
                 viagem.motorista_id if usuario.perfil == Perfil.MOTORISTA else viagem.monitor_id
             ) == usuario.id
-            return escalado and viagem.data == date.today()
+            return escalado and viagem.data == hoje()
         if usuario.perfil == Perfil.RESPONSAVEL:
             return viagem.status == StatusViagem.EM_ANDAMENTO and bool(
                 _filhos_na_viagem(db, usuario, viagem_id)
@@ -96,9 +96,19 @@ def pode_assinar(db: Session, usuario: Usuario, canal: str) -> bool:
         db.commit()
 
 
-def filtrar(db: Session, usuario: Usuario, canal: str, mensagem: dict) -> dict | str | None:
-    """A mensagem como este usuário a vê; None se não é dele; "encerrar" se perdeu o canal."""
-    if usuario.perfil in GESTAO or usuario.perfil in (Perfil.MOTORISTA, Perfil.MONITOR):
+def filtrar(
+    db: Session, usuario: Usuario, canal: str, mensagem: dict, conectado_em: float = 0.0
+) -> dict | str | None:
+    """A mensagem como este usuário a vê; None se não é dele; "encerrar" se perdeu o canal;
+    "fechar" se a conta deixou de valer (desativada, logout geral, troca de senha)."""
+    db.refresh(usuario)
+    db.commit()
+    if not usuario.ativo or usuario.sessoes_validas_desde.timestamp() > conectado_em:
+        return "fechar"
+    if usuario.perfil in (Perfil.MOTORISTA, Perfil.MONITOR):
+        # A escala pode mudar no meio da viagem: o motorista antigo deixa de receber.
+        return mensagem if pode_assinar(db, usuario, canal) else "encerrar"
+    if usuario.perfil in GESTAO:
         return mensagem
     # Responsável: reavalia o escopo a cada entrega.
     viagem_id = _viagem_do_canal(canal)
@@ -121,7 +131,7 @@ def filtrar(db: Session, usuario: Usuario, canal: str, mensagem: dict) -> dict |
         meus = set(
             db.scalars(
                 select(ResponsavelEstudante.estudante_id).where(
-                    ResponsavelEstudante.responsavel_id == usuario.id
+                    ResponsavelEstudante.responsavel_id == usuario.id, consentimento.vigente()
                 )
             )
         )
@@ -166,6 +176,9 @@ async def tempo_real_ws(websocket: WebSocket, db: Annotated[Session, Depends(get
         )
 
     inscritos: set[str] = set()
+    # A sessão do SQLAlchemy não é thread-safe: uma consulta por vez.
+    trava = asyncio.Lock()
+    conectado_em = time.time()
 
     async def ler_cliente() -> None:
         while True:
@@ -173,7 +186,9 @@ async def tempo_real_ws(websocket: WebSocket, db: Annotated[Session, Depends(get
             tipo = pedido.get("tipo") if isinstance(pedido, dict) else None
             canal = str(pedido.get("canal", "")) if isinstance(pedido, dict) else ""
             if tipo == "inscrever":
-                if not await run_in_threadpool(pode_assinar, db, usuario, canal):
+                async with trava:
+                    permitido = await run_in_threadpool(pode_assinar, db, usuario, canal)
+                if not permitido:
                     await _enviar(websocket, {"tipo": "recusado", "canal": canal})
                     continue
                 if canal not in inscritos:
@@ -199,7 +214,13 @@ async def tempo_real_ws(websocket: WebSocket, db: Annotated[Session, Depends(get
             dados = json.loads(msg["data"])
             alvos = [c for c in inscritos if canal_redis(c) == msg["channel"]]
             for canal in alvos:
-                resultado = await run_in_threadpool(filtrar, db, usuario, canal, dados)
+                async with trava:
+                    resultado = await run_in_threadpool(
+                        filtrar, db, usuario, canal, dados, conectado_em
+                    )
+                if resultado == "fechar":
+                    await websocket.close(CODIGO_NAO_AUTENTICADO)
+                    return
                 if resultado == "encerrar":
                     await pubsub.unsubscribe(canal_redis(canal))
                     inscritos.discard(canal)

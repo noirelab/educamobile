@@ -218,6 +218,9 @@ def ausencias(db: Session, f: Filtro) -> tuple[list[dict], dict]:
         e: (esperadas, nao)
         for e, esperadas, nao in db.execute(na_lista.group_by(ViagemAluno.estudante_id))
     }
+    if f.rota_id is not None:
+        # O aviso de ausência não tem rota: só vale para quem está nas viagens dela.
+        avisos = {i: n for i, n in avisos.items() if i in contagem}
     ids = set(avisos) | set(contagem)
     estudantes = {}
     if ids:
@@ -300,6 +303,8 @@ def _celula(valor) -> str:
     if valor is None:
         return ""
     texto = str(valor)
+    if not isinstance(valor, str):
+        return texto  # número negativo é número, não fórmula
     # Defesa contra injeção de fórmula: quem abre o arquivo numa planilha não executa nada.
     return "'" + texto if texto.startswith(_INICIO_DE_FORMULA) else texto
 

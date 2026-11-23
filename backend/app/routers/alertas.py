@@ -141,6 +141,12 @@ def atualizar_configuracao(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, "Os limites não podem ser negativos"
         )
+    curtos = [c for c, v in dados.valores.items() if c.startswith("retencao_") and v < 7]
+    if curtos:
+        # Zero apagaria todas as viagens e eventos no próximo ciclo do worker.
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, f"Prazo de guarda mínimo é 7 dias: {curtos}"
+        )
     for chave, valor in dados.valores.items():
         existentes[chave].valor = valor
     auditoria.registrar(

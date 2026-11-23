@@ -162,12 +162,15 @@ class EnviadorFcm:
             r = self.cliente.post(
                 self.url, json=mensagem, headers={"Authorization": f"Bearer {self.obter_token()}"}
             )
-        except (httpx.HTTPError, OSError):
+        except Exception:  # noqa: BLE001  (rede, credencial recusada, token OAuth indisponível)
             return Resultado.ERRO_TEMPORARIO
         if r.is_success:
             return Resultado.ENVIADO
         if r.status_code in (400, 404):
-            erro = (r.json() if r.content else {}).get("error", {})
+            try:
+                erro = r.json().get("error", {})
+            except ValueError:
+                return Resultado.ERRO_TEMPORARIO
             codigos = {d.get("errorCode") for d in erro.get("details", []) if isinstance(d, dict)}
             texto = str(erro.get("message", "")).lower()
             if (
@@ -220,7 +223,13 @@ def enviar_pendentes(db: Session, enviador: Enviador, agora: datetime | None = N
         ok = invalido = temporario = 0
         for d in dispositivos:
             dados = {"notificacao_id": str(n.id), "tipo": n.tipo}
-            resultado = enviador.enviar(d.token, n.titulo, n.mensagem, dados)
+            try:
+                resultado = enviador.enviar(d.token, n.titulo, n.mensagem, dados)
+            except Exception:  # noqa: BLE001
+                # Um adaptador com defeito conta como falha temporária desta notificação, com
+                # espera crescente, e não trava as demais nem repete o ciclo para sempre.
+                log.exception("falha ao enviar a notificação %s", n.id)
+                resultado = Resultado.ERRO_TEMPORARIO
             if resultado is Resultado.ENVIADO:
                 ok += 1
             elif resultado is Resultado.TOKEN_INVALIDO:

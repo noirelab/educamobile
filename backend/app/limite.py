@@ -85,26 +85,38 @@ class LimiteRedis:
     def _k(self, chave: str) -> str:
         return f"limite:{self.prefixo}:{chave}"
 
+    # Com o Redis fora do ar o limite deixa de valer em vez de derrubar o login e o resto da API.
+    # É uma escolha de disponibilidade: o alerta de Redis indisponível precisa chegar a alguém.
+
     def bloqueado(self, chave: str) -> bool:
         k = self._k(chave)
         agora = time.time()
-        pipe = tempo_real.cliente().pipeline()
-        pipe.zremrangebyscore(k, 0, agora - self.janela_s)
-        pipe.zcard(k)
-        return pipe.execute()[1] >= self.maximo
+        try:
+            pipe = tempo_real.cliente().pipeline()
+            pipe.zremrangebyscore(k, 0, agora - self.janela_s)
+            pipe.zcard(k)
+            return pipe.execute()[1] >= self.maximo
+        except redis.RedisError:
+            return False
 
     def registrar_falha(self, chave: str) -> None:
         k = self._k(chave)
         agora = time.time()
-        pipe = tempo_real.cliente().pipeline()
-        pipe.zadd(k, {uuid.uuid4().hex: agora})
-        # Só as últimas `maximo` importam, e a chave some sozinha quando a janela passa.
-        pipe.zremrangebyrank(k, 0, -(self.maximo + 1))
-        pipe.expire(k, self.janela_s + 1)
-        pipe.execute()
+        try:
+            pipe = tempo_real.cliente().pipeline()
+            pipe.zadd(k, {uuid.uuid4().hex: agora})
+            # Só as últimas `maximo` importam, e a chave some sozinha quando a janela passa.
+            pipe.zremrangebyrank(k, 0, -(self.maximo + 1))
+            pipe.expire(k, self.janela_s + 1)
+            pipe.execute()
+        except redis.RedisError:
+            pass
 
     def limpar(self, chave: str) -> None:
-        tempo_real.cliente().delete(self._k(chave))
+        try:
+            tempo_real.cliente().delete(self._k(chave))
+        except redis.RedisError:
+            pass
 
 
 def criar_limite(prefixo: str, maximo: int, janela_s: int) -> LimiteTentativas:
@@ -119,6 +131,10 @@ MAX_ESCRITAS_POR_MINUTO = 300
 MAX_POSICOES_POR_MINUTO = 120
 limite_escrita = criar_limite("escrita", MAX_ESCRITAS_POR_MINUTO, 60)
 limite_posicoes = criar_limite("posicoes", MAX_POSICOES_POR_MINUTO, 60)
+# Teto por IP, que o cliente não consegue trocar: sem ele, variar o cabeçalho Authorization a
+# cada requisição abriria sempre um contador novo.
+MAX_REQUISICOES_POR_IP_POR_MINUTO = 1200
+limite_ip = criar_limite("ip", MAX_REQUISICOES_POR_IP_POR_MINUTO, 60)
 
 
 def _quem(request: Request) -> str:
@@ -146,8 +162,10 @@ def limitar_escrita(request: Request) -> None:
     """Dependência global: só as rotas que escrevem entram na conta."""
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return
+    _consumir(limite_ip, "ip:" + (auditoria.ip_do_cliente(request) or "?"))
     _consumir(limite_escrita, _quem(request))
 
 
 def limitar_posicoes(request: Request) -> None:
+    _consumir(limite_ip, "ip:" + (auditoria.ip_do_cliente(request) or "?"))
     _consumir(limite_posicoes, _quem(request))

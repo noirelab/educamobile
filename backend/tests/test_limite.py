@@ -177,3 +177,29 @@ def test_redis_fora_do_ar_nao_derruba_a_api(client, criar_usuario, monkeypatch):
         "vistoria_valida_ate": "2030-01-01",
     }
     assert client.post("/veiculos", json=veiculo, headers=h).status_code == 201
+
+
+def test_variar_o_cabecalho_de_autorizacao_nao_escapa_do_limite_por_ip(client, monkeypatch):
+    monkeypatch.setattr(modulo, "limite_ip", LimiteEmMemoria(3, 60))
+    codigos = [
+        client.post(
+            "/auth/logout",
+            json={"refresh_token": "x" * 30},
+            headers={"Authorization": f"Bearer {i}"},
+        ).status_code
+        for i in range(6)
+    ]
+    assert codigos[:3] == [204, 204, 204]
+    assert codigos[3:] == [429, 429, 429]
+
+
+def test_limite_no_redis_fora_do_ar_nao_derruba_o_login(monkeypatch, prefixo):
+    def quebrado():
+        raise redis.ConnectionError("fora do ar")
+
+    lim = LimiteRedis(1, 60, prefixo)
+    monkeypatch.setattr(tempo_real, "cliente", quebrado)
+    lim.registrar_falha("a")
+    lim.registrar_falha("a")
+    assert lim.bloqueado("a") is False
+    lim.limpar("a")

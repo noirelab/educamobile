@@ -45,6 +45,7 @@ from app.schemas.rastreamento import (
     ViagemDoFilho,
 )
 from app.security import Responsavel, exigir_perfil, garantir_responsavel, hash_refresh_token
+from app.tempo import hoje as _hoje
 
 router = APIRouter(tags=["rastreamento"])
 SoMotorista = Annotated[Usuario, exigir_perfil(Perfil.MOTORISTA)]
@@ -106,7 +107,7 @@ def receber_do_rastreador(
         .where(
             Viagem.veiculo_id == veiculo.id,
             Viagem.status == StatusViagem.EM_ANDAMENTO,
-            Viagem.data == date.today(),
+            Viagem.data == _hoje(),
         )
         .with_for_update()
     )
@@ -249,7 +250,7 @@ def filho_hoje(estudante_id: IdRota, request: Request, db: Db, usuario: Responsa
     """
     garantir_responsavel(db, usuario, estudante_id)
     estudante = db.get(Estudante, estudante_id)
-    hoje = date.today()
+    hoje = _hoje()
     na_lista = select(ViagemAluno.viagem_id).where(ViagemAluno.estudante_id == estudante_id)
     inscritas = select(Inscricao.rota_id).where(
         Inscricao.estudante_id == estudante_id, Inscricao.ativa.is_(True)
@@ -359,7 +360,7 @@ def painel_frota(
     turno: Turno | None = None,
     situacao: StatusViagem | None = None,
 ) -> list[ItemDaFrota]:
-    dia = data or date.today()
+    dia = data or _hoje()
     consulta = (
         select(Viagem, Rota.nome)
         .join(Rota, Rota.id == Viagem.rota_id)
@@ -422,7 +423,7 @@ def painel_frota(
                 if bruta
                 else None,
                 atraso_min=_atraso_min(db, viagem, agora_local)
-                if viagem.status == StatusViagem.EM_ANDAMENTO and dia == date.today()
+                if viagem.status == StatusViagem.EM_ANDAMENTO and dia == _hoje()
                 else None,
                 alunos_a_bordo=a_bordo.get(viagem.id, 0),
                 alertas_abertos=alertas.get(viagem.id, 0),

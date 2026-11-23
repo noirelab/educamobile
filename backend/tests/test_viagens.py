@@ -927,3 +927,61 @@ def test_ausencia_avisada_com_a_viagem_andando_vira_aviso_na_lista(
     assert (
         db.get(ViagemAluno, (em_andamento["id"], mundo["beto"].id)).ausencia_avisada_em is not None
     )
+
+
+def test_embarque_fora_da_lista_so_de_estudante_da_mesma_escola(client, db, mundo, em_andamento):
+    outra = escola_de_teste(db, "Outra escola", 1.0, 1.0)
+    de_fora = estudante_de_teste(
+        db, "Alheio", escola_id=outra.id, observacoes_cuidado="Segredo médico"
+    )
+    justificativa = "Troca de carona"
+    inexistente = _ev(
+        "embarque_fora_da_lista", minutos=1, estudante_id=999999, justificativa=justificativa
+    )
+    alheio = _ev("embarque_fora_da_lista", de_fora, 2, justificativa=justificativa)
+    r = _eventos(client, mundo, em_andamento, inexistente, alheio)
+    assert [x["resultado"] for x in r.json()] == ["rejeitado", "rejeitado"]
+    lista = client.get(f"/viagens/{em_andamento['id']}/lista", headers=mundo["hm"]).text
+    assert "Alheio" not in lista and "Segredo médico" not in lista
+
+
+def test_cancelar_a_ausencia_com_a_viagem_andando_devolve_a_crianca_a_lista(
+    client, db, mundo, em_andamento, criar_usuario
+):
+    mae = criar_usuario(Perfil.RESPONSAVEL)
+    _vincular(db, mae, mundo["beto"])
+    criada = client.post(
+        "/ausencias",
+        json={"estudante_id": mundo["beto"].id, "data": HOJE.isoformat()},
+        headers=_h(mae),
+    ).json()
+    assert _status(client, mundo, em_andamento)["Beto"] == "ausencia_avisada"
+    assert client.delete(f"/ausencias/{criada['id']}", headers=_h(mae)).status_code == 204
+    assert _status(client, mundo, em_andamento)["Beto"] == "aguardando"
+
+
+def test_correcao_do_gestor_vence_evento_de_aparelho_com_relogio_adiantado(
+    client, mundo, em_andamento
+):
+    adiantado = _ev("embarque", mundo["ana"])
+    adiantado["hora_aparelho"] = (datetime.now(UTC) + timedelta(minutes=4)).isoformat()
+    _eventos(client, mundo, em_andamento, adiantado)
+    client.post(
+        f"/viagens/{em_andamento['id']}/correcoes",
+        json={"estudante_id": mundo["ana"].id, "status": "nao_embarcou", "motivo": "Toque errado"},
+        headers=mundo["gestor"],
+    )
+    assert _status(client, mundo, em_andamento)["Ana"] == "nao_embarcou"
+
+
+def test_alerta_critico_de_crianca_a_bordo_notifica_a_gestao(client, db, mundo, em_andamento):
+    _eventos(client, mundo, em_andamento, _ev("embarque", mundo["ana"], 1))
+    viagem = db.get(Viagem, em_andamento["id"])
+    verificar_saida_da_cerca(db, viagem, Coordenadas(latitude=0.0005, longitude=0.0))
+    verificar_saida_da_cerca(db, viagem, Coordenadas(latitude=0.01, longitude=0.0))
+    avisos = db.scalars(select(Notificacao).where(Notificacao.tipo.like("alerta_%"))).all()
+    assert avisos and all(n.titulo == "ALERTA CRÍTICO" for n in avisos)
+
+
+def test_gerar_duas_vezes_em_seguida_nao_quebra(client, mundo):
+    assert _gerar(client, mundo)["id"] == _gerar(client, mundo)["id"]

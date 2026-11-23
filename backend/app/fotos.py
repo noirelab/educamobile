@@ -21,6 +21,8 @@ TIPO_FOTO = "foto"
 # Abaixo do limite global de corpo (1 MB), que barra a requisição antes de ela chegar aqui.
 MAX_BYTES = 900_000
 MAX_LADO = 512
+# Um PNG pequeno pode descomprimir em centenas de MB: o teto vale antes de decodificar.
+MAX_PIXELS = 12_000_000
 # Barra imagens que explodem na memória ao abrir (bomba de descompressão).
 Image.MAX_IMAGE_PIXELS = 25_000_000
 
@@ -43,6 +45,9 @@ def salvar(conteudo: bytes) -> str:
         with Image.open(io.BytesIO(conteudo)) as original:
             if original.format not in {"JPEG", "PNG", "WEBP"}:
                 raise _recusar("Use uma foto JPEG, PNG ou WEBP")
+            largura, altura = original.size
+            if largura * altura > MAX_PIXELS:
+                raise _recusar("Imagem grande demais: reduza antes de enviar")
             imagem = ImageOps.exif_transpose(original).convert("RGB")
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as erro:
         raise _recusar("Arquivo não é uma imagem válida") from erro

@@ -1,6 +1,5 @@
 """Inscrição da criança na rota (gestão) e aviso de ausência (responsável)."""
 
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -23,6 +22,7 @@ from app.models import (
 )
 from app.schemas.inscricoes import AusenciaCriar, AusenciaLer, InscricaoLer, InscricoesSubstituir
 from app.security import Responsavel, exigir_perfil, garantir_responsavel
+from app.tempo import hoje as _hoje
 
 router = APIRouter(tags=["inscrições"])
 Gestao = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)]
@@ -91,7 +91,7 @@ def substituir_inscricoes(
                 422, f"A rota tem {len(itens)} inscritos e o veículo comporta {capacidade}"
             )
 
-    hoje = date.today()
+    hoje = _hoje()
     atuais = {
         i.estudante_id: i
         for i in db.scalars(
@@ -152,7 +152,7 @@ def minhas_ausencias(db: Db, usuario: Responsavel) -> list[AusenciaLer]:
     )
     consulta = (
         select(Ausencia)
-        .where(Ausencia.estudante_id.in_(filhos), Ausencia.data >= date.today())
+        .where(Ausencia.estudante_id.in_(filhos), Ausencia.data >= _hoje())
         .order_by(Ausencia.data, Ausencia.id)
     )
     return [AusenciaLer.model_validate(a) for a in db.scalars(consulta)]
@@ -176,7 +176,7 @@ def avisar_ausencia(
     ausencia = Ausencia(**dados.model_dump(), criada_por_id=usuario.id)
     db.add(ausencia)
     db.flush()
-    if dados.data == date.today():
+    if dados.data == _hoje():
         viagens.aviso_de_ausencia_tardia(db, dados.estudante_id, dados.data, dados.sentido)
     auditoria.registrar(
         db,
@@ -201,10 +201,11 @@ def cancelar_ausencia(ausencia_id: IdRota, request: Request, db: Db, usuario: Re
         garantir_responsavel(db, usuario, ausencia.estudante_id)
     except HTTPException as erro:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Ausência não encontrada") from erro
-    if ausencia.data < date.today():
+    if ausencia.data < _hoje():
         raise HTTPException(
             status.HTTP_409_CONFLICT, "Ausência de dia passado não pode ser cancelada"
         )
+    viagens.desfazer_ausencia_tardia(db, ausencia.estudante_id, ausencia.data, ausencia.sentido)
     db.delete(ausencia)
     auditoria.registrar(
         db,

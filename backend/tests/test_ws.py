@@ -23,6 +23,7 @@ from app.models import (
     Sentido,
     Turno,
     Veiculo,
+    Viagem,
 )
 from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
@@ -52,7 +53,10 @@ def db():
     sessao = SessaoReal(bind=app_db.engine, expire_on_commit=False)
     yield sessao
     sessao.close()
-    tabelas = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
+    # `configuracao` vem semeada pela migração: apagá-la quebraria os testes seguintes.
+    tabelas = ", ".join(
+        f'"{t.name}"' for t in Base.metadata.sorted_tables if t.name != "configuracao"
+    )
     with app_db.engine.begin() as conexao:
         conexao.execute(text(f"TRUNCATE TABLE {tabelas} RESTART IDENTITY CASCADE"))
 
@@ -445,3 +449,45 @@ def test_mensagem_so_sai_depois_do_commit(client, db, mundo, criar_usuario, monk
     tempo_real.enfileirar(db, 1, {"tipo": "posicao"})
     db.commit()
     assert tempo_real.CANAL_FROTA in publicadas
+
+
+def test_conta_desativada_depois_de_conectar_perde_a_conexao(client, db, mundo, criar_usuario):
+    _iniciar(client, mundo)
+    gestor = criar_usuario(Perfil.GESTOR)
+    with _abrir(client, gestor) as ws:
+        ws.receive_json()
+        ws.send_json({"tipo": "inscrever", "canal": "frota"})
+        ws.receive_json()
+        gestor.ativo = False
+        db.flush()
+        _posicao(client, mundo, 0.004, 10)
+        with pytest.raises(WebSocketDisconnect) as erro:
+            ws.receive_json()
+        assert erro.value.code == 4401
+
+
+def test_motorista_trocado_na_escala_deixa_de_receber(client, db, mundo, criar_usuario):
+    _iniciar(client, mundo)
+    canal = f"viagem:{mundo['viagem']['id']}"
+    with _abrir(client, mundo["motorista"]) as ws:
+        ws.receive_json()
+        ws.send_json({"tipo": "inscrever", "canal": canal})
+        assert ws.receive_json()["tipo"] == "inscrito"
+        viagem = db.get(Viagem, mundo["viagem"]["id"])
+        viagem.motorista_id = None
+        db.flush()
+        client.post(
+            f"/viagens/{mundo['viagem']['id']}/eventos",
+            json={
+                "eventos": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "tipo": "embarque",
+                        "estudante_id": mundo["ana"].id,
+                        "hora_aparelho": _t(5),
+                    }
+                ]
+            },
+            headers=mundo["gestor"],
+        )
+        assert _receber_ate(ws, "canal_encerrado")["canal"] == canal

@@ -503,3 +503,29 @@ def test_atraso_avisa_a_familia_uma_unica_vez(client, db, mundo, criar_usuario):
     ).all()
     assert len(atrasos) == 1
     assert "Ana" in atrasos[0].mensagem and "Souza" not in atrasos[0].mensagem
+
+
+def test_redis_fora_do_ar_nao_abre_sem_sinal_para_a_frota(client, db, mundo, monkeypatch):
+    import redis
+
+    _iniciar(client, mundo)
+    viagem = db.get(Viagem, mundo["viagem"]["id"])
+    viagem.iniciada_em = AGORA - timedelta(minutes=30)
+    db.flush()
+
+    def quebrado(_):
+        raise redis.ConnectionError("fora do ar")
+
+    monkeypatch.setattr(tempo_real, "ler_posicao", quebrado)
+    assert alertas.executar_regras(db, AGORA) == []
+
+
+def test_so_uma_instancia_roda_as_regras_por_vez(client, db, mundo):
+    from sqlalchemy import text as sql
+
+    _iniciar(client, mundo)
+    db.get(Viagem, mundo["viagem"]["id"]).iniciada_em = AGORA - timedelta(minutes=30)
+    db.flush()
+    assert db.scalar(sql("SELECT pg_try_advisory_xact_lock(7001)")) is True
+    # Quem já segura o lock é a própria sessão (reentrante); o ponto é que a regra o pede.
+    assert [a.tipo for a in alertas.executar_regras(db, AGORA)] == ["sem_sinal"]

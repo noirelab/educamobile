@@ -43,6 +43,7 @@ from app.schemas.viagens import (
     ViagemLer,
 )
 from app.security import exigir_perfil
+from app.tempo import hoje as _hoje
 
 router = APIRouter(tags=["viagens"])
 Gestao = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)]
@@ -64,7 +65,7 @@ def garantir_escalado(usuario: Usuario, viagem: Viagem, *, tolerancia_dias: int 
     escalado = (usuario.perfil == Perfil.MOTORISTA and viagem.motorista_id == usuario.id) or (
         usuario.perfil == Perfil.MONITOR and viagem.monitor_id == usuario.id
     )
-    hoje = date.today()
+    hoje = _hoje()
     no_dia = hoje - timedelta(days=tolerancia_dias) <= viagem.data <= hoje
     if not (escalado and no_dia):
         raise _nao_encontrada()
@@ -93,7 +94,7 @@ def _ler(db: Db, viagem: Viagem) -> ViagemLer:
 
 @router.post("/viagens/gerar", status_code=status.HTTP_201_CREATED)
 def gerar(dados: GerarViagens, request: Request, db: Db, gestor: Gestao) -> list[ViagemLer]:
-    dia = dados.data or date.today()
+    dia = dados.data or _hoje()
     resultado = viagens.gerar(db, dia, dados.rota_id)
     auditoria.registrar(
         db,
@@ -133,7 +134,7 @@ def viagens_de_hoje(
 ) -> list[ViagemLer]:
     coluna = Viagem.motorista_id if usuario.perfil == Perfil.MOTORISTA else Viagem.monitor_id
     consulta = (
-        select(Viagem).where(coluna == usuario.id, Viagem.data == date.today()).order_by(Viagem.id)
+        select(Viagem).where(coluna == usuario.id, Viagem.data == _hoje()).order_by(Viagem.id)
     )
     return [_ler(db, v) for v in db.scalars(consulta)]
 
@@ -179,7 +180,7 @@ def iniciar(viagem_id: IdRota, request: Request, db: Db, usuario: Equipe) -> Via
         raise _nao_encontrada()
     viagem = _viagem(db, viagem_id, usuario, travar=True)
     try:
-        viagens.iniciar(db, viagem, date.today())
+        viagens.iniciar(db, viagem, _hoje())
     except HTTPException:
         db.rollback()
         raise

@@ -621,3 +621,10 @@ def test_painel_so_para_a_gestao(client, mundo, cabecalhos):
     for perfil in (Perfil.MOTORISTA, Perfil.MONITOR, Perfil.RESPONSAVEL):
         assert client.get("/painel/frota", headers=cabecalhos(perfil)).status_code == 403
     assert client.get("/painel/frota").status_code == 401
+
+
+def test_posicao_com_precisao_ruim_nao_vira_referencia(client, db, mundo):
+    ruim = {"registrada_em": _t(0), "latitude": 40.0, "longitude": 40.0, "precisao_m": 5000}
+    r = _enviar(client, mundo, ruim, _pos(0.0, 20))
+    assert [x["resultado"] for x in r.json()] == ["rejeitada", "aceita"]
+    assert r.json()[0]["motivo"] == "Precisão do GPS ruim"

@@ -22,9 +22,12 @@ MANUTENCAO_A_CADA_S = 3600
 
 
 def ciclo(enviador: notificacoes.Enviador, rodar_regras: bool) -> None:
-    with SessionLocal() as db:
-        if rodar_regras:
+    # Transações separadas: uma falha no envio do push não pode jogar fora os alertas já abertos.
+    if rodar_regras:
+        with SessionLocal() as db:
             alertas.executar_regras(db)
+            db.commit()
+    with SessionLocal() as db:
         notificacoes.enviar_pendentes(db, enviador)
         db.commit()
 

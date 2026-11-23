@@ -5,6 +5,7 @@ from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validat
 
 from app.cadastros import IdBanco
 from app.models import Sentido
+from app.tempo import hoje as _hoje
 
 # Quantos dias à frente o responsável pode avisar uma ausência.
 JANELA_AUSENCIA_DIAS = 60
@@ -73,7 +74,7 @@ class AusenciaCriar(BaseModel):
     @field_validator("data")
     @classmethod
     def dentro_da_janela(cls, valor: date) -> date:
-        hoje = date.today()
+        hoje = _hoje()
         if valor < hoje or valor > hoje + timedelta(days=JANELA_AUSENCIA_DIAS):
             raise ValueError(
                 f"A data precisa estar entre hoje e {JANELA_AUSENCIA_DIAS} dias à frente"

@@ -206,3 +206,13 @@ def test_responsavel_ve_so_a_foto_do_proprio_filho_depois_do_consentimento(
     db.flush()
     assert client.get(f"/responsavel/filhos/{filho.id}/foto-url", headers=h).status_code == 200
     assert client.get(f"/responsavel/filhos/{outro.id}/foto-url", headers=h).status_code == 404
+
+
+def test_imagem_com_pixels_demais_e_recusada_antes_de_decodificar(client, db, cabecalhos):
+    estudante = estudante_de_teste(db)
+    # Pequeno em bytes, enorme em pixels: o tipo de arquivo que estoura a memória ao abrir.
+    enorme = _imagem("PNG", tamanho=(4000, 3500))
+    assert len(enorme) < 900_000
+    r = _enviar(client, cabecalhos(Perfil.GESTOR), estudante, enorme, "f.png", "image/png")
+    assert r.status_code == 422
+    assert estudante.foto_arquivo is None

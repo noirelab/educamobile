@@ -24,6 +24,7 @@ from app.schemas.motoristas import (
     MotoristasPagina,
 )
 from app.security import exigir_perfil
+from app.tempo import hoje as _hoje
 
 router = APIRouter(tags=["motoristas"])
 Gestao = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)]
@@ -45,7 +46,7 @@ def _detalhe(usuario: Usuario, m: Motorista) -> MotoristaDetalhe:
         categoria_cnh=m.categoria_cnh,
         cnh_valida_ate=m.cnh_valida_ate,
         curso_transporte_escolar_ate=m.curso_transporte_escolar_ate,
-        habilitacao=_habilitacao(usuario, m, date.today()),
+        habilitacao=_habilitacao(usuario, m, _hoje()),
     )
 
 
@@ -57,7 +58,7 @@ def _resumo(usuario: Usuario, m: Motorista) -> MotoristaResumo:
         categoria_cnh=m.categoria_cnh,
         cnh_valida_ate=m.cnh_valida_ate,
         curso_transporte_escolar_ate=m.curso_transporte_escolar_ate,
-        habilitacao=_habilitacao(usuario, m, date.today()),
+        habilitacao=_habilitacao(usuario, m, _hoje()),
     )
 
 
@@ -93,7 +94,7 @@ def vencendo(
     db: Db, _: Gestao, dias: Annotated[int, Query(ge=1, le=365)] = 30
 ) -> list[DocumentoVencendo]:
     """Documentos que vencem nos próximos `dias`, e os já vencidos, do mais urgente ao menos."""
-    hoje = date.today()
+    hoje = _hoje()
     limite = hoje + timedelta(days=dias)
     resultado: list[DocumentoVencendo] = []
     linhas = db.execute(
@@ -154,7 +155,7 @@ def habilitacao_do_motorista(
     usuario_id: IdRota, db: Db, _: Gestao, data: date | None = None
 ) -> Habilitacao:
     usuario, m = _buscar(db, usuario_id)
-    return _habilitacao(usuario, m, data or date.today())
+    return _habilitacao(usuario, m, data or _hoje())
 
 
 @router.put("/motoristas/{usuario_id}")
@@ -203,4 +204,4 @@ def meu_cadastro(db: Db, usuario: SoMotorista) -> MotoristaDetalhe:
 @router.get("/motorista/eu/habilitacao")
 def minha_habilitacao(db: Db, usuario: SoMotorista, data: date | None = None) -> Habilitacao:
     """Funciona também sem cadastro de documentos: aí a resposta é "não pode" com o motivo."""
-    return _habilitacao(usuario, db.get(Motorista, usuario.id), data or date.today())
+    return _habilitacao(usuario, db.get(Motorista, usuario.id), data or _hoje())

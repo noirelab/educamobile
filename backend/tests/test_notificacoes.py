@@ -443,3 +443,37 @@ def test_fcm_sem_rede_e_erro_temporario():
 def test_sem_credenciais_o_enviador_so_registra_em_log(monkeypatch):
     monkeypatch.setattr(settings, "fcm_credenciais", None)
     assert isinstance(notificacoes.obter_enviador(), notificacoes.EnviadorDeRegistro)
+
+
+def test_enviador_com_defeito_nao_trava_as_outras_notificacoes(db, criar_usuario):
+    mae, pai = criar_usuario(Perfil.RESPONSAVEL), criar_usuario(Perfil.RESPONSAVEL)
+    quebrada = _pendente(db, mae, TOKEN)
+    boa = _pendente(db, pai, "w" * 40)
+
+    class Defeituoso:
+        def enviar(self, token, titulo, corpo, dados):
+            if token == TOKEN:
+                raise RuntimeError("credencial recusada")
+            return Resultado.ENVIADO
+
+    assert enviar_pendentes(db, Defeituoso(), AGORA) == 1
+    assert boa.enviada_em is not None
+    assert (quebrada.enviada_em, quebrada.tentativas) == (None, 1)
+    assert quebrada.proxima_tentativa_em is not None
+
+
+def test_fcm_com_resposta_que_nao_e_json_tenta_de_novo():
+    assert (
+        _fcm(lambda r: httpx.Response(400, content=b"<html>erro</html>")).enviar("t", "a", "b", {})
+        is Resultado.ERRO_TEMPORARIO
+    )
+
+
+def test_fcm_com_credencial_quebrada_tenta_de_novo():
+    def sem_token():
+        raise RuntimeError("RefreshError")
+
+    cliente = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json={})))
+    assert (
+        EnviadorFcm("p", sem_token, cliente).enviar("t", "a", "b", {}) is Resultado.ERRO_TEMPORARIO
+    )

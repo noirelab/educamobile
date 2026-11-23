@@ -20,6 +20,7 @@ def executar(db: Session, agora: datetime | None = None) -> dict[str, int]:
     """Apaga o que passou do prazo e devolve quantas linhas saíram de cada tabela."""
     agora = agora or datetime.now(UTC)
     lim = {**PADRAO, **{k: v for k, v in limites(db).items() if k in PADRAO}}
+    lim = {k: max(v, 7) for k, v in lim.items()}  # piso: um valor errado não apaga tudo
     corte_posicoes = agora - timedelta(days=lim["retencao_posicoes_dias"])
     corte_dados = agora - timedelta(days=lim["retencao_dados_dias"])
     corte_auditoria = agora - timedelta(days=lim["retencao_auditoria_dias"])

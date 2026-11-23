@@ -15,6 +15,7 @@ from app.models import Estudante, Posicao, StatusAluno, Viagem, ViagemAluno, Via
 # Entre duas posições seguidas, mais que isso é salto impossível (GPS com defeito ou forjado).
 VELOCIDADE_MAXIMA_KMH = 150.0
 VELOCIDADE_INFORMADA_MAXIMA_KMH = 200.0
+PRECISAO_MAXIMA_M = 100.0
 TOLERANCIA_RELOGIO_S = 300
 # Posição registrada antes do início da viagem não pertence a ela.
 ANTECEDENCIA_MAXIMA = timedelta(minutes=10)
@@ -155,6 +156,10 @@ def ingerir(
             resultados.append(
                 Resultado(e.registrada_em, "rejeitada", "Anterior ao início da viagem")
             )
+            continue
+        if e.precisao_m is not None and e.precisao_m > PRECISAO_MAXIMA_M:
+            # Um fix ruim vira ponto de referência e faria as posições boas parecerem saltos.
+            resultados.append(Resultado(e.registrada_em, "rejeitada", "Precisão do GPS ruim"))
             continue
         if e.velocidade_kmh is not None and e.velocidade_kmh > VELOCIDADE_INFORMADA_MAXIMA_KMH:
             resultados.append(

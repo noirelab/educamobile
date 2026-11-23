@@ -7,11 +7,12 @@ tivesse chegado na hora.
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import consentimento, habilitacao, notificacoes, tempo_real
@@ -103,9 +104,16 @@ def gerar(db: Session, dia: date, rota_id: int | None = None) -> list[Viagem]:
             veiculo_id=rota.veiculo_id,
             motorista_id=rota.motorista_id,
         )
-        db.add(viagem)
-        viagens.append(viagem)
-    db.flush()
+        try:
+            with db.begin_nested():
+                db.add(viagem)
+                db.flush()
+            viagens.append(viagem)
+        except IntegrityError:
+            # Outra chamada (o endpoint e o comando diário) criou a mesma viagem agora.
+            viagens.append(
+                db.scalar(select(Viagem).where(Viagem.rota_id == rota.id, Viagem.data == dia))
+            )
     return viagens
 
 
@@ -278,6 +286,11 @@ def _avaliar(
     if tipo == TipoEvento.EMBARQUE_FORA_DA_LISTA:
         if not (evento.justificativa and len(evento.justificativa.strip()) >= 5):
             return "Embarque fora da lista exige justificativa", None
+        # Sem esta conferência o motorista leria nome, foto e observações de saúde de qualquer
+        # criança do cadastro, só informando o id.
+        escola = db.scalar(select(Estudante.escola_id).where(Estudante.id == evento.estudante_id))
+        if escola is None or escola != viagem.escola_id:
+            return "Estudante inexistente ou de outra escola", None
         return None, "fora_da_lista"
     aluno = alunos.get(evento.estudante_id)
     if aluno is None:
@@ -375,6 +388,12 @@ def alertar(
 ) -> Alerta:
     alerta = Alerta(viagem_id=viagem.id, tipo=tipo, severidade=severidade, mensagem=mensagem)
     db.add(alerta)
+    if severidade == Severidade.CRITICO and tipo != "emergencia":
+        # A emergência tem o próprio aviso, com a posição; os demais críticos (criança a bordo)
+        # não podem depender de alguém estar olhando o painel.
+        notificacoes.para_gestores(
+            db, f"alerta_{tipo}", "ALERTA CRÍTICO", mensagem, viagem_id=viagem.id
+        )
     tempo_real.enfileirar(
         db,
         viagem.id,
@@ -474,7 +493,17 @@ def corrigir(
             viagem_id=viagem.id,
             tipo=TipoEvento.CORRECAO,
             estudante_id=estudante_id,
-            hora_aparelho=agora(),
+            # Nunca antes de um evento já registrado (relógio de aparelho adiantado).
+            hora_aparelho=max(
+                agora(),
+                db.scalar(
+                    select(func.max(EventoViagem.hora_aparelho)).where(
+                        EventoViagem.viagem_id == viagem.id
+                    )
+                )
+                or agora(),
+            )
+            + timedelta(milliseconds=1),
             autor_id=gestor.id,
             justificativa=motivo,
             status_corrigido=novo_status,
@@ -647,6 +676,27 @@ def cancelar(db: Session, viagem: Viagem, gestor: Usuario, motivo: str) -> int:
     db.flush()
     _avisar_status(db, viagem)
     return len(destinatarios)
+
+
+def desfazer_ausencia_tardia(db: Session, estudante_id: int, dia: date, sentido) -> None:
+    """O responsável cancelou o aviso depois da saída: a criança volta a ser esperada."""
+    consulta = (
+        select(ViagemAluno)
+        .join(Viagem, Viagem.id == ViagemAluno.viagem_id)
+        .where(
+            ViagemAluno.estudante_id == estudante_id,
+            ViagemAluno.ausencia_avisada_em.is_not(None),
+            Viagem.data == dia,
+            Viagem.status == StatusViagem.EM_ANDAMENTO,
+        )
+    )
+    if sentido is not None:
+        consulta = consulta.where(Viagem.sentido == sentido)
+    for aluno in db.scalars(consulta):
+        aluno.ausencia_avisada_em = None
+        if aluno.status == StatusAluno.AUSENCIA_AVISADA:
+            aluno.status = StatusAluno.AGUARDANDO
+        aluno.status_inicial = StatusAluno.AGUARDANDO
 
 
 def aviso_de_ausencia_tardia(db: Session, estudante_id: int, dia: date, sentido) -> None:

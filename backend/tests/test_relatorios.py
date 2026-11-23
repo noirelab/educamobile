@@ -339,3 +339,15 @@ def test_relatorios_so_para_a_gestao(client, mundo, cabecalhos, perfil):
     for nome in ("viagens", "pontualidade", "ausencias", "ocorrencias"):
         assert client.get(f"/relatorios/{nome}", headers=cabecalhos(perfil)).status_code == 403
     assert client.get("/relatorios/viagens").status_code == 401
+
+
+def test_csv_nao_estraga_numero_negativo(client, mundo):
+    r = client.get("/relatorios/pontualidade", params={"formato": "csv"}, headers=mundo["gestor"])
+    celulas = [c for linha in csv.reader(io.StringIO(r.text)) for c in linha]
+    assert "-2" in celulas
+    assert "'-2" not in celulas
+
+
+def test_ausencias_por_rota_nao_traz_aluno_de_outra_rota(client, mundo):
+    r = _get(client, mundo, "ausencias", rota_id=mundo["rota_b"].id)
+    assert r["linhas"] == []

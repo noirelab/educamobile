@@ -16,6 +16,7 @@ from app.config import settings
 from app.models import (
     Alerta,
     Configuracao,
+    Estudante,
     RotaParada,
     Severidade,
     StatusAluno,
@@ -71,10 +72,9 @@ def _resolver_sozinho(db: Session, alerta: Alerta, agora: datetime) -> None:
 
 
 def _ultima_posicao(viagem_id: int) -> dict | None:
-    try:
-        return tempo_real.ler_posicao(viagem_id)
-    except redis.RedisError:
-        return None
+    """None = o ônibus nunca enviou. Redis fora do ar levanta erro e a regra é pulada: sem o
+    Redis não dá para saber se há sinal, e abrir "sem sinal" para toda a frota seria falso."""
+    return tempo_real.ler_posicao(viagem_id)
 
 
 # R6
@@ -304,8 +304,6 @@ def avisar_atraso(db: Session, agora: datetime, lim: dict) -> int:
                 )
                 if ja:
                     continue
-                from app.models import Estudante
-
                 nome = notificacoes.nome_curto(db.get(Estudante, aluno.estudante_id))
                 enviados += notificacoes.para_responsaveis(
                     db,
@@ -324,10 +322,19 @@ REGRAS = (viagem_nao_iniciada, sem_sinal, desvio_de_rota, parada_nao_prevista, v
 def executar_regras(db: Session, agora: datetime | None = None) -> list[Alerta]:
     """Roda todas as regras. Devolve os alertas abertos nesta execução."""
     agora = agora or datetime.now(UTC)
+    # Duas instâncias do worker não rodam as regras ao mesmo tempo (evita alerta duplicado).
+    if not db.scalar(text("SELECT pg_try_advisory_xact_lock(7001)")):
+        return []
     lim = limites(db)
     criados: list[Alerta] = []
     for regra in REGRAS:
-        criados += regra(db, agora, lim)
-    avisar_atraso(db, agora, lim)
+        try:
+            criados += regra(db, agora, lim)
+        except redis.RedisError:
+            continue
+    try:
+        avisar_atraso(db, agora, lim)
+    except redis.RedisError:
+        pass
     db.flush()
     return criados
