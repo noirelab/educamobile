@@ -1,4 +1,5 @@
 import enum
+import uuid
 from datetime import UTC, date, datetime, time
 
 from geoalchemy2 import Geometry
@@ -7,9 +8,11 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     SmallInteger,
     UniqueConstraint,
+    Uuid,
     func,
     text,
 )
@@ -42,6 +45,41 @@ class Turno(enum.StrEnum):
 class Sentido(enum.StrEnum):
     IDA = "ida"
     VOLTA = "volta"
+
+
+class StatusViagem(enum.StrEnum):
+    AGENDADA = "agendada"
+    EM_ANDAMENTO = "em_andamento"
+    CONCLUIDA = "concluida"
+    CANCELADA = "cancelada"
+
+
+class StatusAluno(enum.StrEnum):
+    AGUARDANDO = "aguardando"
+    EMBARCOU = "embarcou"
+    DESEMBARCOU = "desembarcou"
+    NAO_EMBARCOU = "nao_embarcou"
+    AUSENCIA_AVISADA = "ausencia_avisada"
+
+
+# Estados em que a criança não está mais a bordo nem esperada: a viagem pode terminar.
+STATUS_FINAIS = frozenset(
+    {StatusAluno.DESEMBARCOU, StatusAluno.NAO_EMBARCOU, StatusAluno.AUSENCIA_AVISADA}
+)
+
+
+class TipoEvento(enum.StrEnum):
+    EMBARQUE = "embarque"
+    NAO_EMBARCOU = "nao_embarcou"
+    DESEMBARQUE = "desembarque"
+    EMBARQUE_FORA_DA_LISTA = "embarque_fora_da_lista"
+    ONIBUS_VAZIO = "onibus_vazio"
+    CORRECAO = "correcao"
+
+
+class Severidade(enum.StrEnum):
+    CRITICO = "critico"
+    AVISO = "aviso"
 
 
 def _enum(tipo: type[enum.Enum], nome: str) -> Enum:
@@ -302,3 +340,139 @@ class Auditoria(Base):
     recurso_id: Mapped[str | None]
     ip: Mapped[str | None] = mapped_column(INET)
     detalhes: Mapped[dict | None] = mapped_column(JSONB)
+
+
+class Viagem(Base):
+    """O que acontece no dia. Rota e inscrição são o plano; a viagem é o realizado."""
+
+    __tablename__ = "viagem"
+    __table_args__ = (UniqueConstraint("rota_id", "data"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rota_id: Mapped[int] = mapped_column(ForeignKey("rota.id", ondelete="RESTRICT"), index=True)
+    data: Mapped[date] = mapped_column(index=True)
+    turno: Mapped[Turno] = mapped_column(_enum(Turno, "turno"))
+    sentido: Mapped[Sentido] = mapped_column(_enum(Sentido, "sentido"))
+    escola_id: Mapped[int] = mapped_column(ForeignKey("escola.id", ondelete="RESTRICT"))
+    veiculo_id: Mapped[int | None] = mapped_column(ForeignKey("veiculo.id", ondelete="SET NULL"))
+    motorista_id: Mapped[int | None] = mapped_column(
+        ForeignKey("motorista.usuario_id", ondelete="SET NULL")
+    )
+    monitor_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id", ondelete="SET NULL"))
+    status: Mapped[StatusViagem] = mapped_column(
+        _enum(StatusViagem, "status_viagem"), default=StatusViagem.AGENDADA
+    )
+    iniciada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    concluida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cancelada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cancelada_por_id: Mapped[int | None] = mapped_column(
+        ForeignKey("usuario.id", ondelete="SET NULL")
+    )
+    motivo_cancelamento: Mapped[str | None]
+    # Última posição conhecida em relação à cerca da escola (para detectar a saída).
+    dentro_da_cerca_escola: Mapped[bool] = mapped_column(
+        default=False, server_default=text("false")
+    )
+
+
+class ViagemParada(Base):
+    """Cópia da parada no início da viagem: editar a rota depois não muda o que o motorista vê."""
+
+    __tablename__ = "viagem_parada"
+
+    viagem_id: Mapped[int] = mapped_column(
+        ForeignKey("viagem.id", ondelete="CASCADE"), primary_key=True
+    )
+    parada_id: Mapped[int] = mapped_column(primary_key=True)
+    ordem: Mapped[int]
+    nome: Mapped[str]
+    localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=False)
+    horario_previsto: Mapped[time | None]
+    raio_cerca_m: Mapped[int]
+
+
+class ViagemAluno(Base):
+    """A lista do motorista. O status vem dos eventos; `status_inicial` é de antes deles."""
+
+    __tablename__ = "viagem_aluno"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["viagem_id", "parada_id"], ["viagem_parada.viagem_id", "viagem_parada.parada_id"]
+        ),
+    )
+
+    viagem_id: Mapped[int] = mapped_column(
+        ForeignKey("viagem.id", ondelete="CASCADE"), primary_key=True
+    )
+    estudante_id: Mapped[int] = mapped_column(
+        ForeignKey("estudante.id", ondelete="RESTRICT"), primary_key=True, index=True
+    )
+    parada_id: Mapped[int | None]
+    status: Mapped[StatusAluno] = mapped_column(
+        _enum(StatusAluno, "status_aluno"), default=StatusAluno.AGUARDANDO
+    )
+    status_inicial: Mapped[StatusAluno] = mapped_column(
+        _enum(StatusAluno, "status_aluno"), default=StatusAluno.AGUARDANDO
+    )
+    fora_da_lista: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    # Ausência avisada pelo responsável depois do início da viagem (regra R12).
+    ausencia_avisada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class EventoViagem(Base):
+    """Só de inclusão: um trigger no banco recusa UPDATE e DELETE. Correção é um novo evento."""
+
+    __tablename__ = "evento_viagem"
+
+    # Gerado no aparelho: reenviar o mesmo evento não o duplica.
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    viagem_id: Mapped[int] = mapped_column(ForeignKey("viagem.id", ondelete="RESTRICT"), index=True)
+    tipo: Mapped[TipoEvento] = mapped_column(_enum(TipoEvento, "tipo_evento"))
+    estudante_id: Mapped[int | None] = mapped_column(
+        ForeignKey("estudante.id", ondelete="RESTRICT")
+    )
+    parada_id: Mapped[int | None]
+    hora_aparelho: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    recebido_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=True)
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id", ondelete="RESTRICT"))
+    justificativa: Mapped[str | None]
+    status_corrigido: Mapped[StatusAluno | None] = mapped_column(_enum(StatusAluno, "status_aluno"))
+    # Registro suspeito (R4, R5): aceito, mas sinalizado.
+    anomalia: Mapped[str | None]
+
+
+class Alerta(Base):
+    __tablename__ = "alerta"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    viagem_id: Mapped[int | None] = mapped_column(
+        ForeignKey("viagem.id", ondelete="CASCADE"), index=True
+    )
+    tipo: Mapped[str] = mapped_column(index=True)
+    severidade: Mapped[Severidade] = mapped_column(_enum(Severidade, "severidade"))
+    mensagem: Mapped[str]
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    resolvido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolvido_por_id: Mapped[int | None] = mapped_column(
+        ForeignKey("usuario.id", ondelete="SET NULL")
+    )
+
+
+class Aviso(Base):
+    """Mensagem para uma pessoa. O envio por push (etapa E) lê desta tabela."""
+
+    __tablename__ = "aviso"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuario.id", ondelete="CASCADE"), index=True
+    )
+    viagem_id: Mapped[int | None] = mapped_column(ForeignKey("viagem.id", ondelete="CASCADE"))
+    estudante_id: Mapped[int | None] = mapped_column(ForeignKey("estudante.id", ondelete="CASCADE"))
+    tipo: Mapped[str]
+    mensagem: Mapped[str]
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    lido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

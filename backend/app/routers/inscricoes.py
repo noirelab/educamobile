@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app import auditoria
+from app import auditoria, viagens
 from app.cadastros import Db, IdRota
 from app.models import (
     Ausencia,
@@ -176,6 +176,8 @@ def avisar_ausencia(
     ausencia = Ausencia(**dados.model_dump(), criada_por_id=usuario.id)
     db.add(ausencia)
     db.flush()
+    if dados.data == date.today():
+        viagens.aviso_de_ausencia_tardia(db, dados.estudante_id, dados.data, dados.sentido)
     auditoria.registrar(
         db,
         "ausencia.criar",

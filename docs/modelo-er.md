@@ -19,6 +19,12 @@ erDiagram
     ESTUDANTE ||--o{ INSCRICAO : embarca
     PARADA ||--o{ INSCRICAO : "embarque em"
     ESTUDANTE ||--o{ AUSENCIA : "avisada para"
+    ROTA ||--o{ VIAGEM : "executada em"
+    VIAGEM ||--o{ VIAGEM_PARADA : "copia as paradas"
+    VIAGEM ||--o{ VIAGEM_ALUNO : "lista do motorista"
+    VIAGEM ||--o{ EVENTO_VIAGEM : registra
+    VIAGEM ||--o{ ALERTA : gera
+    USUARIO ||--o{ AVISO : recebe
 
     ESCOLA { int id PK
         string nome
@@ -74,6 +80,47 @@ erDiagram
         date vigencia_inicio
         date vigencia_fim
         bool ativa }
+    VIAGEM { int id PK
+        int rota_id FK
+        date data
+        enum status
+        int veiculo_id FK
+        int motorista_id FK
+        int monitor_id FK
+        bool dentro_da_cerca_escola }
+    VIAGEM_PARADA { int viagem_id PK
+        int parada_id PK
+        int ordem
+        string nome
+        point localizacao
+        time horario_previsto
+        int raio_cerca_m }
+    VIAGEM_ALUNO { int viagem_id PK
+        int estudante_id PK
+        int parada_id
+        enum status
+        enum status_inicial
+        bool fora_da_lista }
+    EVENTO_VIAGEM { uuid id PK
+        int viagem_id FK
+        enum tipo
+        int estudante_id FK
+        timestamptz hora_aparelho
+        timestamptz recebido_em
+        point localizacao
+        int autor_id FK
+        string justificativa
+        string anomalia }
+    ALERTA { int id PK
+        int viagem_id FK
+        string tipo
+        enum severidade
+        string mensagem }
+    AVISO { int id PK
+        int usuario_id FK
+        int estudante_id FK
+        string tipo
+        string mensagem }
     AUSENCIA { int id PK
         int estudante_id FK
         date data
@@ -124,4 +171,7 @@ erDiagram
 - **Inscrição única por turno e sentido.** Turno e sentido são copiados da rota para a inscrição só para um índice parcial único (`ativa`) impedir duas inscrições ativas iguais para a mesma criança.
 - **Ponta da rota é a escola.** Na ida a última parada, na volta a primeira, precisa estar dentro do raio da cerca da escola.
 - **Habilitação do motorista** (`app/habilitacao.py`): conta ativa, CNH em dia, categoria D ou E e curso de transporte escolar em dia. A viagem só começa se a regra passar.
+- **Lista copiada no início.** Ao iniciar, `ViagemParada` e `ViagemAluno` são cópias da rota e das inscrições do dia; editar a rota depois não muda a lista que o motorista tem na mão.
+- **Eventos imutáveis.** `evento_viagem` recusa UPDATE e DELETE por trigger no banco. O id vem do aparelho (reenviar não duplica) e o status do aluno é derivado dos eventos pela hora do aparelho, então eventos atrasados do modo offline terminam no estado certo. Correção é um novo evento do gestor, com motivo.
+- **Conclusão segura (R2).** A viagem só termina com todo aluno em estado final e o evento `onibus_vazio` posterior ao último movimento. Sair da cerca da escola com criança a bordo, na ida, abre alerta crítico mesmo sem ninguém tentar concluir.
 - **Removidos na etapa A:** polos, turmas, professores, matrículas, transferências e frequência, e os perfis `diretor` e `coordenador`.

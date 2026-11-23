@@ -175,6 +175,15 @@ _ROTAS_DE_CONTA = {
 }
 
 
+_ROTAS_DA_EQUIPE = {
+    ("GET", "/viagens/{viagem_id}"),
+    ("POST", "/viagens/{viagem_id}/iniciar"),
+    ("GET", "/viagens/{viagem_id}/lista"),
+    ("POST", "/viagens/{viagem_id}/eventos"),
+    ("POST", "/viagens/{viagem_id}/concluir"),
+}
+
+
 def _rotas_da_api():
     # O schema OpenAPI lista todas as operações dos routers incluídos.
     for caminho, operacoes in app.openapi()["paths"].items():
@@ -194,6 +203,9 @@ def test_perfis_externos_barrados_em_todas_as_rotas_de_cadastro(client, cabecalh
         }
     if perfil == Perfil.MOTORISTA:
         liberadas |= {(m, p) for m, p in _rotas_da_api() if p.startswith("/motorista/")}
+    if perfil in (Perfil.MOTORISTA, Perfil.MONITOR):
+        # Quem não está escalado recebe 404, não 403: a viagem some para ele.
+        liberadas |= _ROTAS_DA_EQUIPE | {("GET", "/motorista/viagens-hoje")}
 
     verificadas = 0
     for metodo, caminho in _rotas_da_api():
