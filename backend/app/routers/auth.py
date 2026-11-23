@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -10,9 +10,10 @@ from app import auditoria, sessoes
 from app.config import settings
 from app.db import get_db
 from app.limite import LimiteEmMemoria
-from app.models import Perfil, Usuario
-from app.schemas.auth import RefreshTokenEntrada, Token, TrocaSenha, UsuarioCriar, UsuarioLer
-from app.security import UsuarioAtual, criar_token, exigir_perfil, gerar_hash, senha_confere
+from app.models import Convite, Perfil, ResponsavelEstudante, Usuario
+from app.schemas.auth import RefreshTokenEntrada, Token, TrocaSenha, UsuarioLer
+from app.schemas.usuarios import ConviteAceitar
+from app.security import UsuarioAtual, criar_token, gerar_hash, hash_refresh_token, senha_confere
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 Db = Annotated[Session, Depends(get_db)]
@@ -27,6 +28,8 @@ limite_login_ip = LimiteEmMemoria(maximo=MAX_FALHAS_POR_IP, janela_s=JANELA_LOGI
 limite_login_conta = LimiteEmMemoria(maximo=MAX_FALHAS_POR_CONTA, janela_s=JANELA_LOGIN_S)
 # Troca de senha por quem já está logado: a senha atual também não pode ser adivinhada.
 limite_troca_senha = LimiteEmMemoria(maximo=5, janela_s=JANELA_LOGIN_S)
+# Aceite de convite: o código é aleatório, mas o limite barra quem tenta adivinhar.
+limite_convite = LimiteEmMemoria(maximo=10, janela_s=JANELA_LOGIN_S)
 
 
 def _muitas_tentativas() -> HTTPException:
@@ -135,33 +138,61 @@ def me(usuario: UsuarioAtual) -> UsuarioLer:
     return UsuarioLer.model_validate(usuario)
 
 
-@router.post("/usuarios", status_code=status.HTTP_201_CREATED)
-def criar_usuario(
-    dados: UsuarioCriar,
-    request: Request,
-    db: Db,
-    admin: Annotated[Usuario, exigir_perfil(Perfil.ADMIN)],
-) -> UsuarioLer:
+@router.post("/convites/{codigo}/aceitar", status_code=status.HTTP_201_CREATED)
+def aceitar_convite(codigo: str, dados: ConviteAceitar, request: Request, db: Db) -> Token:
+    """O responsável define a senha e entra. O convite já traz o vínculo com o estudante."""
+    ip = auditoria.ip_do_cliente(request) or ""
+    if limite_convite.bloqueado(ip):
+        raise _muitas_tentativas()
+    invalido = HTTPException(status.HTTP_404_NOT_FOUND, "Convite inválido ou expirado")
+    if len(codigo) > 100 or "\x00" in codigo:
+        limite_convite.registrar_falha(ip)
+        raise invalido
+    # O UPDATE condicional é o que garante o uso único, mesmo com duas requisições em paralelo.
+    convite = db.scalar(
+        update(Convite)
+        .where(
+            Convite.codigo_hash == hash_refresh_token(codigo),
+            Convite.usado_em.is_(None),
+            Convite.expira_em > func.now(),
+        )
+        .values(usado_em=func.now())
+        .returning(Convite)
+    )
+    if convite is None:
+        limite_convite.registrar_falha(ip)
+        raise invalido
     usuario = Usuario(
-        nome=dados.nome,
-        email=dados.email.lower(),
+        nome=convite.nome,
+        email=convite.email,
         senha_hash=gerar_hash(dados.senha),
-        perfil=dados.perfil,
+        perfil=Perfil.RESPONSAVEL,
     )
     db.add(usuario)
     try:
         db.flush()
     except IntegrityError as erro:
+        # Alguém criou uma conta com este e-mail depois do convite.
         db.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, "E-mail já cadastrado") from erro
+    db.add(
+        ResponsavelEstudante(
+            responsavel_id=usuario.id,
+            estudante_id=convite.estudante_id,
+            parentesco=convite.parentesco,
+            principal=convite.principal,
+            criado_por_id=convite.criado_por_id,
+        )
+    )
+    token = _emitir(db, usuario, request)
     auditoria.registrar(
         db,
-        "usuario.criar",
+        "convite.aceitar",
         request=request,
-        usuario=admin,
-        recurso="usuario",
-        recurso_id=usuario.id,
-        perfil=usuario.perfil.value,
+        usuario=usuario,
+        recurso="estudante",
+        recurso_id=convite.estudante_id,
+        convite_id=convite.id,
     )
     db.commit()
-    return UsuarioLer.model_validate(usuario)
+    return token

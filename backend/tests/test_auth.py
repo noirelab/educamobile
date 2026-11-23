@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from app.config import settings
 from app.models import Perfil
-from app.schemas.auth import UsuarioCriar
+from app.schemas.usuarios import UsuarioCriar
 from app.security import ALGORITMO, criar_token
 
 
@@ -85,16 +85,16 @@ NOVO = {
 
 def test_admin_cria_usuario_e_email_duplicado_conflita(client, cabecalhos):
     h = cabecalhos(Perfil.ADMIN)
-    resposta = client.post("/auth/usuarios", json=NOVO, headers=h)
+    resposta = client.post("/usuarios", json=NOVO, headers=h)
     assert resposta.status_code == 201
     assert resposta.json()["email"] == "ana@exemplo.com"
     assert _token(client, "ANA@exemplo.com".lower(), NOVO["senha"]).status_code == 200
-    assert client.post("/auth/usuarios", json=NOVO, headers=h).status_code == 409
+    assert client.post("/usuarios", json=NOVO, headers=h).status_code == 409
 
 
 @pytest.mark.parametrize("perfil", [Perfil.GESTOR])
 def test_so_admin_cria_usuario(client, cabecalhos, perfil):
-    assert client.post("/auth/usuarios", json=NOVO, headers=cabecalhos(perfil)).status_code == 403
+    assert client.post("/usuarios", json=NOVO, headers=cabecalhos(perfil)).status_code == 403
 
 
 def test_senha_curta_rejeitada():

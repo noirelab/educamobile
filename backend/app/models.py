@@ -150,6 +150,26 @@ class ResponsavelEstudante(Base):
     consentimento_versao: Mapped[str | None]
 
 
+class Convite(Base):
+    """Convite de uso único para o responsável. Só o hash do código é guardado."""
+
+    __tablename__ = "convite"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    codigo_hash: Mapped[str] = mapped_column(unique=True)
+    nome: Mapped[str]
+    email: Mapped[str] = mapped_column(index=True)
+    estudante_id: Mapped[int] = mapped_column(
+        ForeignKey("estudante.id", ondelete="CASCADE"), index=True
+    )
+    parentesco: Mapped[str]
+    principal: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    criado_por_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id", ondelete="SET NULL"))
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    usado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Auditoria(Base):
     """Registro só de inclusão. Nunca guarda senha nem token."""
 

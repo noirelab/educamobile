@@ -53,7 +53,13 @@ def limites_zerados(monkeypatch) -> None:
     from app.limite import LimiteEmMemoria
     from app.routers import auth
 
-    for nome in ("limite_login", "limite_login_ip", "limite_login_conta", "limite_troca_senha"):
+    for nome in (
+        "limite_login",
+        "limite_login_ip",
+        "limite_login_conta",
+        "limite_troca_senha",
+        "limite_convite",
+    ):
         atual = getattr(auth, nome)
         monkeypatch.setattr(auth, nome, LimiteEmMemoria(atual.maximo, atual.janela_s))
 

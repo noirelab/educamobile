@@ -164,6 +164,7 @@ def test_validade_do_token_nao_passa_de_uma_hora():
 _ROTAS_DE_CONTA = {
     ("POST", "/auth/login"),
     ("POST", "/auth/refresh"),
+    ("POST", "/auth/convites/{codigo}/aceitar"),
     ("POST", "/auth/logout"),
     ("POST", "/auth/logout-todos"),
     ("PUT", "/auth/senha"),
@@ -212,7 +213,7 @@ def test_gestor_opera_o_transporte_mas_nao_cria_usuarios(client, cabecalhos):
     assert client.post("/rotas", json={"nome": "Linha G"}, headers=h).status_code == 201
     assert client.get("/estudantes", headers=h).status_code == 200
     novo = {"nome": "X", "email": "x@exemplo.com", "senha": SENHA, "perfil": "admin"}
-    assert client.post("/auth/usuarios", json=novo, headers=h).status_code == 403
+    assert client.post("/usuarios", json=novo, headers=h).status_code == 403
 
 
 # Vínculo responsável–estudante
@@ -486,7 +487,7 @@ def test_json_hostil_recebe_422_e_nao_500(client, corpo):
 
 def test_422_nao_repete_o_valor_enviado(client, cabecalhos):
     novo = {"nome": "Ana", "email": "ana@exemplo.com", "senha": "segredo1", "perfil": "admin"}
-    resposta = client.post("/auth/usuarios", json=novo, headers=cabecalhos(Perfil.ADMIN))
+    resposta = client.post("/usuarios", json=novo, headers=cabecalhos(Perfil.ADMIN))
     assert resposta.status_code == 422
     assert "segredo1" not in resposta.text
     assert all(set(item) == {"loc", "msg", "type"} for item in resposta.json()["detail"])

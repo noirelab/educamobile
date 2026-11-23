@@ -16,7 +16,7 @@ O banco guarda só o HMAC do refresh token, nunca o token.
 | `POST /auth/logout-todos` | Encerra todas as sessões e invalida na hora todos os tokens de acesso. |
 | `PUT /auth/senha` | Pede a senha atual; troca a senha e encerra todas as sessões. Cinco erros seguidos bloqueiam por 15 minutos. |
 
-O primeiro administrador é criado por `python -m app.criar_admin`. Os demais, por `POST /auth/usuarios`, só para administradores. Senhas são guardadas com Argon2.
+O primeiro administrador é criado por `python -m app.criar_admin`. Os demais entram por `POST /usuarios`: o administrador cria qualquer perfil menos responsável, e o gestor cria motorista e monitor. Senhas são guardadas com Argon2.
 
 ## Perfis
 
@@ -100,3 +100,7 @@ Com `AMBIENTE=producao`:
 - a API não sobe se `CORS_ORIGINS` tiver origem sem `https://`.
 
 Em qualquer ambiente, as respostas levam `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` e uma CSP restrita fora do Swagger.
+
+## Convite de responsável
+
+Responsável não tem cadastro aberto. O gestor chama `POST /convites` com nome, e-mail, estudante e parentesco; a resposta traz o `codigo` uma única vez (o banco guarda só o hash, válido por 72 h). O responsável abre o link e chama `POST /auth/convites/{codigo}/aceitar` com a senha que escolheu. O convite cria a conta e o vínculo com o estudante e devolve os tokens. Depois do primeiro uso ele deixa de valer, e tentativas com código errado são limitadas por IP. O consentimento (LGPD, art. 14) continua pendente até o responsável aceitá-lo.

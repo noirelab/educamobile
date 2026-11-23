@@ -30,7 +30,7 @@ def test_id_fora_do_limite_nao_vira_erro_500(client, cabecalhos, metodo, rota, c
         ("/paradas", {"nome": "a\x00b", "localizacao": {"latitude": 0, "longitude": 0}}),
         ("/rotas", {"nome": "a\x00b"}),
         (
-            "/auth/usuarios",
+            "/usuarios",
             {
                 "nome": "a\x00b",
                 "email": "n@exemplo.com",

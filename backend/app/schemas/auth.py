@@ -2,7 +2,6 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
-from app.cadastros import Texto
 from app.models import Perfil
 
 Senha = Field(min_length=10, max_length=128)
@@ -28,13 +27,6 @@ class TrocaSenha(BaseModel):
         if self.senha_atual == self.senha_nova:
             raise ValueError("A senha nova precisa ser diferente da atual")
         return self
-
-
-class UsuarioCriar(BaseModel):
-    nome: Texto
-    email: EmailStr
-    senha: str = Senha
-    perfil: Perfil
 
 
 class UsuarioLer(BaseModel):

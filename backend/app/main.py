@@ -12,6 +12,7 @@ from app.routers import (
     paradas,
     responsaveis,
     rotas,
+    usuarios,
 )
 
 _CAMINHOS_DOCS = ("/docs", "/redoc", "/openapi.json")
@@ -149,6 +150,7 @@ def criar_app(config: Settings = settings) -> FastAPI:
         paradas,
         rotas,
         responsaveis,
+        usuarios,
     ):
         app.include_router(modulo.router)
 
