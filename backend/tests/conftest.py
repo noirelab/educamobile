@@ -25,7 +25,7 @@ settings.database_url = _url_base.set(database=_nome_banco).render_as_string(hid
 from app import db as app_db  # noqa: E402
 from app.geo import Coordenadas, para_ponto  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Escola, Estudante, Perfil, Turno, Usuario  # noqa: E402
+from app.models import Escola, Estudante, Perfil, Rota, Sentido, Turno, Usuario  # noqa: E402
 from app.security import criar_token, gerar_hash  # noqa: E402
 
 
@@ -45,6 +45,43 @@ def estudante_de_teste(db: Session, nome: str = "Ana", **campos) -> Estudante:
     db.add(estudante)
     db.flush()
     return estudante
+
+
+def escola_de_teste(
+    db: Session,
+    nome: str = "Escola",
+    latitude: float = -25.4,
+    longitude: float = -49.2,
+    raio_cerca_m: int = 10_000_000,
+) -> Escola:
+    """Escola com cerca enorme por padrão: testes de geometria não esbarram na regra da escola."""
+    escola = Escola(
+        nome=nome,
+        localizacao=para_ponto(Coordenadas(latitude=latitude, longitude=longitude)),
+        raio_cerca_m=raio_cerca_m,
+    )
+    db.add(escola)
+    db.flush()
+    return escola
+
+
+def rota_de_teste(db: Session, nome: str = "Linha 1", **campos) -> Rota:
+    """Rota válida no banco; cria uma escola própria quando `escola_id` não é informado."""
+    if "escola_id" not in campos:
+        campos["escola_id"] = escola_de_teste(db, f"Escola da {nome}").id
+    campos.setdefault("turno", Turno.MANHA)
+    campos.setdefault("sentido", Sentido.IDA)
+    rota = Rota(nome=nome, **campos)
+    db.add(rota)
+    db.flush()
+    return rota
+
+
+def corpo_de_rota(db: Session, nome: str = "Linha 1", **campos) -> dict:
+    """Corpo válido de POST /rotas, com uma escola criada no banco."""
+    if "escola_id" not in campos:
+        campos["escola_id"] = escola_de_teste(db, f"Escola da {nome}").id
+    return {"nome": nome, "turno": "manha", "sentido": "ida", **campos}
 
 
 BACKEND = Path(__file__).resolve().parent.parent

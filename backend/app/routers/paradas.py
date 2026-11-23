@@ -44,13 +44,6 @@ def _buscar(db: Session, parada_id: int) -> Parada:
     return parada
 
 
-def _buscar_estudante(db: Session, estudante_id: int) -> Estudante:
-    estudante = db.get(Estudante, estudante_id)
-    if estudante is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Estudante não encontrado")
-    return estudante
-
-
 @router.get("")
 def listar_paradas(
     db: Db,
@@ -136,27 +129,3 @@ def listar_estudantes(parada_id: IdRota, db: Db, _: UsuarioInterno) -> list[Estu
     _buscar(db, parada_id)
     consulta = select(Estudante).where(Estudante.parada_id == parada_id).order_by(Estudante.id)
     return [EstudanteDaParada.model_validate(e) for e in db.scalars(consulta)]
-
-
-@router.put(
-    "/{parada_id}/estudantes/{estudante_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[PODE_ESCREVER],
-)
-def associar_estudante(parada_id: IdRota, estudante_id: IdRota, db: Db) -> None:
-    _buscar(db, parada_id)
-    _buscar_estudante(db, estudante_id).parada_id = parada_id
-    db.commit()
-
-
-@router.delete(
-    "/{parada_id}/estudantes/{estudante_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[PODE_ESCREVER],
-)
-def desassociar_estudante(parada_id: IdRota, estudante_id: IdRota, db: Db) -> None:
-    estudante = _buscar_estudante(db, estudante_id)
-    if estudante.parada_id != parada_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Estudante não associado a esta parada")
-    estudante.parada_id = None
-    db.commit()

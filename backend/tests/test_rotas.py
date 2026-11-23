@@ -2,6 +2,7 @@ import pytest
 
 from app.geo import Coordenadas, para_ponto
 from app.models import Parada, Perfil
+from tests.conftest import corpo_de_rota
 
 # Em WGS 84, um grau de latitude a partir do equador mede 110574,39 m.
 UM_GRAU_LATITUDE_M = 110_574.39
@@ -16,16 +17,17 @@ def _parada(db, latitude, longitude=0.0, nome="P"):
     return parada
 
 
-def _rota(client, h, nome="Linha 1"):
-    resposta = client.post("/rotas", json={"nome": nome}, headers=h)
+def _rota(client, db, h, nome="Linha 1", **extra):
+    corpo = {**corpo_de_rota(db, nome), **extra}
+    resposta = client.post("/rotas", json=corpo, headers=h)
     assert resposta.status_code == 201
     return resposta.json()
 
 
 @pytest.mark.parametrize("perfil", [Perfil.ADMIN, Perfil.GESTOR])
-def test_crud_de_rota(client, cabecalhos, perfil):
+def test_crud_de_rota(client, db, cabecalhos, perfil):
     h = cabecalhos(perfil)
-    rota = _rota(client, h)
+    rota = _rota(client, db, h)
     assert rota["paradas"] == []
     assert rota["trajeto"] is None
     assert rota["distancia_m"] is None
@@ -39,14 +41,16 @@ def test_crud_de_rota(client, cabecalhos, perfil):
     assert client.get(url, headers=h).status_code == 404
 
 
-def test_nome_repetido_da_409(client, cabecalhos):
+def test_nome_repetido_da_409(client, db, cabecalhos):
     h = cabecalhos()
-    _rota(client, h, "Igual")
-    assert client.post("/rotas", json={"nome": "Igual"}, headers=h).status_code == 409
+    _rota(client, db, h, "Igual")
+    repetida = corpo_de_rota(db, "Igual")
+    assert client.post("/rotas", json=repetida, headers=h).status_code == 409
 
 
-def test_nome_vazio_da_422(client, cabecalhos):
-    assert client.post("/rotas", json={"nome": " "}, headers=cabecalhos()).status_code == 422
+def test_nome_vazio_da_422(client, db, cabecalhos):
+    corpo = {**corpo_de_rota(db), "nome": " "}
+    assert client.post("/rotas", json=corpo, headers=cabecalhos()).status_code == 422
 
 
 def test_exige_token(client):
@@ -58,7 +62,7 @@ def test_exige_token(client):
 def test_sequencia_define_ordem_trajeto_e_distancia(client, db, cabecalhos):
     h = cabecalhos(Perfil.GESTOR)
     a, b, c = _parada(db, 0.0, nome="A"), _parada(db, 1.0, nome="B"), _parada(db, 2.0, nome="C")
-    rota = _rota(client, h)
+    rota = _rota(client, db, h)
     url = f"/rotas/{rota['id']}/paradas"
 
     resposta = client.put(url, json={"parada_ids": [b.id, a.id, c.id]}, headers=h)
@@ -83,7 +87,7 @@ def test_sequencia_define_ordem_trajeto_e_distancia(client, db, cabecalhos):
 def test_menos_de_duas_paradas_zera_geometria(client, db, cabecalhos, quantidade):
     h = cabecalhos()
     a, b = _parada(db, 0.0), _parada(db, 1.0)
-    rota = _rota(client, h)
+    rota = _rota(client, db, h)
     url = f"/rotas/{rota['id']}/paradas"
     assert client.put(url, json={"parada_ids": [a.id, b.id]}, headers=h).json()["trajeto"]
 
@@ -97,7 +101,7 @@ def test_paradas_repetidas_e_inexistentes_rejeitadas(client, db, cabecalhos):
     h = cabecalhos()
     a = _parada(db, 0.0)
     b = _parada(db, 1.0)
-    rota = _rota(client, h)
+    rota = _rota(client, db, h)
     url = f"/rotas/{rota['id']}/paradas"
     assert client.put(url, json={"parada_ids": [a.id, b.id]}, headers=h).status_code == 200
 
@@ -115,8 +119,8 @@ def test_sequencia_de_rota_inexistente_da_404(client, cabecalhos):
 def test_mover_parada_recalcula_rotas_que_a_usam(client, db, cabecalhos):
     h = cabecalhos()
     a, b, c = _parada(db, 0.0), _parada(db, 1.0), _parada(db, 5.0)
-    com_b = _rota(client, h, "Com B")
-    sem_b = _rota(client, h, "Sem B")
+    com_b = _rota(client, db, h, "Com B")
+    sem_b = _rota(client, db, h, "Sem B")
     url_com_b, url_sem_b = f"/rotas/{com_b['id']}", f"/rotas/{sem_b['id']}"
     client.put(f"{url_com_b}/paradas", json={"parada_ids": [a.id, b.id]}, headers=h)
     antes = client.put(f"{url_sem_b}/paradas", json={"parada_ids": [a.id, c.id]}, headers=h).json()
@@ -135,7 +139,7 @@ def test_mover_parada_recalcula_rotas_que_a_usam(client, db, cabecalhos):
 def test_renomear_parada_mantem_geometria_da_rota(client, db, cabecalhos):
     h = cabecalhos()
     a, b = _parada(db, 0.0), _parada(db, 1.0)
-    rota = _rota(client, h)
+    rota = _rota(client, db, h)
     url = f"/rotas/{rota['id']}"
     antes = client.put(f"{url}/paradas", json={"parada_ids": [a.id, b.id]}, headers=h).json()
     client.patch(f"/paradas/{a.id}", json={"nome": "Novo"}, headers=h)
@@ -147,7 +151,7 @@ def test_renomear_parada_mantem_geometria_da_rota(client, db, cabecalhos):
 def test_remover_rota_libera_paradas(client, db, cabecalhos):
     h = cabecalhos()
     a, b = _parada(db, 0.0), _parada(db, 1.0)
-    rota = _rota(client, h)
+    rota = _rota(client, db, h)
     client.put(f"/rotas/{rota['id']}/paradas", json={"parada_ids": [a.id, b.id]}, headers=h)
     assert client.delete(f"/paradas/{a.id}", headers=h).status_code == 409
     assert client.delete(f"/rotas/{rota['id']}", headers=h).status_code == 204

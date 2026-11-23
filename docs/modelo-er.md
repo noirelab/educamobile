@@ -11,12 +11,21 @@ erDiagram
     USUARIO ||--o{ RESPONSAVEL_ESTUDANTE : "responsavel por"
     ESTUDANTE ||--o{ RESPONSAVEL_ESTUDANTE : "tem responsavel"
     USUARIO ||--o{ AUDITORIA : "autor de"
+    ESCOLA ||--o{ ROTA : "destino de"
+    VEICULO ||--o{ ROTA : "padrao de"
+    USUARIO ||--o| MOTORISTA : "documentos de"
+    MOTORISTA ||--o{ ROTA : "padrao de"
+    ROTA ||--o{ INSCRICAO : recebe
+    ESTUDANTE ||--o{ INSCRICAO : embarca
+    PARADA ||--o{ INSCRICAO : "embarque em"
+    ESTUDANTE ||--o{ AUSENCIA : "avisada para"
 
     ESCOLA { int id PK
         string nome
         string codigo_inep UK
         string endereco
-        point localizacao }
+        point localizacao
+        int raio_cerca_m }
     ESCOLA ||--o{ ESTUDANTE : matricula
     ESTUDANTE { int id PK
         string nome
@@ -31,11 +40,45 @@ erDiagram
         point localizacao }
     ROTA { int id PK
         string nome UK
+        int escola_id FK
+        enum turno
+        enum sentido
+        int veiculo_id FK
+        int motorista_id FK
         linestring trajeto
         float distancia_m }
     ROTA_PARADA { int rota_id PK
         int parada_id PK
-        int ordem }
+        int ordem
+        time horario_previsto
+        int raio_cerca_m }
+    VEICULO { int id PK
+        string placa UK
+        int capacidade
+        string modelo
+        int ano
+        date vistoria_valida_ate
+        bool ativo }
+    MOTORISTA { int usuario_id PK
+        string cnh UK
+        string categoria_cnh
+        date cnh_valida_ate
+        date curso_transporte_escolar_ate }
+    INSCRICAO { int id PK
+        int estudante_id FK
+        int rota_id FK
+        int parada_id FK
+        enum turno
+        enum sentido
+        int[] dias_semana
+        date vigencia_inicio
+        date vigencia_fim
+        bool ativa }
+    AUSENCIA { int id PK
+        int estudante_id FK
+        date data
+        enum sentido
+        int criada_por_id FK }
     USUARIO { int id PK
         string nome
         string email UK
@@ -77,4 +120,8 @@ erDiagram
 - **Dados pessoais mínimos.** Os estudantes são menores de idade: não há CPF nem endereço ou localização da casa (a parada basta), e o responsável é um usuário vinculado, não um nome em texto.
 - **Foto fora do JSON.** O arquivo é reencodado (sem EXIF/GPS), guardado com nome aleatório e servido por URL assinada que vale 5 minutos. Só o gestor envia.
 - **Observações de cuidado** (alergia, necessidade especial) saem só para administrador e gestor; a equipe da viagem passa a vê-las na etapa C.
+- **Planejado e realizado são tabelas diferentes.** `Rota` e `Inscricao` dizem o que deveria acontecer; as viagens do dia (etapa C) registram o que aconteceu.
+- **Inscrição única por turno e sentido.** Turno e sentido são copiados da rota para a inscrição só para um índice parcial único (`ativa`) impedir duas inscrições ativas iguais para a mesma criança.
+- **Ponta da rota é a escola.** Na ida a última parada, na volta a primeira, precisa estar dentro do raio da cerca da escola.
+- **Habilitação do motorista** (`app/habilitacao.py`): conta ativa, CNH em dia, categoria D ou E e curso de transporte escolar em dia. A viagem só começa se a regra passar.
 - **Removidos na etapa A:** polos, turmas, professores, matrículas, transferências e frequência, e os perfis `diretor` e `coordenador`.

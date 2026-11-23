@@ -11,10 +11,9 @@ from app.geo import Coordenadas, para_ponto
 from app.models import (
     SRID,
     Parada,
-    Rota,
     RotaParada,
 )
-from tests.conftest import estudante_de_teste
+from tests.conftest import estudante_de_teste, rota_de_teste
 
 QUADRADO = "MULTIPOLYGON(((-49.3 -25.5,-49.2 -25.5,-49.2 -25.4,-49.3 -25.4,-49.3 -25.5)))"
 
@@ -36,8 +35,8 @@ def test_remover_parada_solta_estudante_mas_nao_rota(db):
     estudante = estudante_de_teste(db)
     livre = Parada(nome="Livre", localizacao=_ponto(-25.4, -49.2))
     usada = Parada(nome="Usada", localizacao=_ponto(-25.5, -49.3))
-    rota = Rota(nome="R1")
-    db.add_all([livre, usada, rota])
+    rota = rota_de_teste(db, "R1")
+    db.add_all([livre, usada])
     db.flush()
     estudante.parada_id = livre.id
     db.add(RotaParada(rota_id=rota.id, parada_id=usada.id, ordem=1))

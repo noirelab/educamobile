@@ -10,10 +10,13 @@ from app.routers import (
     escolas,
     estudantes,
     fotos,
+    inscricoes,
+    motoristas,
     paradas,
     responsaveis,
     rotas,
     usuarios,
+    veiculos,
 )
 
 _CAMINHOS_DOCS = ("/docs", "/redoc", "/openapi.json")
@@ -149,6 +152,9 @@ def criar_app(config: Settings = settings) -> FastAPI:
         escolas,
         estudantes,
         fotos,
+        inscricoes,
+        motoristas,
+        veiculos,
         paradas,
         rotas,
         responsaveis,

@@ -1,16 +1,19 @@
 import enum
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     Enum,
     ForeignKey,
+    Index,
+    SmallInteger,
     UniqueConstraint,
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import INET, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, INET, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -36,6 +39,11 @@ class Turno(enum.StrEnum):
     INTEGRAL = "integral"
 
 
+class Sentido(enum.StrEnum):
+    IDA = "ida"
+    VOLTA = "volta"
+
+
 def _enum(tipo: type[enum.Enum], nome: str) -> Enum:
     return Enum(tipo, name=nome, values_callable=lambda e: [m.value for m in e])
 
@@ -48,6 +56,8 @@ class Escola(Base):
     codigo_inep: Mapped[str | None] = mapped_column(unique=True)
     endereco: Mapped[str | None]
     localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=False)
+    # Raio da cerca virtual da escola: chegar dentro dele conta como chegada.
+    raio_cerca_m: Mapped[int] = mapped_column(default=150, server_default=text("150"))
 
 
 class Parada(Base):
@@ -77,11 +87,49 @@ class Estudante(Base):
     foto_arquivo: Mapped[str | None]
 
 
+class Veiculo(Base):
+    __tablename__ = "veiculo"
+    __table_args__ = (
+        CheckConstraint("capacidade > 0", name="ck_veiculo_capacidade"),
+        CheckConstraint("ano BETWEEN 1980 AND 2100", name="ck_veiculo_ano"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    placa: Mapped[str] = mapped_column(unique=True)
+    capacidade: Mapped[int]
+    modelo: Mapped[str]
+    ano: Mapped[int]
+    vistoria_valida_ate: Mapped[date]
+    ativo: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
+
+
+class Motorista(Base):
+    """Cadastro do motorista, ligado à conta de usuário com perfil motorista."""
+
+    __tablename__ = "motorista"
+
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuario.id", ondelete="CASCADE"), primary_key=True
+    )
+    cnh: Mapped[str] = mapped_column(unique=True)
+    categoria_cnh: Mapped[str]
+    cnh_valida_ate: Mapped[date]
+    curso_transporte_escolar_ate: Mapped[date]
+
+
 class Rota(Base):
     __tablename__ = "rota"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(unique=True)
+    escola_id: Mapped[int] = mapped_column(ForeignKey("escola.id", ondelete="RESTRICT"), index=True)
+    turno: Mapped[Turno] = mapped_column(_enum(Turno, "turno"))
+    sentido: Mapped[Sentido] = mapped_column(_enum(Sentido, "sentido"))
+    # Veículo e motorista padrão; a viagem do dia pode trocá-los.
+    veiculo_id: Mapped[int | None] = mapped_column(ForeignKey("veiculo.id", ondelete="SET NULL"))
+    motorista_id: Mapped[int | None] = mapped_column(
+        ForeignKey("motorista.usuario_id", ondelete="SET NULL")
+    )
     # Calculados a partir das paradas, em ordem. Nulos com menos de duas paradas.
     trajeto = mapped_column(Geometry("LINESTRING", srid=SRID), nullable=True)
     distancia_m: Mapped[float | None]
@@ -102,8 +150,63 @@ class RotaParada(Base):
         ForeignKey("parada.id", ondelete="RESTRICT"), primary_key=True
     )
     ordem: Mapped[int]
+    horario_previsto: Mapped[time | None]
+    # Raio da cerca virtual da parada, em metros.
+    raio_cerca_m: Mapped[int] = mapped_column(default=50, server_default=text("50"))
 
     rota: Mapped[Rota] = relationship(back_populates="paradas")
+
+
+class Inscricao(Base):
+    """Onde a criança deve embarcar: rota, parada, dias da semana e vigência."""
+
+    __tablename__ = "inscricao"
+    __table_args__ = (
+        CheckConstraint(
+            "vigencia_fim IS NULL OR vigencia_fim >= vigencia_inicio", name="ck_insc_periodo"
+        ),
+        CheckConstraint("cardinality(dias_semana) BETWEEN 1 AND 7", name="ck_insc_dias"),
+        # Turno e sentido são copiados da rota para o banco impedir duas inscrições ativas iguais.
+        Index(
+            "uq_inscricao_ativa_por_turno_e_sentido",
+            "estudante_id",
+            "turno",
+            "sentido",
+            unique=True,
+            postgresql_where=text("ativa"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    estudante_id: Mapped[int] = mapped_column(
+        ForeignKey("estudante.id", ondelete="CASCADE"), index=True
+    )
+    rota_id: Mapped[int] = mapped_column(ForeignKey("rota.id", ondelete="CASCADE"), index=True)
+    parada_id: Mapped[int] = mapped_column(ForeignKey("parada.id", ondelete="RESTRICT"))
+    turno: Mapped[Turno] = mapped_column(_enum(Turno, "turno"))
+    sentido: Mapped[Sentido] = mapped_column(_enum(Sentido, "sentido"))
+    # 0 = segunda ... 6 = domingo (date.weekday()).
+    dias_semana: Mapped[list[int]] = mapped_column(ARRAY(SmallInteger))
+    vigencia_inicio: Mapped[date]
+    vigencia_fim: Mapped[date | None]
+    ativa: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
+
+
+class Ausencia(Base):
+    """Aviso do responsável de que a criança não vai embarcar naquele dia."""
+
+    __tablename__ = "ausencia"
+    __table_args__ = (UniqueConstraint("estudante_id", "data", "sentido"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    estudante_id: Mapped[int] = mapped_column(
+        ForeignKey("estudante.id", ondelete="CASCADE"), index=True
+    )
+    data: Mapped[date] = mapped_column(index=True)
+    # Nulo vale para ida e volta.
+    sentido: Mapped[Sentido | None] = mapped_column(_enum(Sentido, "sentido"))
+    criada_por_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id", ondelete="SET NULL"))
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Usuario(Base):

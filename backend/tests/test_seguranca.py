@@ -15,7 +15,7 @@ from app.geo import Coordenadas, para_ponto
 from app.main import app, criar_app
 from app.models import Auditoria, Parada, Perfil, Sessao
 from app.security import ALGORITMO, criar_token
-from tests.conftest import estudante_de_teste
+from tests.conftest import corpo_de_rota, estudante_de_teste
 
 SENHA = "senha-forte-1"
 SEGREDO_FORTE = "Gq7-pX2_vL9wRt4ZkM8nB3cYh6JdF1sA"
@@ -187,7 +187,13 @@ def test_perfis_externos_barrados_em_todas_as_rotas_de_cadastro(client, cabecalh
     h = cabecalhos(perfil)
     liberadas = set(_ROTAS_DE_CONTA)
     if perfil == Perfil.RESPONSAVEL:
-        liberadas |= {(m, p) for m, p in _rotas_da_api() if p.startswith("/responsavel/")}
+        liberadas |= {
+            (m, p)
+            for m, p in _rotas_da_api()
+            if p.startswith("/responsavel/") or p.startswith("/ausencias")
+        }
+    if perfil == Perfil.MOTORISTA:
+        liberadas |= {(m, p) for m, p in _rotas_da_api() if p.startswith("/motorista/")}
 
     verificadas = 0
     for metodo, caminho in _rotas_da_api():
@@ -208,11 +214,11 @@ def test_rotas_novas_entram_na_varredura():
     assert "/estudantes/{estudante_id}/responsaveis" in caminhos
 
 
-def test_gestor_opera_o_transporte_mas_nao_cria_usuarios(client, cabecalhos):
+def test_gestor_opera_o_transporte_mas_nao_cria_usuarios(client, db, cabecalhos):
     h = cabecalhos(Perfil.GESTOR)
     parada = {"nome": "Parada", "localizacao": {"latitude": -25.4, "longitude": -49.2}}
     assert client.post("/paradas", json=parada, headers=h).status_code == 201
-    assert client.post("/rotas", json={"nome": "Linha G"}, headers=h).status_code == 201
+    assert client.post("/rotas", json=corpo_de_rota(db, "Linha G"), headers=h).status_code == 201
     assert client.get("/estudantes", headers=h).status_code == 200
     novo = {"nome": "X", "email": "x@exemplo.com", "senha": SENHA, "perfil": "admin"}
     assert client.post("/usuarios", json=novo, headers=h).status_code == 403

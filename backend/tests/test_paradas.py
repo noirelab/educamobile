@@ -4,10 +4,9 @@ from app.geo import Coordenadas, para_ponto
 from app.models import (
     Parada,
     Perfil,
-    Rota,
     RotaParada,
 )
-from tests.conftest import estudante_de_teste
+from tests.conftest import estudante_de_teste, rota_de_teste
 
 ESCRITA = [Perfil.ADMIN, Perfil.GESTOR]
 LOCAL = {"latitude": -25.43, "longitude": -49.27}
@@ -71,31 +70,6 @@ def test_exige_token(client, db):
     assert client.post("/paradas", json={"nome": "P", "localizacao": LOCAL}).status_code == 401
 
 
-def test_associar_e_desassociar_estudante(client, db, cabecalhos):
-    h = cabecalhos(Perfil.GESTOR)
-    parada = _parada(db)
-    estudante = _estudante(db)
-    url = f"/paradas/{parada.id}/estudantes"
-
-    assert client.put(f"{url}/{estudante.id}", headers=h).status_code == 204
-    assert client.get(url, headers=h).json() == [{"id": estudante.id, "nome": "Ana"}]
-
-    outra = _parada(db, "Outra")
-    outra_url = f"/paradas/{outra.id}/estudantes/{estudante.id}"
-    assert client.delete(outra_url, headers=h).status_code == 404
-
-    assert client.delete(f"{url}/{estudante.id}", headers=h).status_code == 204
-    assert client.get(url, headers=h).json() == []
-
-
-def test_associar_inexistentes_da_404(client, db, cabecalhos):
-    h = cabecalhos()
-    parada = _parada(db)
-    estudante = _estudante(db)
-    assert client.put(f"/paradas/{parada.id}/estudantes/999999", headers=h).status_code == 404
-    assert client.put(f"/paradas/999999/estudantes/{estudante.id}", headers=h).status_code == 404
-
-
 def test_estudante_da_parada_nao_expoe_dados_pessoais(client, db, cabecalhos):
     parada = _parada(db)
     _estudante(db, "Ana", parada.id)
@@ -136,9 +110,7 @@ def test_proximas_invalida(client, cabecalhos, params):
 
 def test_remover_parada_em_rota_da_409(client, db, cabecalhos):
     parada = _parada(db)
-    rota = Rota(nome="R1")
-    db.add(rota)
-    db.flush()
+    rota = rota_de_teste(db, "R1")
     db.add(RotaParada(rota_id=rota.id, parada_id=parada.id, ordem=0))
     h = cabecalhos()
     # O rollback do conflito desfaria também os dados de teste ainda não confirmados.
