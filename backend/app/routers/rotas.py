@@ -16,7 +16,7 @@ from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/rotas", tags=["rotas"])
 Db = Annotated[Session, Depends(get_db)]
-PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR, Perfil.COORDENADOR)
+PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)
 
 _RECALCULAR = text(
     """

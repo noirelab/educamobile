@@ -22,7 +22,7 @@ def _rota(client, h, nome="Linha 1"):
     return resposta.json()
 
 
-@pytest.mark.parametrize("perfil", [Perfil.ADMIN, Perfil.COORDENADOR])
+@pytest.mark.parametrize("perfil", [Perfil.ADMIN, Perfil.GESTOR])
 def test_crud_de_rota(client, cabecalhos, perfil):
     h = cabecalhos(perfil)
     rota = _rota(client, h)
@@ -55,20 +55,8 @@ def test_exige_token(client):
     assert client.put("/rotas/1/paradas", json={"parada_ids": []}).status_code == 401
 
 
-def test_diretor_le_mas_nao_escreve(client, cabecalhos):
-    rota = _rota(client, cabecalhos())
-    url = f"/rotas/{rota['id']}"
-    h = cabecalhos(Perfil.DIRETOR)
-    assert client.get(url, headers=h).status_code == 200
-    assert client.get("/rotas", headers=h).status_code == 200
-    assert client.post("/rotas", json={"nome": "R"}, headers=h).status_code == 403
-    assert client.patch(url, json={"nome": "R"}, headers=h).status_code == 403
-    assert client.put(f"{url}/paradas", json={"parada_ids": []}, headers=h).status_code == 403
-    assert client.delete(url, headers=h).status_code == 403
-
-
 def test_sequencia_define_ordem_trajeto_e_distancia(client, db, cabecalhos):
-    h = cabecalhos(Perfil.COORDENADOR)
+    h = cabecalhos(Perfil.GESTOR)
     a, b, c = _parada(db, 0.0, nome="A"), _parada(db, 1.0, nome="B"), _parada(db, 2.0, nome="C")
     rota = _rota(client, h)
     url = f"/rotas/{rota['id']}/paradas"

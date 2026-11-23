@@ -2,7 +2,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
-from app.cadastros import IdBanco, Texto
+from app.cadastros import Texto
 from app.models import Perfil
 
 Senha = Field(min_length=10, max_length=128)
@@ -35,15 +35,6 @@ class UsuarioCriar(BaseModel):
     email: EmailStr
     senha: str = Senha
     perfil: Perfil
-    escola_id: IdBanco | None = None
-
-    @model_validator(mode="after")
-    def diretor_tem_escola(self) -> Self:
-        if self.perfil == Perfil.DIRETOR and self.escola_id is None:
-            raise ValueError("Diretor precisa de escola_id")
-        if self.perfil != Perfil.DIRETOR and self.escola_id is not None:
-            raise ValueError("Só o diretor é ligado a uma escola")
-        return self
 
 
 class UsuarioLer(BaseModel):
@@ -53,5 +44,4 @@ class UsuarioLer(BaseModel):
     nome: str
     email: EmailStr
     perfil: Perfil
-    escola_id: int | None
     ativo: bool

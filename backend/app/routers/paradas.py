@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from geoalchemy2 import Geography
-from sqlalchemy import cast, exists, func, select
+from sqlalchemy import cast, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -12,13 +12,10 @@ from app.geo import de_ponto, para_ponto
 from app.models import (
     SRID,
     Estudante,
-    Matricula,
     Parada,
     Perfil,
     Rota,
     RotaParada,
-    StatusMatricula,
-    Turma,
 )
 from app.routers.rotas import recalcular_trajeto
 from app.schemas.paradas import (
@@ -32,7 +29,7 @@ from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/paradas", tags=["paradas"])
 Db = Annotated[Session, Depends(get_db)]
-PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR, Perfil.COORDENADOR)
+PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)
 RAIO_MAXIMO_M = 50_000
 
 
@@ -135,20 +132,9 @@ def remover_parada(parada_id: IdRota, db: Db) -> None:
 
 
 @router.get("/{parada_id}/estudantes")
-def listar_estudantes(
-    parada_id: IdRota, db: Db, usuario: UsuarioInterno
-) -> list[EstudanteDaParada]:
+def listar_estudantes(parada_id: IdRota, db: Db, _: UsuarioInterno) -> list[EstudanteDaParada]:
     _buscar(db, parada_id)
     consulta = select(Estudante).where(Estudante.parada_id == parada_id).order_by(Estudante.id)
-    if usuario.perfil == Perfil.DIRETOR:
-        consulta = consulta.where(
-            exists().where(
-                Matricula.estudante_id == Estudante.id,
-                Matricula.status == StatusMatricula.ATIVA,
-                Matricula.turma_id == Turma.id,
-                Turma.escola_id == usuario.escola_id,
-            )
-        )
     return [EstudanteDaParada.model_validate(e) for e in db.scalars(consulta)]
 
 

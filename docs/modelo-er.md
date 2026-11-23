@@ -1,55 +1,28 @@
 # Modelo de dados
 
-Definido em `backend/app/models.py`. Geometrias usam SRID 4326 (WGS 84), com índice GiST.
+Definido em `backend/app/models.py`. Geometrias usam SRID 4326 (WGS 84), com índice GiST. Este é o estado depois da etapa A da reformulação (ver `docs/reformulacao/README.md`); as tabelas de viagem, embarque e posição entram nas etapas B a D.
 
 ```mermaid
 erDiagram
-    POLO ||--o{ ESCOLA : agrupa
-    ESCOLA ||--o{ TURMA : oferece
-    ESCOLA ||--o{ PROFESSOR : lota
-    ESCOLA ||--o{ USUARIO : "diretor de"
-    TURMA ||--o{ MATRICULA : recebe
-    ESTUDANTE ||--o{ MATRICULA : possui
-    MATRICULA ||--o{ FREQUENCIA : registra
     PARADA ||--o{ ESTUDANTE : atende
     ROTA ||--o{ ROTA_PARADA : percorre
     PARADA ||--o{ ROTA_PARADA : compoe
+    USUARIO ||--o{ SESSAO : "tem aparelhos"
+    USUARIO ||--o{ RESPONSAVEL_ESTUDANTE : "responsavel por"
+    ESTUDANTE ||--o{ RESPONSAVEL_ESTUDANTE : "tem responsavel"
+    USUARIO ||--o{ AUDITORIA : "autor de"
 
-    POLO { int id PK
-        string nome UK
-        multipolygon area }
     ESCOLA { int id PK
         string nome
         string codigo_inep UK
         string endereco
-        int polo_id FK
         point localizacao }
-    TURMA { int id PK
-        int escola_id FK
-        string nome
-        string serie
-        enum turno
-        int ano_letivo }
     ESTUDANTE { int id PK
         string nome
         date data_nascimento
         string nome_responsavel
         point localizacao
         int parada_id FK }
-    PROFESSOR { int id PK
-        string nome
-        string email UK
-        int escola_id FK }
-    MATRICULA { int id PK
-        int estudante_id FK
-        int turma_id FK
-        date data_inicio
-        date data_fim
-        enum status }
-    FREQUENCIA { int id PK
-        int matricula_id FK
-        date data
-        bool presente }
     PARADA { int id PK
         string nome
         point localizacao }
@@ -65,16 +38,38 @@ erDiagram
         string email UK
         string senha_hash
         enum perfil
-        int escola_id FK
-        bool ativo }
+        bool ativo
+        timestamptz sessoes_validas_desde }
+    SESSAO { int id PK
+        int usuario_id FK
+        string token_hash UK
+        timestamptz expira_em
+        timestamptz revogada_em
+        int substituida_por_id FK }
+    RESPONSAVEL_ESTUDANTE { int responsavel_id PK
+        int estudante_id PK
+        string parentesco
+        bool principal
+        timestamptz consentimento_em
+        string consentimento_versao }
+    AUDITORIA { int id PK
+        timestamptz em
+        int usuario_id FK
+        string acao
+        string recurso
+        jsonb detalhes }
 ```
+
+## Perfis
+
+`admin`, `gestor`, `motorista`, `monitor` e `responsavel`. Só `admin` e `gestor` são internos (`PERFIS_INTERNOS`) e enxergam os cadastros. Os demais acessam apenas o que um vínculo libera (filho, viagem escalada).
 
 ## Decisões
 
-- **Matrícula guarda o histórico.** Transferir encerra o vínculo atual (`transferida`) e cria outro. Um índice único parcial impede dois vínculos ativos para o mesmo estudante.
-- **Frequência é por matrícula e por dia,** com um registro único para cada par. Assim a falta fica ligada à turma e à escola em que o estudante estava naquele dia.
-- **Polo tem área opcional.** O vínculo da escola é por `polo_id`; a área permite consultas espaciais como `ST_Contains`.
 - **Distâncias em metros** são calculadas convertendo para `geography`, porque a geometria em SRID 4326 mede em graus.
-- **Trajeto da rota** é a linha reta entre as paradas, na ordem cadastrada. Não segue as ruas: isso exigiria um serviço de roteamento, fora do escopo atual.
-- **Dados pessoais mínimos.** Os estudantes são, em geral, menores de idade, por isso não há CPF, e a localização da residência é opcional.
-- **Fora do escopo:** merenda, estoque e US02, conforme o quadro.
+- **Trajeto da rota** é a linha reta entre as paradas, na ordem cadastrada. Não segue as ruas: isso exigiria um serviço de roteamento.
+- **Acesso por vínculo.** O perfil diz o que a pessoa é; o vínculo diz quais crianças ela pode ver. O responsável só vê o filho depois de registrar o consentimento (LGPD, art. 14).
+- **Sessões por aparelho.** O refresh token é guardado só como hash e troca a cada uso; reuso de um token já trocado revoga todas as sessões da pessoa.
+- **Auditoria só de inclusão,** sem senha nem token.
+- **Dados pessoais mínimos.** Os estudantes são menores de idade: não há CPF, e a localização da residência é opcional.
+- **Removidos na etapa A:** polos, turmas, professores, matrículas, transferências e frequência, e os perfis `diretor` e `coordenador`.

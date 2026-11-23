@@ -96,15 +96,12 @@ def criar_escola(db: Session) -> Callable[..., Escola]:
 
 @pytest.fixture
 def criar_usuario(db: Session) -> Callable[..., Usuario]:
-    def criar(
-        perfil: Perfil = Perfil.ADMIN, escola_id: int | None = None, senha: str = "senha-forte-1"
-    ):
+    def criar(perfil: Perfil = Perfil.ADMIN, senha: str = "senha-forte-1"):
         usuario = Usuario(
             nome=f"Usuário {perfil.value}",
             email=f"{uuid.uuid4().hex[:10]}@exemplo.com",
             senha_hash=gerar_hash(senha),
             perfil=perfil,
-            escola_id=escola_id,
         )
         db.add(usuario)
         db.flush()
@@ -114,13 +111,11 @@ def criar_usuario(db: Session) -> Callable[..., Usuario]:
 
 
 @pytest.fixture
-def cabecalhos(criar_usuario, criar_escola) -> Callable[..., dict[str, str]]:
-    """Cabeçalho Authorization de um usuário do perfil pedido. Diretor sem escola ganha uma."""
+def cabecalhos(criar_usuario) -> Callable[..., dict[str, str]]:
+    """Cabeçalho Authorization de um usuário do perfil pedido."""
 
-    def criar(perfil: Perfil = Perfil.ADMIN, escola_id: int | None = None) -> dict[str, str]:
-        if perfil == Perfil.DIRETOR and escola_id is None:
-            escola_id = criar_escola().id
-        usuario = criar_usuario(perfil, escola_id)
+    def criar(perfil: Perfil = Perfil.ADMIN) -> dict[str, str]:
+        usuario = criar_usuario(perfil)
         return {"Authorization": f"Bearer {criar_token(usuario)}"}
 
     return criar

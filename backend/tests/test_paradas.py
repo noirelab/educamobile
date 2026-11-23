@@ -5,17 +5,13 @@ import pytest
 from app.geo import Coordenadas, para_ponto
 from app.models import (
     Estudante,
-    Matricula,
     Parada,
     Perfil,
     Rota,
     RotaParada,
-    StatusMatricula,
-    Turma,
-    Turno,
 )
 
-ESCRITA = [Perfil.ADMIN, Perfil.COORDENADOR]
+ESCRITA = [Perfil.ADMIN, Perfil.GESTOR]
 LOCAL = {"latitude": -25.43, "longitude": -49.27}
 
 
@@ -33,27 +29,6 @@ def _estudante(db, nome="Ana", parada_id=None):
     db.add(estudante)
     db.flush()
     return estudante
-
-
-def _matricular(db, estudante, escola, status=StatusMatricula.ATIVA):
-    turma = Turma(
-        escola_id=escola.id,
-        nome=f"T{estudante.id}",
-        serie="6",
-        turno=Turno.MANHA,
-        ano_letivo=2026,
-    )
-    db.add(turma)
-    db.flush()
-    db.add(
-        Matricula(
-            estudante_id=estudante.id,
-            turma_id=turma.id,
-            data_inicio=date(2026, 2, 1),
-            status=status,
-        )
-    )
-    db.flush()
 
 
 @pytest.mark.parametrize("perfil", ESCRITA)
@@ -101,23 +76,8 @@ def test_exige_token(client, db):
     assert client.post("/paradas", json={"nome": "P", "localizacao": LOCAL}).status_code == 401
 
 
-def test_diretor_le_mas_nao_escreve(client, db, cabecalhos):
-    h = cabecalhos(Perfil.DIRETOR)
-    parada = _parada(db)
-    estudante = _estudante(db)
-    url = f"/paradas/{parada.id}"
-    assert client.get(url, headers=h).status_code == 200
-    assert client.get("/paradas", headers=h).status_code == 200
-    novo = {"nome": "P", "localizacao": LOCAL}
-    assert client.post("/paradas", json=novo, headers=h).status_code == 403
-    assert client.patch(url, json={"nome": "X"}, headers=h).status_code == 403
-    assert client.delete(url, headers=h).status_code == 403
-    assert client.put(f"{url}/estudantes/{estudante.id}", headers=h).status_code == 403
-    assert client.delete(f"{url}/estudantes/{estudante.id}", headers=h).status_code == 403
-
-
 def test_associar_e_desassociar_estudante(client, db, cabecalhos):
-    h = cabecalhos(Perfil.COORDENADOR)
+    h = cabecalhos(Perfil.GESTOR)
     parada = _parada(db)
     estudante = _estudante(db)
     url = f"/paradas/{parada.id}/estudantes"
@@ -141,28 +101,6 @@ def test_associar_inexistentes_da_404(client, db, cabecalhos):
     assert client.put(f"/paradas/999999/estudantes/{estudante.id}", headers=h).status_code == 404
 
 
-def test_diretor_so_ve_estudantes_com_matricula_ativa_na_sua_escola(
-    client, db, cabecalhos, criar_escola
-):
-    minha, outra = criar_escola("Minha"), criar_escola("Outra")
-    parada = _parada(db)
-    meu = _estudante(db, "Meu", parada.id)
-    alheio = _estudante(db, "Alheio", parada.id)
-    ex_aluno = _estudante(db, "Ex", parada.id)
-    sem_matricula = _estudante(db, "Sem", parada.id)
-    _matricular(db, meu, minha)
-    _matricular(db, alheio, outra)
-    _matricular(db, ex_aluno, minha, StatusMatricula.TRANSFERIDA)
-    url = f"/paradas/{parada.id}/estudantes"
-
-    diretor = client.get(url, headers=cabecalhos(Perfil.DIRETOR, minha.id))
-    assert [e["id"] for e in diretor.json()] == [meu.id]
-
-    for perfil in ESCRITA:
-        ids = [e["id"] for e in client.get(url, headers=cabecalhos(perfil)).json()]
-        assert ids == [meu.id, alheio.id, ex_aluno.id, sem_matricula.id]
-
-
 def test_estudante_da_parada_nao_expoe_dados_pessoais(client, db, cabecalhos):
     parada = _parada(db)
     _estudante(db, "Ana", parada.id)
@@ -178,7 +116,7 @@ def test_proximas_ordena_e_mede_em_metros(client, db, cabecalhos):
     resposta = client.get(
         "/paradas/proximas",
         params={"latitude": 0, "longitude": 0, "raio_m": 3000},
-        headers=cabecalhos(Perfil.DIRETOR),
+        headers=cabecalhos(Perfil.GESTOR),
     )
     assert resposta.status_code == 200
     corpo = resposta.json()

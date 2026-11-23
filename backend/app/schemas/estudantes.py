@@ -4,7 +4,6 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.cadastros import IdBanco, LocalizacaoLidaOpcional, Texto
 from app.geo import Coordenadas
-from app.schemas.matriculas import MatriculaInicial
 
 
 class EstudanteCriar(BaseModel):
@@ -20,12 +19,6 @@ class EstudanteCriar(BaseModel):
         if valor >= date.today():
             raise ValueError("A data de nascimento deve estar no passado")
         return valor
-
-
-class EstudanteCadastrar(EstudanteCriar):
-    """Na criação, a matrícula é opcional para o administrador e obrigatória para o diretor."""
-
-    matricula: MatriculaInicial | None = None
 
 
 class EstudanteLer(BaseModel):

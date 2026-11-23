@@ -1,3 +1,5 @@
+> **Obsoleto.** Este documento descreve o escopo anterior à reformulação para transporte escolar seguro (ver `docs/reformulacao/README.md`). Mantido só como histórico.
+
 # Tarefas: EducaMobile Smart City
 
 Extraído do [quadro no Trello](https://trello.com/b/nyeQ6Iqt/educamobile-smart-city-kanban) em 01/11/2026. O Trello continua sendo a fonte oficial do andamento.

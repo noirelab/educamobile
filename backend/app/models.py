@@ -3,11 +3,9 @@ from datetime import UTC, date, datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
-    CheckConstraint,
     DateTime,
     Enum,
     ForeignKey,
-    Index,
     UniqueConstraint,
     func,
     text,
@@ -26,38 +24,14 @@ class Perfil(enum.StrEnum):
     MOTORISTA = "motorista"
     MONITOR = "monitor"
     RESPONSAVEL = "responsavel"
-    # Perfis do escopo antigo, removidos na etapa A da reformulação.
-    DIRETOR = "diretor"
-    COORDENADOR = "coordenador"
 
 
 # Perfis da equipe da secretaria. Os demais só acessam o que for liberado por vínculo.
-PERFIS_INTERNOS = frozenset({Perfil.ADMIN, Perfil.GESTOR, Perfil.DIRETOR, Perfil.COORDENADOR})
-
-
-class Turno(enum.StrEnum):
-    MANHA = "manha"
-    TARDE = "tarde"
-    NOITE = "noite"
-    INTEGRAL = "integral"
-
-
-class StatusMatricula(enum.StrEnum):
-    ATIVA = "ativa"
-    TRANSFERIDA = "transferida"
-    ENCERRADA = "encerrada"
+PERFIS_INTERNOS = frozenset({Perfil.ADMIN, Perfil.GESTOR})
 
 
 def _enum(tipo: type[enum.Enum], nome: str) -> Enum:
     return Enum(tipo, name=nome, values_callable=lambda e: [m.value for m in e])
-
-
-class Polo(Base):
-    __tablename__ = "polo"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nome: Mapped[str] = mapped_column(unique=True)
-    area = mapped_column(Geometry("MULTIPOLYGON", srid=SRID), nullable=True)
 
 
 class Escola(Base):
@@ -67,20 +41,7 @@ class Escola(Base):
     nome: Mapped[str]
     codigo_inep: Mapped[str | None] = mapped_column(unique=True)
     endereco: Mapped[str | None]
-    polo_id: Mapped[int | None] = mapped_column(ForeignKey("polo.id", ondelete="SET NULL"))
     localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=False)
-
-
-class Turma(Base):
-    __tablename__ = "turma"
-    __table_args__ = (UniqueConstraint("escola_id", "nome", "ano_letivo"),)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    escola_id: Mapped[int] = mapped_column(ForeignKey("escola.id", ondelete="RESTRICT"), index=True)
-    nome: Mapped[str]
-    serie: Mapped[str]
-    turno: Mapped[Turno] = mapped_column(_enum(Turno, "turno"))
-    ano_letivo: Mapped[int]
 
 
 class Parada(Base):
@@ -102,54 +63,6 @@ class Estudante(Base):
     parada_id: Mapped[int | None] = mapped_column(
         ForeignKey("parada.id", ondelete="SET NULL"), index=True
     )
-
-
-class Professor(Base):
-    __tablename__ = "professor"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nome: Mapped[str]
-    email: Mapped[str] = mapped_column(unique=True)
-    escola_id: Mapped[int | None] = mapped_column(
-        ForeignKey("escola.id", ondelete="SET NULL"), index=True
-    )
-
-
-class Matricula(Base):
-    __tablename__ = "matricula"
-    __table_args__ = (
-        CheckConstraint("data_fim IS NULL OR data_fim >= data_inicio", name="ck_matricula_periodo"),
-        # O histórico fica na tabela; só pode haver um vínculo ativo por estudante.
-        Index(
-            "uq_matricula_ativa_por_estudante",
-            "estudante_id",
-            unique=True,
-            postgresql_where=text("status = 'ativa'"),
-        ),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    estudante_id: Mapped[int] = mapped_column(
-        ForeignKey("estudante.id", ondelete="RESTRICT"), index=True
-    )
-    turma_id: Mapped[int] = mapped_column(ForeignKey("turma.id", ondelete="RESTRICT"), index=True)
-    data_inicio: Mapped[date]
-    data_fim: Mapped[date | None]
-    status: Mapped[StatusMatricula] = mapped_column(
-        _enum(StatusMatricula, "status_matricula"), default=StatusMatricula.ATIVA
-    )
-
-
-class Frequencia(Base):
-    __tablename__ = "frequencia"
-    __table_args__ = (UniqueConstraint("matricula_id", "data"),)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    matricula_id: Mapped[int] = mapped_column(
-        ForeignKey("matricula.id", ondelete="CASCADE"), index=True
-    )
-    data: Mapped[date] = mapped_column(index=True)
-    presente: Mapped[bool]
 
 
 class Rota(Base):
@@ -183,18 +96,12 @@ class RotaParada(Base):
 
 class Usuario(Base):
     __tablename__ = "usuario"
-    __table_args__ = (
-        CheckConstraint(
-            "perfil <> 'diretor' OR escola_id IS NOT NULL", name="ck_usuario_diretor_tem_escola"
-        ),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True)
     senha_hash: Mapped[str]
     perfil: Mapped[Perfil] = mapped_column(_enum(Perfil, "perfil"))
-    escola_id: Mapped[int | None] = mapped_column(ForeignKey("escola.id", ondelete="RESTRICT"))
     ativo: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
     # Tokens de acesso emitidos antes deste instante deixam de valer (troca de senha, logout geral).
     sessoes_validas_desde: Mapped[datetime] = mapped_column(

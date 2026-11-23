@@ -111,12 +111,6 @@ UsuarioInterno = Annotated[Usuario, exigir_perfil(*PERFIS_INTERNOS)]
 Responsavel = Annotated[Usuario, exigir_perfil(Perfil.RESPONSAVEL)]
 
 
-def garantir_escola(usuario: Usuario, escola_id: int | None) -> None:
-    """Diretor só atua na própria escola; os demais perfis liberados pela rota passam direto."""
-    if usuario.perfil == Perfil.DIRETOR and usuario.escola_id != escola_id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do escopo da sua escola")
-
-
 def garantir_responsavel(
     db: Session, usuario: Usuario, estudante_id: int, exigir_consentimento: bool = True
 ) -> ResponsavelEstudante:

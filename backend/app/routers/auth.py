@@ -147,16 +147,13 @@ def criar_usuario(
         email=dados.email.lower(),
         senha_hash=gerar_hash(dados.senha),
         perfil=dados.perfil,
-        escola_id=dados.escola_id,
     )
     db.add(usuario)
     try:
         db.flush()
     except IntegrityError as erro:
         db.rollback()
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, "E-mail já cadastrado ou escola inexistente"
-        ) from erro
+        raise HTTPException(status.HTTP_409_CONFLICT, "E-mail já cadastrado") from erro
     auditoria.registrar(
         db,
         "usuario.criar",

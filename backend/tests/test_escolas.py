@@ -1,6 +1,6 @@
 import pytest
 
-from app.models import Perfil, Turma, Turno
+from app.models import Perfil
 
 DADOS = {
     "nome": "Escola Central",
@@ -51,8 +51,6 @@ def test_paginacao_e_filtro(client, cabecalhos, criar_escola):
         {"localizacao": {"latitude": 91, "longitude": 0}},
         {"localizacao": {"latitude": 0, "longitude": 181}},
         {"localizacao": None},
-        {"polo_id": 0},
-        {"polo_id": 2_147_483_648},
     ],
 )
 def test_validacao(client, cabecalhos, alteracao):
@@ -64,24 +62,17 @@ def test_id_gigante_nao_quebra(client, cabecalhos):
     assert client.get("/escolas/99999999999", headers=cabecalhos()).status_code == 422
 
 
-def test_conflitos(client, db, cabecalhos, criar_escola):
+def test_conflitos(client, db, cabecalhos):
     h = cabecalhos()
     db.commit()
     assert client.post("/escolas", json=DADOS, headers=h).status_code == 201
     assert client.post("/escolas", json=DADOS, headers=h).status_code == 409
-    sem_polo = {**DADOS, "codigo_inep": None, "polo_id": 999999}
-    assert client.post("/escolas", json=sem_polo, headers=h).status_code == 409
-
-    escola = criar_escola("Com turma")
-    db.add(Turma(escola_id=escola.id, nome="1A", serie="1", turno=Turno.MANHA, ano_letivo=2026))
-    db.commit()
-    assert client.delete(f"/escolas/{escola.id}", headers=h).status_code == 409
 
 
 def test_perfis(client, cabecalhos, criar_escola):
     assert client.get("/escolas").status_code == 401
     escola = criar_escola()
-    for perfil in (Perfil.DIRETOR, Perfil.COORDENADOR):
+    for perfil in (Perfil.GESTOR,):
         h = cabecalhos(perfil)
         url = f"/escolas/{escola.id}"
         assert client.get(url, headers=h).status_code == 200

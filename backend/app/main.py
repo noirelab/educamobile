@@ -9,14 +9,9 @@ from app.routers import (
     auth,
     escolas,
     estudantes,
-    frequencias,
-    matriculas,
     paradas,
-    polos,
-    professores,
     responsaveis,
     rotas,
-    turmas,
 )
 
 _CAMINHOS_DOCS = ("/docs", "/redoc", "/openapi.json")
@@ -149,15 +144,10 @@ def criar_app(config: Settings = settings) -> FastAPI:
 
     for modulo in (
         auth,
-        polos,
         escolas,
-        turmas,
         estudantes,
-        professores,
         paradas,
         rotas,
-        matriculas,
-        frequencias,
         responsaveis,
     ):
         app.include_router(modulo.router)

@@ -196,7 +196,7 @@ def test_perfis_externos_barrados_em_todas_as_rotas_de_cadastro(client, cabecalh
             f"{perfil}: {metodo} {caminho} -> {resposta.status_code}"
         )
         verificadas += 1
-    assert verificadas > 40
+    assert verificadas > 20
 
 
 def test_rotas_novas_entram_na_varredura():
@@ -205,7 +205,7 @@ def test_rotas_novas_entram_na_varredura():
     assert "/estudantes/{estudante_id}/responsaveis" in caminhos
 
 
-def test_gestor_tem_o_acesso_do_coordenador(client, cabecalhos):
+def test_gestor_opera_o_transporte_mas_nao_cria_usuarios(client, cabecalhos):
     h = cabecalhos(Perfil.GESTOR)
     parada = {"nome": "Parada", "localizacao": {"latitude": -25.4, "longitude": -49.2}}
     assert client.post("/paradas", json=parada, headers=h).status_code == 201
@@ -213,7 +213,6 @@ def test_gestor_tem_o_acesso_do_coordenador(client, cabecalhos):
     assert client.get("/estudantes", headers=h).status_code == 200
     novo = {"nome": "X", "email": "x@exemplo.com", "senha": SENHA, "perfil": "admin"}
     assert client.post("/auth/usuarios", json=novo, headers=h).status_code == 403
-    assert client.get("/matriculas", headers=h).status_code == 403
 
 
 # Vínculo responsável–estudante
@@ -258,7 +257,7 @@ def test_vinculo_exige_usuario_responsavel_e_nao_duplica(
 
 
 def test_so_admin_e_gestor_criam_vinculo(client, cabecalhos, familia):
-    for perfil in (Perfil.DIRETOR, Perfil.COORDENADOR):
+    for perfil in (Perfil.MOTORISTA, Perfil.MONITOR):
         assert (
             _vincular(client, cabecalhos(perfil), familia["filho"], familia["mae"]).status_code
             == 403
@@ -508,15 +507,3 @@ def test_corpo_grande_demais_recebe_413(client):
         "/auth/refresh", content=em_partes(), headers={"Content-Type": "application/json"}
     )
     assert resposta.status_code == 413
-
-
-def test_escola_so_para_diretor(client, cabecalhos, criar_escola):
-    novo = {
-        "nome": "R",
-        "email": "r@exemplo.com",
-        "senha": SENHA,
-        "perfil": "responsavel",
-        "escola_id": criar_escola().id,
-    }
-    resposta = client.post("/auth/usuarios", json=novo, headers=cabecalhos(Perfil.ADMIN))
-    assert resposta.status_code == 422
