@@ -2409,6 +2409,495 @@
         }
       }
     },
+    "/viagens/{viagem_id}/posicoes": {
+      "post": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Receber Posicoes",
+        "description": "Lote do aparelho do motorista escalado, só com a viagem em andamento.",
+        "operationId": "receber_posicoes_viagens__viagem_id__posicoes_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotePosicoes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultadoPosicao"
+                  },
+                  "title": "Response Receber Posicoes Viagens  Viagem Id  Posicoes Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rastreador/posicoes": {
+      "post": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Receber Do Rastreador",
+        "description": "Rastreador veicular: autentica pelo veículo e grava na viagem em andamento dele.",
+        "operationId": "receber_do_rastreador_rastreador_posicoes_post",
+        "parameters": [
+          {
+            "name": "x-token-rastreador",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 200,
+              "title": "X-Token-Rastreador"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotePosicoes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultadoPosicao"
+                  },
+                  "title": "Response Receber Do Rastreador Rastreador Posicoes Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/veiculos/{veiculo_id}/token-rastreador": {
+      "post": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Gerar Token Do Rastreador",
+        "description": "O token aparece só nesta resposta; o banco guarda o hash. Gerar outro revoga o anterior.",
+        "operationId": "gerar_token_do_rastreador_veiculos__veiculo_id__token_rastreador_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "veiculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Veiculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenRastreador"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Revogar Token Do Rastreador",
+        "operationId": "revogar_token_do_rastreador_veiculos__veiculo_id__token_rastreador_delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "veiculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Veiculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/posicao": {
+      "get": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Posicao Atual",
+        "operationId": "posicao_atual_viagens__viagem_id__posicao_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoAoVivo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/percurso": {
+      "get": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Percurso",
+        "operationId": "percurso_viagens__viagem_id__percurso_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PontoDoPercurso"
+                  },
+                  "title": "Response Percurso Viagens  Viagem Id  Percurso Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/responsavel/filhos/{estudante_id}/hoje": {
+      "get": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Filho Hoje",
+        "description": "Situação do filho e, só enquanto ele está na viagem, a posição do ônibus.\n\nFora da janela (antes do início, depois do desembarque, falta avisada) a posição não sai:\nver o ônibus nesses momentos seria ver onde estão outras crianças.",
+        "operationId": "filho_hoje_responsavel_filhos__estudante_id__hoje_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estudante_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Estudante Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilhoHoje"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/painel/frota": {
+      "get": {
+        "tags": [
+          "rastreamento"
+        ],
+        "summary": "Painel Frota",
+        "operationId": "painel_frota_painel_frota_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data"
+            }
+          },
+          {
+            "name": "escola_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Escola Id"
+            }
+          },
+          {
+            "name": "turno",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Turno"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Turno"
+            }
+          },
+          {
+            "name": "situacao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StatusViagem"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Situacao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemDaFrota"
+                  },
+                  "title": "Response Painel Frota Painel Frota Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rotas": {
       "get": {
         "tags": [
@@ -3554,6 +4043,881 @@
         }
       }
     },
+    "/viagens/gerar": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Gerar",
+        "operationId": "gerar_viagens_gerar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GerarViagens"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ViagemLer"
+                  },
+                  "type": "array",
+                  "title": "Response Gerar Viagens Gerar Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/viagens": {
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Listar",
+        "operationId": "listar_viagens_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data"
+            }
+          },
+          {
+            "name": "situacao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StatusViagem"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Situacao"
+            }
+          },
+          {
+            "name": "rota_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rota Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ViagemLer"
+                  },
+                  "title": "Response Listar Viagens Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/motorista/viagens-hoje": {
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Viagens De Hoje",
+        "operationId": "viagens_de_hoje_motorista_viagens_hoje_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ViagemLer"
+                  },
+                  "type": "array",
+                  "title": "Response Viagens De Hoje Motorista Viagens Hoje Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/viagens/{viagem_id}": {
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Obter",
+        "operationId": "obter_viagens__viagem_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViagemLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/escala": {
+      "patch": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Escalar",
+        "operationId": "escalar_viagens__viagem_id__escala_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Escala"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViagemLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/iniciar": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Iniciar",
+        "operationId": "iniciar_viagens__viagem_id__iniciar_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViagemLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/cancelar": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Cancelar",
+        "operationId": "cancelar_viagens__viagem_id__cancelar_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cancelamento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelamentoResultado"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/lista": {
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Lista",
+        "operationId": "lista_viagens__viagem_id__lista_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaDaViagem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/eventos": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Registrar Eventos",
+        "description": "Lote idempotente: reenviar o mesmo id devolve `duplicado` e não muda nada.",
+        "operationId": "registrar_eventos_viagens__viagem_id__eventos_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoteDeEventos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultadoDoEvento"
+                  },
+                  "title": "Response Registrar Eventos Viagens  Viagem Id  Eventos Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Listar Eventos",
+        "operationId": "listar_eventos_viagens__viagem_id__eventos_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventoLer"
+                  },
+                  "title": "Response Listar Eventos Viagens  Viagem Id  Eventos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/correcoes": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Corrigir",
+        "operationId": "corrigir_viagens__viagem_id__correcoes_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Correcao"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViagemLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viagens/{viagem_id}/concluir": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Concluir",
+        "operationId": "concluir_viagens__viagem_id__concluir_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusaoResultado"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alertas": {
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Listar Alertas",
+        "operationId": "listar_alertas_alertas_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "abertos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Abertos"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertaLer"
+                  },
+                  "title": "Response Listar Alertas Alertas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alertas/{alerta_id}/resolver": {
+      "post": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Resolver Alerta",
+        "operationId": "resolver_alerta_alertas__alerta_id__resolver_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alerta_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Alerta Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertaLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/responsavel/avisos": {
+      "get": {
+        "tags": [
+          "viagens"
+        ],
+        "summary": "Meus Avisos",
+        "description": "Avisos só dos filhos com consentimento registrado.",
+        "operationId": "meus_avisos_responsavel_avisos_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvisoLer"
+                  },
+                  "title": "Response Meus Avisos Responsavel Avisos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -3582,6 +4946,65 @@
   },
   "components": {
     "schemas": {
+      "AlertaLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "viagem_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viagem Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "severidade": {
+            "type": "string",
+            "title": "Severidade"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "resolvido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolvido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "viagem_id",
+          "tipo",
+          "severidade",
+          "mensagem",
+          "criado_em",
+          "resolvido_em"
+        ],
+        "title": "AlertaLer"
+      },
       "AusenciaCriar": {
         "properties": {
           "estudante_id": {
@@ -3647,6 +5070,72 @@
           "sentido"
         ],
         "title": "AusenciaLer"
+      },
+      "AvisoLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "viagem_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viagem Id"
+          },
+          "estudante_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estudante Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "lido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "viagem_id",
+          "estudante_id",
+          "tipo",
+          "mensagem",
+          "criado_em",
+          "lido_em"
+        ],
+        "title": "AvisoLer"
       },
       "Body_enviar_foto_estudantes__estudante_id__foto_put": {
         "properties": {
@@ -3720,6 +5209,51 @@
           "password"
         ],
         "title": "Body_login_auth_login_post"
+      },
+      "Cancelamento": {
+        "properties": {
+          "motivo": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "pattern": "^[^\\x00]+$",
+            "title": "Motivo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "motivo"
+        ],
+        "title": "Cancelamento"
+      },
+      "CancelamentoResultado": {
+        "properties": {
+          "viagem": {
+            "$ref": "#/components/schemas/ViagemLer"
+          },
+          "responsaveis_avisados": {
+            "type": "integer",
+            "title": "Responsaveis Avisados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem",
+          "responsaveis_avisados"
+        ],
+        "title": "CancelamentoResultado"
+      },
+      "ConclusaoResultado": {
+        "properties": {
+          "viagem": {
+            "$ref": "#/components/schemas/ViagemLer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem"
+        ],
+        "title": "ConclusaoResultado"
       },
       "Consentimento": {
         "properties": {
@@ -3899,6 +5433,33 @@
         ],
         "title": "Coordenadas"
       },
+      "Correcao": {
+        "properties": {
+          "estudante_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Estudante Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAluno"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "pattern": "^[^\\x00]+$",
+            "title": "Motivo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_id",
+          "status",
+          "motivo"
+        ],
+        "title": "Correcao"
+      },
       "DocumentoVencendo": {
         "properties": {
           "usuario_id": {
@@ -3937,6 +5498,52 @@
           "dias_restantes"
         ],
         "title": "DocumentoVencendo"
+      },
+      "Escala": {
+        "properties": {
+          "veiculo_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Veiculo Id"
+          },
+          "motorista_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Id"
+          },
+          "monitor_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monitor Id"
+          }
+        },
+        "type": "object",
+        "title": "Escala",
+        "description": "Só os campos enviados mudam; null limpa."
       },
       "EscolaCriar": {
         "properties": {
@@ -4041,6 +5648,36 @@
           "raio_cerca_m"
         ],
         "title": "EscolaLer"
+      },
+      "EstadoAoVivo": {
+        "properties": {
+          "posicao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PosicaoAtual"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proxima_parada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProximaParada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "posicao",
+          "proxima_parada"
+        ],
+        "title": "EstadoAoVivo"
       },
       "EstudanteCriar": {
         "properties": {
@@ -4205,6 +5842,180 @@
         ],
         "title": "EstudantesPagina"
       },
+      "EventoEntrada": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEvento"
+          },
+          "hora_aparelho": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Hora Aparelho"
+          },
+          "estudante_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estudante Id"
+          },
+          "parada_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parada Id"
+          },
+          "localizacao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Coordenadas"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "justificativa": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "pattern": "^[^\\x00]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justificativa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "hora_aparelho"
+        ],
+        "title": "EventoEntrada"
+      },
+      "EventoLer": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEvento"
+          },
+          "estudante_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estudante Id"
+          },
+          "parada_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parada Id"
+          },
+          "hora_aparelho": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Hora Aparelho"
+          },
+          "recebido_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recebido Em"
+          },
+          "autor_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Autor Id"
+          },
+          "justificativa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justificativa"
+          },
+          "status_corrigido": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StatusAluno"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "anomalia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomalia"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "estudante_id",
+          "parada_id",
+          "hora_aparelho",
+          "recebido_em",
+          "autor_id",
+          "justificativa",
+          "status_corrigido",
+          "anomalia"
+        ],
+        "title": "EventoLer"
+      },
       "FilhoDetalhe": {
         "properties": {
           "estudante_id": {
@@ -4234,6 +6045,38 @@
         ],
         "title": "FilhoDetalhe",
         "description": "Dados mínimos para o acompanhamento. Endereço e localização da casa não saem daqui."
+      },
+      "FilhoHoje": {
+        "properties": {
+          "estudante_id": {
+            "type": "integer",
+            "title": "Estudante Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "title": "Data"
+          },
+          "viagens": {
+            "items": {
+              "$ref": "#/components/schemas/ViagemDoFilho"
+            },
+            "type": "array",
+            "title": "Viagens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_id",
+          "nome",
+          "data",
+          "viagens"
+        ],
+        "title": "FilhoHoje"
       },
       "FilhoResumo": {
         "properties": {
@@ -4282,6 +6125,37 @@
           "expira_em"
         ],
         "title": "FotoUrl"
+      },
+      "GerarViagens": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "rota_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rota Id"
+          }
+        },
+        "type": "object",
+        "title": "GerarViagens"
       },
       "HTTPValidationError": {
         "properties": {
@@ -4469,6 +6343,196 @@
         "title": "InscricoesSubstituir",
         "description": "A lista completa de inscrições ativas da rota. Quem não estiver nela é desativado."
       },
+      "ItemDaFrota": {
+        "properties": {
+          "viagem_id": {
+            "type": "integer",
+            "title": "Viagem Id"
+          },
+          "rota_id": {
+            "type": "integer",
+            "title": "Rota Id"
+          },
+          "rota_nome": {
+            "type": "string",
+            "title": "Rota Nome"
+          },
+          "escola_id": {
+            "type": "integer",
+            "title": "Escola Id"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/Sentido"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusViagem"
+          },
+          "placa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placa"
+          },
+          "motorista_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Nome"
+          },
+          "posicao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PosicaoAtual"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "atraso_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atraso Min"
+          },
+          "alunos_a_bordo": {
+            "type": "integer",
+            "title": "Alunos A Bordo"
+          },
+          "alertas_abertos": {
+            "type": "integer",
+            "title": "Alertas Abertos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem_id",
+          "rota_id",
+          "rota_nome",
+          "escola_id",
+          "turno",
+          "sentido",
+          "status",
+          "placa",
+          "motorista_nome",
+          "posicao",
+          "atraso_min",
+          "alunos_a_bordo",
+          "alertas_abertos"
+        ],
+        "title": "ItemDaFrota"
+      },
+      "ItemDaLista": {
+        "properties": {
+          "estudante_id": {
+            "type": "integer",
+            "title": "Estudante Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "foto_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foto Url"
+          },
+          "parada_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parada Id"
+          },
+          "parada_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parada Nome"
+          },
+          "ordem": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordem"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAluno"
+          },
+          "fora_da_lista": {
+            "type": "boolean",
+            "title": "Fora Da Lista"
+          },
+          "ausencia_avisada_depois": {
+            "type": "boolean",
+            "title": "Ausencia Avisada Depois"
+          },
+          "observacoes_cuidado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observacoes Cuidado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_id",
+          "nome",
+          "foto_url",
+          "parada_id",
+          "parada_nome",
+          "ordem",
+          "status",
+          "fora_da_lista",
+          "ausencia_avisada_depois",
+          "observacoes_cuidado"
+        ],
+        "title": "ItemDaLista",
+        "description": "O que o motorista vê. Sem data de nascimento nem endereço."
+      },
       "ItemDoItinerario": {
         "properties": {
           "parada_id": {
@@ -4504,6 +6568,79 @@
           "raio_cerca_m"
         ],
         "title": "ItemDoItinerario"
+      },
+      "ListaDaViagem": {
+        "properties": {
+          "viagem": {
+            "$ref": "#/components/schemas/ViagemLer"
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "embarque",
+              "desembarque"
+            ],
+            "title": "Modo"
+          },
+          "paradas": {
+            "items": {
+              "$ref": "#/components/schemas/ParadaDaViagem"
+            },
+            "type": "array",
+            "title": "Paradas"
+          },
+          "alunos": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDaLista"
+            },
+            "type": "array",
+            "title": "Alunos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem",
+          "modo",
+          "paradas",
+          "alunos"
+        ],
+        "title": "ListaDaViagem"
+      },
+      "LoteDeEventos": {
+        "properties": {
+          "eventos": {
+            "items": {
+              "$ref": "#/components/schemas/EventoEntrada"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Eventos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eventos"
+        ],
+        "title": "LoteDeEventos"
+      },
+      "LotePosicoes": {
+        "properties": {
+          "posicoes": {
+            "items": {
+              "$ref": "#/components/schemas/PosicaoEntrada"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Posicoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "posicoes"
+        ],
+        "title": "LotePosicoes"
       },
       "MotoristaAtualizar": {
         "properties": {
@@ -4711,6 +6848,38 @@
         ],
         "title": "MotoristasPagina"
       },
+      "OnibusDoFilho": {
+        "properties": {
+          "placa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placa"
+          },
+          "motorista_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Nome"
+          }
+        },
+        "type": "object",
+        "required": [
+          "placa",
+          "motorista_nome"
+        ],
+        "title": "OnibusDoFilho"
+      },
       "ParadaAtualizar": {
         "properties": {
           "nome": {
@@ -4760,6 +6929,47 @@
           "localizacao"
         ],
         "title": "ParadaCriar"
+      },
+      "ParadaDaViagem": {
+        "properties": {
+          "parada_id": {
+            "type": "integer",
+            "title": "Parada Id"
+          },
+          "ordem": {
+            "type": "integer",
+            "title": "Ordem"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "horario_previsto": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horario Previsto"
+          },
+          "raio_cerca_m": {
+            "type": "integer",
+            "title": "Raio Cerca M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "parada_id",
+          "ordem",
+          "nome",
+          "horario_previsto",
+          "raio_cerca_m"
+        ],
+        "title": "ParadaDaViagem"
       },
       "ParadaDoFilho": {
         "properties": {
@@ -4874,6 +7084,253 @@
         ],
         "title": "Perfil"
       },
+      "PontoDoPercurso": {
+        "properties": {
+          "registrada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada Em"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "velocidade_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade Kmh"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registrada_em",
+          "latitude",
+          "longitude",
+          "velocidade_kmh"
+        ],
+        "title": "PontoDoPercurso"
+      },
+      "PosicaoAtual": {
+        "properties": {
+          "viagem_id": {
+            "type": "integer",
+            "title": "Viagem Id"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "registrada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada Em"
+          },
+          "velocidade_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade Kmh"
+          },
+          "desvio_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desvio M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem_id",
+          "latitude",
+          "longitude",
+          "registrada_em",
+          "velocidade_kmh"
+        ],
+        "title": "PosicaoAtual"
+      },
+      "PosicaoDoOnibus": {
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "registrada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada Em"
+          },
+          "velocidade_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade Kmh"
+          }
+        },
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "registrada_em",
+          "velocidade_kmh"
+        ],
+        "title": "PosicaoDoOnibus"
+      },
+      "PosicaoEntrada": {
+        "properties": {
+          "registrada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada Em"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "velocidade_kmh": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade Kmh"
+          },
+          "precisao_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precisao M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registrada_em",
+          "latitude",
+          "longitude"
+        ],
+        "title": "PosicaoEntrada"
+      },
+      "Previsao": {
+        "properties": {
+          "parada_id": {
+            "type": "integer",
+            "title": "Parada Id"
+          },
+          "distancia_restante_m": {
+            "type": "integer",
+            "title": "Distancia Restante M"
+          },
+          "eta_segundos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Segundos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "parada_id",
+          "distancia_restante_m",
+          "eta_segundos"
+        ],
+        "title": "Previsao"
+      },
+      "ProximaParada": {
+        "properties": {
+          "parada_id": {
+            "type": "integer",
+            "title": "Parada Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "horario_previsto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horario Previsto"
+          },
+          "previsao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Previsao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "parada_id",
+          "nome",
+          "horario_previsto",
+          "previsao"
+        ],
+        "title": "ProximaParada"
+      },
       "RefreshTokenEntrada": {
         "properties": {
           "refresh_token": {
@@ -4888,6 +7345,77 @@
           "refresh_token"
         ],
         "title": "RefreshTokenEntrada"
+      },
+      "ResultadoDoEvento": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "resultado": {
+            "type": "string",
+            "title": "Resultado"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "anomalia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomalia"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "resultado"
+        ],
+        "title": "ResultadoDoEvento"
+      },
+      "ResultadoPosicao": {
+        "properties": {
+          "registrada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada Em"
+          },
+          "resultado": {
+            "type": "string",
+            "title": "Resultado"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registrada_em",
+          "resultado"
+        ],
+        "title": "ResultadoPosicao"
       },
       "RotaAtualizar": {
         "properties": {
@@ -5167,6 +7695,39 @@
         ],
         "title": "Sentido"
       },
+      "StatusAluno": {
+        "type": "string",
+        "enum": [
+          "aguardando",
+          "embarcou",
+          "desembarcou",
+          "nao_embarcou",
+          "ausencia_avisada"
+        ],
+        "title": "StatusAluno"
+      },
+      "StatusViagem": {
+        "type": "string",
+        "enum": [
+          "agendada",
+          "em_andamento",
+          "concluida",
+          "cancelada"
+        ],
+        "title": "StatusViagem"
+      },
+      "TipoEvento": {
+        "type": "string",
+        "enum": [
+          "embarque",
+          "nao_embarcou",
+          "desembarque",
+          "embarque_fora_da_lista",
+          "onibus_vazio",
+          "correcao"
+        ],
+        "title": "TipoEvento"
+      },
       "Token": {
         "properties": {
           "access_token": {
@@ -5194,6 +7755,50 @@
           "refresh_token"
         ],
         "title": "Token"
+      },
+      "TokenRastreador": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "TokenRastreador"
+      },
+      "Totais": {
+        "properties": {
+          "aguardando": {
+            "type": "integer",
+            "title": "Aguardando",
+            "default": 0
+          },
+          "embarcou": {
+            "type": "integer",
+            "title": "Embarcou",
+            "default": 0
+          },
+          "desembarcou": {
+            "type": "integer",
+            "title": "Desembarcou",
+            "default": 0
+          },
+          "nao_embarcou": {
+            "type": "integer",
+            "title": "Nao Embarcou",
+            "default": 0
+          },
+          "ausencia_avisada": {
+            "type": "integer",
+            "title": "Ausencia Avisada",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "Totais"
       },
       "TrajetoGeoJSON": {
         "properties": {
@@ -5533,6 +8138,211 @@
           "itens"
         ],
         "title": "VeiculosPagina"
+      },
+      "ViagemDoFilho": {
+        "properties": {
+          "viagem_id": {
+            "type": "integer",
+            "title": "Viagem Id"
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/Sentido"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "status_viagem": {
+            "$ref": "#/components/schemas/StatusViagem"
+          },
+          "situacao_do_filho": {
+            "$ref": "#/components/schemas/StatusAluno"
+          },
+          "parada_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parada Nome"
+          },
+          "onibus": {
+            "$ref": "#/components/schemas/OnibusDoFilho"
+          },
+          "posicao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PosicaoDoOnibus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previsao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Previsao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem_id",
+          "sentido",
+          "turno",
+          "status_viagem",
+          "situacao_do_filho",
+          "parada_nome",
+          "onibus",
+          "posicao",
+          "previsao"
+        ],
+        "title": "ViagemDoFilho"
+      },
+      "ViagemLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "rota_id": {
+            "type": "integer",
+            "title": "Rota Id"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "title": "Data"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/Sentido"
+          },
+          "escola_id": {
+            "type": "integer",
+            "title": "Escola Id"
+          },
+          "veiculo_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Veiculo Id"
+          },
+          "motorista_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Id"
+          },
+          "monitor_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monitor Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusViagem"
+          },
+          "iniciada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iniciada Em"
+          },
+          "concluida_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluida Em"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "motivo_cancelamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo Cancelamento"
+          },
+          "totais": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Totais"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rota_id",
+          "data",
+          "turno",
+          "sentido",
+          "escola_id",
+          "veiculo_id",
+          "motorista_id",
+          "monitor_id",
+          "status",
+          "iniciada_em",
+          "concluida_em",
+          "cancelada_em",
+          "motivo_cancelamento"
+        ],
+        "title": "ViagemLer"
       },
       "VinculoCriar": {
         "properties": {

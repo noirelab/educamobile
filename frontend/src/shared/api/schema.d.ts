@@ -539,6 +539,141 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/viagens/{viagem_id}/posicoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receber Posicoes
+         * @description Lote do aparelho do motorista escalado, só com a viagem em andamento.
+         */
+        post: operations["receber_posicoes_viagens__viagem_id__posicoes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rastreador/posicoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receber Do Rastreador
+         * @description Rastreador veicular: autentica pelo veículo e grava na viagem em andamento dele.
+         */
+        post: operations["receber_do_rastreador_rastreador_posicoes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veiculos/{veiculo_id}/token-rastreador": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Gerar Token Do Rastreador
+         * @description O token aparece só nesta resposta; o banco guarda o hash. Gerar outro revoga o anterior.
+         */
+        post: operations["gerar_token_do_rastreador_veiculos__veiculo_id__token_rastreador_post"];
+        /** Revogar Token Do Rastreador */
+        delete: operations["revogar_token_do_rastreador_veiculos__veiculo_id__token_rastreador_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/posicao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Posicao Atual */
+        get: operations["posicao_atual_viagens__viagem_id__posicao_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/percurso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Percurso */
+        get: operations["percurso_viagens__viagem_id__percurso_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/responsavel/filhos/{estudante_id}/hoje": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Filho Hoje
+         * @description Situação do filho e, só enquanto ele está na viagem, a posição do ônibus.
+         *
+         *     Fora da janela (antes do início, depois do desembarque, falta avisada) a posição não sai:
+         *     ver o ônibus nesses momentos seria ver onde estão outras crianças.
+         */
+        get: operations["filho_hoje_responsavel_filhos__estudante_id__hoje_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/painel/frota": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Painel Frota */
+        get: operations["painel_frota_painel_frota_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rotas": {
         parameters: {
             query?: never;
@@ -784,6 +919,251 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/viagens/gerar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gerar */
+        post: operations["gerar_viagens_gerar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["listar_viagens_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motorista/viagens-hoje": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Viagens De Hoje */
+        get: operations["viagens_de_hoje_motorista_viagens_hoje_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter */
+        get: operations["obter_viagens__viagem_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/escala": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Escalar */
+        patch: operations["escalar_viagens__viagem_id__escala_patch"];
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/iniciar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Iniciar */
+        post: operations["iniciar_viagens__viagem_id__iniciar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancelar */
+        post: operations["cancelar_viagens__viagem_id__cancelar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/lista": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista */
+        get: operations["lista_viagens__viagem_id__lista_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/eventos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Eventos */
+        get: operations["listar_eventos_viagens__viagem_id__eventos_get"];
+        put?: never;
+        /**
+         * Registrar Eventos
+         * @description Lote idempotente: reenviar o mesmo id devolve `duplicado` e não muda nada.
+         */
+        post: operations["registrar_eventos_viagens__viagem_id__eventos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/correcoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Corrigir */
+        post: operations["corrigir_viagens__viagem_id__correcoes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/concluir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Concluir */
+        post: operations["concluir_viagens__viagem_id__concluir_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alertas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Alertas */
+        get: operations["listar_alertas_alertas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alertas/{alerta_id}/resolver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolver Alerta */
+        post: operations["resolver_alerta_alertas__alerta_id__resolver_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/responsavel/avisos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Meus Avisos
+         * @description Avisos só dos filhos com consentimento registrado.
+         */
+        get: operations["meus_avisos_responsavel_avisos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -805,6 +1185,26 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlertaLer */
+        AlertaLer: {
+            /** Id */
+            id: number;
+            /** Viagem Id */
+            viagem_id: number | null;
+            /** Tipo */
+            tipo: string;
+            /** Severidade */
+            severidade: string;
+            /** Mensagem */
+            mensagem: string;
+            /**
+             * Criado Em
+             * Format: date-time
+             */
+            criado_em: string;
+            /** Resolvido Em */
+            resolvido_em: string | null;
+        };
         /** AusenciaCriar */
         AusenciaCriar: {
             /** Estudante Id */
@@ -828,6 +1228,26 @@ export interface components {
              */
             data: string;
             sentido: components["schemas"]["Sentido"] | null;
+        };
+        /** AvisoLer */
+        AvisoLer: {
+            /** Id */
+            id: number;
+            /** Viagem Id */
+            viagem_id: number | null;
+            /** Estudante Id */
+            estudante_id: number | null;
+            /** Tipo */
+            tipo: string;
+            /** Mensagem */
+            mensagem: string;
+            /**
+             * Criado Em
+             * Format: date-time
+             */
+            criado_em: string;
+            /** Lido Em */
+            lido_em: string | null;
         };
         /** Body_enviar_foto_estudantes__estudante_id__foto_put */
         Body_enviar_foto_estudantes__estudante_id__foto_put: {
@@ -857,6 +1277,21 @@ export interface components {
              * Format: password
              */
             client_secret?: string | null;
+        };
+        /** Cancelamento */
+        Cancelamento: {
+            /** Motivo */
+            motivo: string;
+        };
+        /** CancelamentoResultado */
+        CancelamentoResultado: {
+            viagem: components["schemas"]["ViagemLer"];
+            /** Responsaveis Avisados */
+            responsaveis_avisados: number;
+        };
+        /** ConclusaoResultado */
+        ConclusaoResultado: {
+            viagem: components["schemas"]["ViagemLer"];
         };
         /** Consentimento */
         Consentimento: {
@@ -937,6 +1372,14 @@ export interface components {
             /** Longitude */
             longitude: number;
         };
+        /** Correcao */
+        Correcao: {
+            /** Estudante Id */
+            estudante_id: number;
+            status: components["schemas"]["StatusAluno"];
+            /** Motivo */
+            motivo: string;
+        };
         /** DocumentoVencendo */
         DocumentoVencendo: {
             /** Usuario Id */
@@ -958,6 +1401,18 @@ export interface components {
              * @description Negativo quando já venceu
              */
             dias_restantes: number;
+        };
+        /**
+         * Escala
+         * @description Só os campos enviados mudam; null limpa.
+         */
+        Escala: {
+            /** Veiculo Id */
+            veiculo_id?: number | null;
+            /** Motorista Id */
+            motorista_id?: number | null;
+            /** Monitor Id */
+            monitor_id?: number | null;
         };
         /** EscolaCriar */
         EscolaCriar: {
@@ -987,6 +1442,11 @@ export interface components {
             localizacao: components["schemas"]["Coordenadas"];
             /** Raio Cerca M */
             raio_cerca_m: number;
+        };
+        /** EstadoAoVivo */
+        EstadoAoVivo: {
+            posicao: components["schemas"]["PosicaoAtual"] | null;
+            proxima_parada: components["schemas"]["ProximaParada"] | null;
         };
         /** EstudanteCriar */
         EstudanteCriar: {
@@ -1043,6 +1503,57 @@ export interface components {
             /** Itens */
             itens: components["schemas"]["EstudanteLer"][];
         };
+        /** EventoEntrada */
+        EventoEntrada: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            tipo: components["schemas"]["TipoEvento"];
+            /**
+             * Hora Aparelho
+             * Format: date-time
+             */
+            hora_aparelho: string;
+            /** Estudante Id */
+            estudante_id?: number | null;
+            /** Parada Id */
+            parada_id?: number | null;
+            localizacao?: components["schemas"]["Coordenadas"] | null;
+            /** Justificativa */
+            justificativa?: string | null;
+        };
+        /** EventoLer */
+        EventoLer: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            tipo: components["schemas"]["TipoEvento"];
+            /** Estudante Id */
+            estudante_id: number | null;
+            /** Parada Id */
+            parada_id: number | null;
+            /**
+             * Hora Aparelho
+             * Format: date-time
+             */
+            hora_aparelho: string;
+            /**
+             * Recebido Em
+             * Format: date-time
+             */
+            recebido_em: string;
+            /** Autor Id */
+            autor_id: number | null;
+            /** Justificativa */
+            justificativa: string | null;
+            status_corrigido: components["schemas"]["StatusAluno"] | null;
+            /** Anomalia */
+            anomalia: string | null;
+        };
         /**
          * FilhoDetalhe
          * @description Dados mínimos para o acompanhamento. Endereço e localização da casa não saem daqui.
@@ -1053,6 +1564,20 @@ export interface components {
             /** Nome */
             nome: string;
             parada: components["schemas"]["ParadaDoFilho"] | null;
+        };
+        /** FilhoHoje */
+        FilhoHoje: {
+            /** Estudante Id */
+            estudante_id: number;
+            /** Nome */
+            nome: string;
+            /**
+             * Data
+             * Format: date
+             */
+            data: string;
+            /** Viagens */
+            viagens: components["schemas"]["ViagemDoFilho"][];
         };
         /**
          * FilhoResumo
@@ -1077,6 +1602,13 @@ export interface components {
              * Format: date-time
              */
             expira_em: string;
+        };
+        /** GerarViagens */
+        GerarViagens: {
+            /** Data */
+            data?: string | null;
+            /** Rota Id */
+            rota_id?: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1155,6 +1687,56 @@ export interface components {
             /** Inscricoes */
             inscricoes: components["schemas"]["InscricaoItem"][];
         };
+        /** ItemDaFrota */
+        ItemDaFrota: {
+            /** Viagem Id */
+            viagem_id: number;
+            /** Rota Id */
+            rota_id: number;
+            /** Rota Nome */
+            rota_nome: string;
+            /** Escola Id */
+            escola_id: number;
+            turno: components["schemas"]["Turno"];
+            sentido: components["schemas"]["Sentido"];
+            status: components["schemas"]["StatusViagem"];
+            /** Placa */
+            placa: string | null;
+            /** Motorista Nome */
+            motorista_nome: string | null;
+            posicao: components["schemas"]["PosicaoAtual"] | null;
+            /** Atraso Min */
+            atraso_min: number | null;
+            /** Alunos A Bordo */
+            alunos_a_bordo: number;
+            /** Alertas Abertos */
+            alertas_abertos: number;
+        };
+        /**
+         * ItemDaLista
+         * @description O que o motorista vê. Sem data de nascimento nem endereço.
+         */
+        ItemDaLista: {
+            /** Estudante Id */
+            estudante_id: number;
+            /** Nome */
+            nome: string;
+            /** Foto Url */
+            foto_url: string | null;
+            /** Parada Id */
+            parada_id: number | null;
+            /** Parada Nome */
+            parada_nome: string | null;
+            /** Ordem */
+            ordem: number | null;
+            status: components["schemas"]["StatusAluno"];
+            /** Fora Da Lista */
+            fora_da_lista: boolean;
+            /** Ausencia Avisada Depois */
+            ausencia_avisada_depois: boolean;
+            /** Observacoes Cuidado */
+            observacoes_cuidado: string | null;
+        };
         /** ItemDoItinerario */
         ItemDoItinerario: {
             /** Parada Id */
@@ -1165,6 +1747,29 @@ export interface components {
             horario_previsto: string | null;
             /** Raio Cerca M */
             raio_cerca_m: number;
+        };
+        /** ListaDaViagem */
+        ListaDaViagem: {
+            viagem: components["schemas"]["ViagemLer"];
+            /**
+             * Modo
+             * @enum {string}
+             */
+            modo: "embarque" | "desembarque";
+            /** Paradas */
+            paradas: components["schemas"]["ParadaDaViagem"][];
+            /** Alunos */
+            alunos: components["schemas"]["ItemDaLista"][];
+        };
+        /** LoteDeEventos */
+        LoteDeEventos: {
+            /** Eventos */
+            eventos: components["schemas"]["EventoEntrada"][];
+        };
+        /** LotePosicoes */
+        LotePosicoes: {
+            /** Posicoes */
+            posicoes: components["schemas"]["PosicaoEntrada"][];
         };
         /** MotoristaAtualizar */
         MotoristaAtualizar: {
@@ -1264,6 +1869,13 @@ export interface components {
             /** Itens */
             itens: components["schemas"]["MotoristaResumo"][];
         };
+        /** OnibusDoFilho */
+        OnibusDoFilho: {
+            /** Placa */
+            placa: string | null;
+            /** Motorista Nome */
+            motorista_nome: string | null;
+        };
         /** ParadaAtualizar */
         ParadaAtualizar: {
             /** Nome */
@@ -1275,6 +1887,19 @@ export interface components {
             /** Nome */
             nome: string;
             localizacao: components["schemas"]["Coordenadas"];
+        };
+        /** ParadaDaViagem */
+        ParadaDaViagem: {
+            /** Parada Id */
+            parada_id: number;
+            /** Ordem */
+            ordem: number;
+            /** Nome */
+            nome: string;
+            /** Horario Previsto */
+            horario_previsto: string | null;
+            /** Raio Cerca M */
+            raio_cerca_m: number;
         };
         /** ParadaDoFilho */
         ParadaDoFilho: {
@@ -1318,10 +1943,117 @@ export interface components {
          * @enum {string}
          */
         Perfil: "admin" | "gestor" | "motorista" | "monitor" | "responsavel";
+        /** PontoDoPercurso */
+        PontoDoPercurso: {
+            /**
+             * Registrada Em
+             * Format: date-time
+             */
+            registrada_em: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Velocidade Kmh */
+            velocidade_kmh: number | null;
+        };
+        /** PosicaoAtual */
+        PosicaoAtual: {
+            /** Viagem Id */
+            viagem_id: number;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /**
+             * Registrada Em
+             * Format: date-time
+             */
+            registrada_em: string;
+            /** Velocidade Kmh */
+            velocidade_kmh: number | null;
+            /** Desvio M */
+            desvio_m?: number | null;
+        };
+        /** PosicaoDoOnibus */
+        PosicaoDoOnibus: {
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /**
+             * Registrada Em
+             * Format: date-time
+             */
+            registrada_em: string;
+            /** Velocidade Kmh */
+            velocidade_kmh: number | null;
+        };
+        /** PosicaoEntrada */
+        PosicaoEntrada: {
+            /**
+             * Registrada Em
+             * Format: date-time
+             */
+            registrada_em: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Velocidade Kmh */
+            velocidade_kmh?: number | null;
+            /** Precisao M */
+            precisao_m?: number | null;
+        };
+        /** Previsao */
+        Previsao: {
+            /** Parada Id */
+            parada_id: number;
+            /** Distancia Restante M */
+            distancia_restante_m: number;
+            /** Eta Segundos */
+            eta_segundos: number | null;
+        };
+        /** ProximaParada */
+        ProximaParada: {
+            /** Parada Id */
+            parada_id: number;
+            /** Nome */
+            nome: string;
+            /** Horario Previsto */
+            horario_previsto: string | null;
+            previsao: components["schemas"]["Previsao"] | null;
+        };
         /** RefreshTokenEntrada */
         RefreshTokenEntrada: {
             /** Refresh Token */
             refresh_token: string;
+        };
+        /** ResultadoDoEvento */
+        ResultadoDoEvento: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Resultado */
+            resultado: string;
+            /** Motivo */
+            motivo?: string | null;
+            /** Anomalia */
+            anomalia?: string | null;
+        };
+        /** ResultadoPosicao */
+        ResultadoPosicao: {
+            /**
+             * Registrada Em
+             * Format: date-time
+             */
+            registrada_em: string;
+            /** Resultado */
+            resultado: string;
+            /** Motivo */
+            motivo?: string | null;
         };
         /**
          * RotaAtualizar
@@ -1389,6 +2121,21 @@ export interface components {
          * @enum {string}
          */
         Sentido: "ida" | "volta";
+        /**
+         * StatusAluno
+         * @enum {string}
+         */
+        StatusAluno: "aguardando" | "embarcou" | "desembarcou" | "nao_embarcou" | "ausencia_avisada";
+        /**
+         * StatusViagem
+         * @enum {string}
+         */
+        StatusViagem: "agendada" | "em_andamento" | "concluida" | "cancelada";
+        /**
+         * TipoEvento
+         * @enum {string}
+         */
+        TipoEvento: "embarque" | "nao_embarcou" | "desembarque" | "embarque_fora_da_lista" | "onibus_vazio" | "correcao";
         /** Token */
         Token: {
             /** Access Token */
@@ -1402,6 +2149,39 @@ export interface components {
             expires_in: number;
             /** Refresh Token */
             refresh_token: string;
+        };
+        /** TokenRastreador */
+        TokenRastreador: {
+            /** Token */
+            token: string;
+        };
+        /** Totais */
+        Totais: {
+            /**
+             * Aguardando
+             * @default 0
+             */
+            aguardando: number;
+            /**
+             * Embarcou
+             * @default 0
+             */
+            embarcou: number;
+            /**
+             * Desembarcou
+             * @default 0
+             */
+            desembarcou: number;
+            /**
+             * Nao Embarcou
+             * @default 0
+             */
+            nao_embarcou: number;
+            /**
+             * Ausencia Avisada
+             * @default 0
+             */
+            ausencia_avisada: number;
         };
         /** TrajetoGeoJSON */
         TrajetoGeoJSON: {
@@ -1533,6 +2313,52 @@ export interface components {
             total: number;
             /** Itens */
             itens: components["schemas"]["VeiculoLer"][];
+        };
+        /** ViagemDoFilho */
+        ViagemDoFilho: {
+            /** Viagem Id */
+            viagem_id: number;
+            sentido: components["schemas"]["Sentido"];
+            turno: components["schemas"]["Turno"];
+            status_viagem: components["schemas"]["StatusViagem"];
+            situacao_do_filho: components["schemas"]["StatusAluno"];
+            /** Parada Nome */
+            parada_nome: string | null;
+            onibus: components["schemas"]["OnibusDoFilho"];
+            posicao: components["schemas"]["PosicaoDoOnibus"] | null;
+            previsao: components["schemas"]["Previsao"] | null;
+        };
+        /** ViagemLer */
+        ViagemLer: {
+            /** Id */
+            id: number;
+            /** Rota Id */
+            rota_id: number;
+            /**
+             * Data
+             * Format: date
+             */
+            data: string;
+            turno: components["schemas"]["Turno"];
+            sentido: components["schemas"]["Sentido"];
+            /** Escola Id */
+            escola_id: number;
+            /** Veiculo Id */
+            veiculo_id: number | null;
+            /** Motorista Id */
+            motorista_id: number | null;
+            /** Monitor Id */
+            monitor_id: number | null;
+            status: components["schemas"]["StatusViagem"];
+            /** Iniciada Em */
+            iniciada_em: string | null;
+            /** Concluida Em */
+            concluida_em: string | null;
+            /** Cancelada Em */
+            cancelada_em: string | null;
+            /** Motivo Cancelamento */
+            motivo_cancelamento: string | null;
+            totais?: components["schemas"]["Totais"] | null;
         };
         /** VinculoCriar */
         VinculoCriar: {
@@ -3030,6 +3856,265 @@ export interface operations {
             };
         };
     };
+    receber_posicoes_viagens__viagem_id__posicoes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LotePosicoes"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoPosicao"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    receber_do_rastreador_rastreador_posicoes_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-token-rastreador": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LotePosicoes"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoPosicao"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gerar_token_do_rastreador_veiculos__veiculo_id__token_rastreador_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                veiculo_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenRastreador"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revogar_token_do_rastreador_veiculos__veiculo_id__token_rastreador_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                veiculo_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    posicao_atual_viagens__viagem_id__posicao_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoAoVivo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    percurso_viagens__viagem_id__percurso_get: {
+        parameters: {
+            query?: {
+                desde?: string | null;
+            };
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PontoDoPercurso"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    filho_hoje_responsavel_filhos__estudante_id__hoje_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estudante_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilhoHoje"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    painel_frota_painel_frota_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+                escola_id?: number | null;
+                turno?: components["schemas"]["Turno"] | null;
+                situacao?: components["schemas"]["StatusViagem"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDaFrota"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     listar_rotas_rotas_get: {
         parameters: {
             query?: {
@@ -3687,6 +4772,485 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConviteLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gerar_viagens_gerar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GerarViagens"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_viagens_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+                situacao?: components["schemas"]["StatusViagem"] | null;
+                rota_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    viagens_de_hoje_motorista_viagens_hoje_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"][];
+                };
+            };
+        };
+    };
+    obter_viagens__viagem_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    escalar_viagens__viagem_id__escala_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Escala"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    iniciar_viagens__viagem_id__iniciar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelar_viagens__viagem_id__cancelar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Cancelamento"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CancelamentoResultado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lista_viagens__viagem_id__lista_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListaDaViagem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_eventos_viagens__viagem_id__eventos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventoLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registrar_eventos_viagens__viagem_id__eventos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoteDeEventos"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoDoEvento"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    corrigir_viagens__viagem_id__correcoes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Correcao"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViagemLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    concluir_viagens__viagem_id__concluir_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConclusaoResultado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_alertas_alertas_get: {
+        parameters: {
+            query?: {
+                abertos?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertaLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolver_alerta_alertas__alerta_id__resolver_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alerta_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertaLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meus_avisos_responsavel_avisos_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvisoLer"][];
                 };
             };
             /** @description Validation Error */
