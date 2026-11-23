@@ -23,3 +23,22 @@
 Mensagens (todas trazem `canal`): `posicao`, `chegada_parada`, `partida_parada`, `viagem_status`, `aluno` (`estudante_id` e `status`) e `alerta`. O responsável só recebe `posicao`, `viagem_status` e o `aluno` dos próprios filhos. O escopo é conferido a cada mensagem entregue: quando o filho desembarca (ou falta, ou a viagem acaba) o responsável recebe `canal_encerrado` e não recebe mais posições.
 
 Entre processos da API, as mensagens passam pelo pub/sub do Redis e só saem **depois do commit** da requisição que as gerou.
+
+## Worker, alertas e notificações
+
+O processo `worker` (`python -m app.worker`, serviço `worker` no `compose.yaml`) roda as regras que dependem do tempo passar e envia as notificações. Acorda por mensagem no Redis (uma emergência, por exemplo) ou a cada 5 s; as regras rodam a cada 15 s.
+
+| Regra | Alerta | Limite (tabela `configuracao`) |
+| --- | --- | --- |
+| R6 | `viagem_nao_iniciada` | `viagem_nao_iniciada_min` (10) |
+| R7 | `sem_sinal` (resolve sozinho quando o sinal volta) | `sem_sinal_s` (120) |
+| R8 | `desvio_de_rota` | `desvio_max_m` (300) |
+| R9 | `parada_nao_prevista` | `parada_nao_prevista_min` (5), `parado_raio_m` (30) |
+| R10 | `velocidade_acima_do_limite` | `velocidade_max_kmh` (80) |
+| R11 | `emergencia` (crítico, `POST /viagens/{id}/emergencia`) | `emergencia_avisa_responsaveis` (0) |
+
+Os limites mudam em `PUT /configuracao/alertas` (só administrador), sem novo deploy. Alertas: `GET /alertas`, `POST /alertas/{id}/reconhecer` e `/resolver`.
+
+**Emergência:** a resposta é imediata (202). O alerta crítico (com a última posição conhecida) e as notificações são criados na hora, a mensagem sai no canal `frota` e o worker envia o push aos gestores. Os responsáveis só são avisados se a opção `emergencia_avisa_responsaveis` estiver ligada (decisão do grupo, ver issue #25); o texto não cita nenhuma criança.
+
+**Push:** o app registra o token com `POST /dispositivos` e lê as mensagens em `GET /notificacoes` (e `POST /notificacoes/{id}/lida`). O worker envia as pendentes pela API HTTP v1 do Firebase, tenta de novo com espera crescente (30 s, 1 min, 2 min... até 1 h, no máximo 5 tentativas) e apaga o token que o Firebase recusa. Sem `FCM_CREDENCIAIS` e `FCM_PROJETO`, o push só é registrado em log. Os textos citam apenas o primeiro nome do próprio filho.

@@ -8,9 +8,9 @@ from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import tempo_real, viagens
+from app import notificacoes, tempo_real, viagens
 from app.geo import Coordenadas, para_ponto
-from app.models import Posicao, Viagem, ViagemParada
+from app.models import Estudante, Posicao, StatusAluno, Viagem, ViagemAluno, ViagemParada
 
 # Entre duas posições seguidas, mais que isso é salto impossível (GPS com defeito ou forjado).
 VELOCIDADE_MAXIMA_KMH = 150.0
@@ -83,6 +83,27 @@ def _cercas(
     )
     eventos += [("partida", r[0]) for r in partidas]
     return eventos
+
+
+def _avisar_chegada(db: Session, viagem: Viagem, parada_id: int) -> None:
+    """Ônibus chegando: avisa quem tem criança esperando nessa parada."""
+    esperando = db.scalars(
+        select(ViagemAluno).where(
+            ViagemAluno.viagem_id == viagem.id,
+            ViagemAluno.parada_id == parada_id,
+            ViagemAluno.status == StatusAluno.AGUARDANDO,
+        )
+    ).all()
+    for aluno in esperando:
+        nome = notificacoes.nome_curto(db.get(Estudante, aluno.estudante_id))
+        notificacoes.para_responsaveis(
+            db,
+            aluno.estudante_id,
+            "onibus_chegando",
+            "Ônibus chegando",
+            f"O ônibus chegou à parada de {nome}.",
+            viagem_id=viagem.id,
+        )
 
 
 def desvio_m(db: Session, viagem: Viagem, ponto: Coordenadas) -> float | None:
@@ -172,6 +193,8 @@ def ingerir(
     for e in aceitas:
         ponto = Coordenadas(latitude=e.latitude, longitude=e.longitude)
         for tipo, parada_id in _cercas(db, viagem, ponto, e.registrada_em):
+            if tipo == "chegada":
+                _avisar_chegada(db, viagem, parada_id)
             tempo_real.enfileirar(
                 db,
                 viagem.id,

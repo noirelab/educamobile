@@ -6,6 +6,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import Settings, settings
 from app.routers import (
+    alertas,
     auth,
     escolas,
     estudantes,
@@ -151,6 +152,7 @@ def criar_app(config: Settings = settings) -> FastAPI:
     app.add_middleware(LimiteDeCorpo, maximo=config.max_corpo_bytes)
 
     for modulo in (
+        alertas,
         auth,
         escolas,
         estudantes,

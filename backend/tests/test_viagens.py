@@ -14,10 +14,10 @@ from app.geo import Coordenadas
 from app.models import (
     Alerta,
     Ausencia,
-    Aviso,
     EventoViagem,
     Inscricao,
     Motorista,
+    Notificacao,
     Perfil,
     ResponsavelEstudante,
     Sentido,
@@ -870,11 +870,12 @@ def test_gestor_cancela_com_motivo_e_avisa_os_responsaveis(client, db, mundo, cr
     assert r.json()["viagem"]["status"] == "cancelada"
     assert r.json()["viagem"]["motivo_cancelamento"] == "Ônibus quebrou"
     assert r.json()["responsaveis_avisados"] == 1
-    avisos = client.get("/responsavel/avisos", headers=_h(mae)).json()
+    avisos = client.get("/notificacoes", headers=_h(mae)).json()
     assert [a["tipo"] for a in avisos] == ["viagem_cancelada"]
+    assert avisos[0]["titulo"] == "Viagem cancelada"
     assert "Ônibus quebrou" in avisos[0]["mensagem"]
-    assert client.get("/responsavel/avisos", headers=_h(pai)).json() == []
-    assert db.scalar(select(text("count(*)")).select_from(Aviso)) == 1
+    assert client.get("/notificacoes", headers=_h(pai)).json() == []
+    assert db.scalar(select(text("count(*)")).select_from(Notificacao)) == 1
 
 
 def test_cancelar_exige_gestor_motivo_e_estado_valido(client, db, mundo):
@@ -900,14 +901,6 @@ def test_nao_cancela_com_crianca_a_bordo(client, mundo, em_andamento):
     )
     assert r.status_code == 409
     assert "criança a bordo" in r.json()["detail"]
-
-
-def test_avisos_so_dos_filhos_com_consentimento(client, db, mundo, criar_usuario):
-    mae = criar_usuario(Perfil.RESPONSAVEL)
-    _vincular(db, mae, mundo["ana"], consentido=False)
-    db.add(Aviso(usuario_id=mae.id, estudante_id=mundo["ana"].id, tipo="x", mensagem="segredo"))
-    db.flush()
-    assert client.get("/responsavel/avisos", headers=_h(mae)).json() == []
 
 
 # R12

@@ -13,13 +13,10 @@ from sqlalchemy import func, select
 from app import auditoria, fotos, rastreamento, viagens
 from app.cadastros import Db, Deslocamento, IdRota, Limite
 from app.models import (
-    Alerta,
-    Aviso,
     Estudante,
     EventoViagem,
     Motorista,
     Perfil,
-    ResponsavelEstudante,
     StatusAluno,
     StatusViagem,
     Usuario,
@@ -29,8 +26,6 @@ from app.models import (
     ViagemParada,
 )
 from app.schemas.viagens import (
-    AlertaLer,
-    AvisoLer,
     Cancelamento,
     CancelamentoResultado,
     ConclusaoResultado,
@@ -46,7 +41,7 @@ from app.schemas.viagens import (
     Totais,
     ViagemLer,
 )
-from app.security import Responsavel, exigir_perfil
+from app.security import exigir_perfil
 
 router = APIRouter(tags=["viagens"])
 Gestao = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)]
@@ -379,57 +374,3 @@ def concluir(viagem_id: IdRota, request: Request, db: Db, usuario: Equipe) -> Co
     )
     db.commit()
     return ConclusaoResultado(viagem=_ler(db, viagem))
-
-
-@router.get("/alertas")
-def listar_alertas(
-    db: Db, _: Gestao, abertos: bool = True, limit: Limite = 50, offset: Deslocamento = 0
-) -> list[AlertaLer]:
-    consulta = (
-        select(Alerta)
-        .order_by(Alerta.criado_em.desc(), Alerta.id.desc())
-        .limit(limit)
-        .offset(offset)
-    )
-    if abertos:
-        consulta = consulta.where(Alerta.resolvido_em.is_(None))
-    return [AlertaLer.model_validate(a) for a in db.scalars(consulta)]
-
-
-@router.post("/alertas/{alerta_id}/resolver")
-def resolver_alerta(alerta_id: IdRota, request: Request, db: Db, gestor: Gestao) -> AlertaLer:
-    alerta = db.get(Alerta, alerta_id)
-    if alerta is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Alerta não encontrado")
-    if alerta.resolvido_em is None:
-        alerta.resolvido_em = viagens.agora()
-        alerta.resolvido_por_id = gestor.id
-        auditoria.registrar(
-            db,
-            "alerta.resolver",
-            request=request,
-            usuario=gestor,
-            recurso="alerta",
-            recurso_id=alerta.id,
-        )
-        db.commit()
-    return AlertaLer.model_validate(alerta)
-
-
-@router.get("/responsavel/avisos")
-def meus_avisos(
-    db: Db, usuario: Responsavel, limit: Limite = 50, offset: Deslocamento = 0
-) -> list[AvisoLer]:
-    """Avisos só dos filhos com consentimento registrado."""
-    filhos = select(ResponsavelEstudante.estudante_id).where(
-        ResponsavelEstudante.responsavel_id == usuario.id,
-        ResponsavelEstudante.consentimento_em.is_not(None),
-    )
-    consulta = (
-        select(Aviso)
-        .where(Aviso.usuario_id == usuario.id, Aviso.estudante_id.in_(filhos))
-        .order_by(Aviso.criado_em.desc(), Aviso.id.desc())
-        .limit(limit)
-        .offset(offset)
-    )
-    return [AvisoLer.model_validate(a) for a in db.scalars(consulta)]

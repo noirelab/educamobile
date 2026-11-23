@@ -2,7 +2,14 @@ import uuid
 from datetime import date, datetime, time
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    computed_field,
+    model_validator,
+)
 
 from app.cadastros import IdBanco
 from app.geo import Coordenadas
@@ -166,16 +173,60 @@ class AlertaLer(BaseModel):
     severidade: str
     mensagem: str
     criado_em: datetime
+    reconhecido_em: datetime | None
+    reconhecido_por_id: int | None
     resolvido_em: datetime | None
+    resolvido_por_id: int | None
+    resolvido_automaticamente: bool
+    dados: dict | None
+
+    @computed_field
+    @property
+    def situacao(self) -> str:
+        if self.resolvido_em is not None:
+            return "resolvido"
+        return "reconhecido" if self.reconhecido_em is not None else "aberto"
 
 
-class AvisoLer(BaseModel):
+class Emergencia(BaseModel):
+    observacao: (
+        Annotated[
+            str, StringConstraints(strip_whitespace=True, max_length=300, pattern=r"^[^\x00]*$")
+        ]
+        | None
+    ) = None
+
+
+class EmergenciaResultado(BaseModel):
+    alerta_id: int
+    gestores_avisados: int
+    responsaveis_avisados: int
+
+
+class ConfiguracaoLer(BaseModel):
+    chave: str
+    valor: float
+    descricao: str
+
+
+class ConfiguracaoAtualizar(BaseModel):
+    valores: Annotated[dict[str, float], Field(min_length=1, max_length=50)]
+
+
+class DispositivoCriar(BaseModel):
+    token: Annotated[str, StringConstraints(min_length=20, max_length=500, pattern=r"^[^\s\x00]+$")]
+    plataforma: Literal["android", "ios", "web"]
+
+
+class NotificacaoLer(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    tipo: str
+    titulo: str
+    mensagem: str
     viagem_id: int | None
     estudante_id: int | None
-    tipo: str
-    mensagem: str
     criado_em: datetime
+    enviada_em: datetime | None
     lido_em: datetime | None

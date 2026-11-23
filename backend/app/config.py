@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     # Os horários previstos das paradas são hora do relógio local.
     fuso_horario: str = "America/Sao_Paulo"
+    # Conta de serviço do Firebase (arquivo JSON) e id do projeto; sem elas o push vai ao log.
+    fcm_credenciais: str | None = None
+    fcm_projeto: str | None = None
     fotos_dir: str = "fotos"
     foto_url_validade_s: int = Field(default=300, ge=30, le=3600)
 

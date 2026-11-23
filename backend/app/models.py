@@ -464,12 +464,47 @@ class Alerta(Base):
     resolvido_por_id: Mapped[int | None] = mapped_column(
         ForeignKey("usuario.id", ondelete="SET NULL")
     )
+    # Quem viu e assumiu o alerta. Resolver sem reconhecer também é permitido.
+    reconhecido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reconhecido_por_id: Mapped[int | None] = mapped_column(
+        ForeignKey("usuario.id", ondelete="SET NULL")
+    )
+    # Resolvido pelo próprio sistema (ex.: o sinal do ônibus voltou).
+    resolvido_automaticamente: Mapped[bool] = mapped_column(
+        default=False, server_default=text("false")
+    )
+    # Contexto do alerta: posição conhecida, valores medidos, limite aplicado.
+    dados: Mapped[dict | None] = mapped_column(JSONB)
 
 
-class Aviso(Base):
-    """Mensagem para uma pessoa. O envio por push (etapa E) lê desta tabela."""
+class Configuracao(Base):
+    """Limites das regras de alerta e opções de operação. Mudar daqui não exige novo deploy."""
 
-    __tablename__ = "aviso"
+    __tablename__ = "configuracao"
+
+    chave: Mapped[str] = mapped_column(primary_key=True)
+    valor: Mapped[float]
+    descricao: Mapped[str]
+
+
+class Dispositivo(Base):
+    """Token do Firebase Cloud Messaging de um aparelho, ligado a uma pessoa."""
+
+    __tablename__ = "dispositivo"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuario.id", ondelete="CASCADE"), index=True
+    )
+    token: Mapped[str] = mapped_column(unique=True)
+    plataforma: Mapped[str]
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Notificacao(Base):
+    """Mensagem para uma pessoa. O worker envia por push e a pessoa também a lê pela API."""
+
+    __tablename__ = "notificacao"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     usuario_id: Mapped[int] = mapped_column(
@@ -478,9 +513,15 @@ class Aviso(Base):
     viagem_id: Mapped[int | None] = mapped_column(ForeignKey("viagem.id", ondelete="CASCADE"))
     estudante_id: Mapped[int | None] = mapped_column(ForeignKey("estudante.id", ondelete="CASCADE"))
     tipo: Mapped[str]
+    titulo: Mapped[str]
     mensagem: Mapped[str]
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     lido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Envio pelo worker: nulo até sair; tentativas e próxima tentativa guiam o reenvio.
+    enviada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tentativas: Mapped[int] = mapped_column(default=0, server_default=text("0"))
+    proxima_tentativa_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    erro: Mapped[str | None]
 
 
 class Posicao(Base):

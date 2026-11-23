@@ -25,7 +25,8 @@ erDiagram
     VIAGEM ||--o{ EVENTO_VIAGEM : registra
     VIAGEM ||--o{ ALERTA : gera
     VIAGEM ||--o{ POSICAO : percorre
-    USUARIO ||--o{ AVISO : recebe
+    USUARIO ||--o{ NOTIFICACAO : recebe
+    USUARIO ||--o{ DISPOSITIVO : "aparelhos de"
 
     ESCOLA { int id PK
         string nome
@@ -122,12 +123,25 @@ erDiagram
         int viagem_id FK
         string tipo
         enum severidade
-        string mensagem }
-    AVISO { int id PK
+        string mensagem
+        timestamptz reconhecido_em
+        timestamptz resolvido_em
+        jsonb dados }
+    NOTIFICACAO { int id PK
         int usuario_id FK
         int estudante_id FK
         string tipo
-        string mensagem }
+        string titulo
+        string mensagem
+        timestamptz enviada_em
+        int tentativas }
+    DISPOSITIVO { int id PK
+        int usuario_id FK
+        string token UK
+        string plataforma }
+    CONFIGURACAO { string chave PK
+        float valor
+        string descricao }
     AUSENCIA { int id PK
         int estudante_id FK
         date data

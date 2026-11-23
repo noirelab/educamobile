@@ -84,12 +84,26 @@ def enfileirar(db: Session, viagem_id: int, mensagem: dict) -> None:
     db.info.setdefault("mensagens", []).append((viagem_id, mensagem))
 
 
+WORKER_ACORDAR = "worker:acordar"
+
+
+def acordar_worker() -> None:
+    try:
+        cliente().lpush(WORKER_ACORDAR, "1")
+        cliente().ltrim(WORKER_ACORDAR, 0, 9)
+    except redis.RedisError:
+        pass
+
+
 @event.listens_for(Session, "after_commit")
 def _descarregar(session: Session) -> None:
     for viagem_id, mensagem in session.info.pop("mensagens", []):
         _publicar_na_viagem_e_na_frota(viagem_id, mensagem)
+    if session.info.pop("acordar_worker", False):
+        acordar_worker()
 
 
 @event.listens_for(Session, "after_rollback")
 def _descartar(session: Session) -> None:
     session.info.pop("mensagens", None)
+    session.info.pop("acordar_worker", None)

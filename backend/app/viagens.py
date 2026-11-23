@@ -14,13 +14,12 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import habilitacao, tempo_real
+from app import habilitacao, notificacoes, tempo_real
 from app.geo import Coordenadas, para_ponto
 from app.models import (
     STATUS_FINAIS,
     Alerta,
     Ausencia,
-    Aviso,
     Estudante,
     EventoViagem,
     Inscricao,
@@ -199,6 +198,17 @@ def iniciar(db: Session, viagem: Viagem, hoje: date) -> None:
     viagem.iniciada_em = agora()
     db.flush()
     _avisar_status(db, viagem)
+    for i in inscricoes:
+        if i.estudante_id not in ausentes:
+            nome = notificacoes.nome_curto(db.get(Estudante, i.estudante_id))
+            notificacoes.para_responsaveis(
+                db,
+                i.estudante_id,
+                "onibus_saiu",
+                "Ônibus a caminho",
+                f"O ônibus de {nome} saiu e está a caminho.",
+                viagem_id=viagem.id,
+            )
 
 
 def _avisar_status(db: Session, viagem: Viagem) -> None:
@@ -379,6 +389,31 @@ def alertar(
     return alerta
 
 
+_TEXTOS = {
+    StatusAluno.EMBARCOU: ("embarcou", "Embarque confirmado", "{nome} embarcou no ônibus."),
+    StatusAluno.NAO_EMBARCOU: (
+        "nao_embarcou",
+        "Não embarcou",
+        "{nome} não embarcou no ônibus. Se não era esperado, fale com a escola.",
+    ),
+    StatusAluno.DESEMBARCOU: ("desembarcou", "Chegada confirmada", "{nome} desembarcou."),
+}
+
+
+def _notificar_status(db: Session, viagem_id: int, estudante_id: int, novo: StatusAluno) -> None:
+    modelo = _TEXTOS.get(novo)
+    if modelo is None:
+        return
+    tipo, titulo, texto = modelo
+    viagem = db.get(Viagem, viagem_id)
+    if novo == StatusAluno.DESEMBARCOU and viagem is not None and viagem.sentido.value == "ida":
+        titulo, texto = "Chegou à escola", "{nome} chegou à escola."
+    nome = notificacoes.nome_curto(db.get(Estudante, estudante_id))
+    notificacoes.para_responsaveis(
+        db, estudante_id, tipo, titulo, texto.format(nome=nome), viagem_id=viagem_id
+    )
+
+
 def recalcular(db: Session, viagem_id: int, estudante_ids: set[int]) -> None:
     """Status = efeito dos eventos do aluno, na ordem da hora do aparelho."""
     if not estudante_ids:
@@ -407,6 +442,7 @@ def recalcular(db: Session, viagem_id: int, estudante_ids: set[int]) -> None:
                 atual = _STATUS_DO_TIPO[e.tipo]
         if aluno.status != atual:
             aluno.status = atual
+            _notificar_status(db, viagem_id, estudante_id, atual)
             # Só o responsável desse aluno recebe: o repasse filtra por estudante_id.
             tempo_real.enfileirar(
                 db,
@@ -599,14 +635,14 @@ def cancelar(db: Session, viagem: Viagem, gestor: Usuario, motivo: str) -> int:
     viagem.cancelada_por_id = gestor.id
     viagem.motivo_cancelamento = motivo
     for responsavel_id, estudante_id in destinatarios:
-        db.add(
-            Aviso(
-                usuario_id=responsavel_id,
-                viagem_id=viagem.id,
-                estudante_id=estudante_id,
-                tipo="viagem_cancelada",
-                mensagem=f"A viagem de {viagem.data:%d/%m} foi cancelada: {motivo}",
-            )
+        notificacoes.criar(
+            db,
+            responsavel_id,
+            "viagem_cancelada",
+            "Viagem cancelada",
+            f"A viagem de {viagem.data:%d/%m} foi cancelada: {motivo}",
+            viagem_id=viagem.id,
+            estudante_id=estudante_id,
         )
     db.flush()
     _avisar_status(db, viagem)
