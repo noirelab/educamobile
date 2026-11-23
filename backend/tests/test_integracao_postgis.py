@@ -1,7 +1,5 @@
 """Integridade referencial e consultas espaciais contra o PostGIS real."""
 
-from datetime import date
-
 import pytest
 from geoalchemy2 import Geography
 from geoalchemy2.elements import WKTElement
@@ -12,11 +10,11 @@ from sqlalchemy.orm import aliased
 from app.geo import Coordenadas, para_ponto
 from app.models import (
     SRID,
-    Estudante,
     Parada,
     Rota,
     RotaParada,
 )
+from tests.conftest import estudante_de_teste
 
 QUADRADO = "MULTIPOLYGON(((-49.3 -25.5,-49.2 -25.5,-49.2 -25.4,-49.3 -25.4,-49.3 -25.5)))"
 
@@ -35,8 +33,7 @@ def _falha_integridade(db, acao):
 
 
 def test_remover_parada_solta_estudante_mas_nao_rota(db):
-    estudante = Estudante(nome="Ana", data_nascimento=date(2015, 1, 1))
-    db.add(estudante)
+    estudante = estudante_de_teste(db)
     livre = Parada(nome="Livre", localizacao=_ponto(-25.4, -49.2))
     usada = Parada(nome="Usada", localizacao=_ponto(-25.5, -49.3))
     rota = Rota(nome="R1")
@@ -99,6 +96,5 @@ def test_indices_espaciais_existem(db):
     assert {
         "idx_escola_localizacao",
         "idx_parada_localizacao",
-        "idx_estudante_localizacao",
         "idx_rota_trajeto",
     } <= nomes

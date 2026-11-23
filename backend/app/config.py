@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     versao_termo_consentimento: str = "2026-11"
     # Corpo maior que isso recebe 413 antes de ser lido.
     max_corpo_bytes: int = Field(default=1_000_000, ge=10_000)
+    # Onde ficam as fotos dos estudantes. Em produção, um volume fora da imagem.
+    fotos_dir: str = "fotos"
+    foto_url_validade_s: int = Field(default=300, ge=30, le=3600)
 
     @field_validator("jwt_secret")
     @classmethod

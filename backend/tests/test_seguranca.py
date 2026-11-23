@@ -1,7 +1,7 @@
 """Sessões, controle de acesso por perfil e vínculo, auditoria e cabeçalhos."""
 
 import re
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
@@ -13,8 +13,9 @@ from app import auditoria
 from app.config import Settings, settings
 from app.geo import Coordenadas, para_ponto
 from app.main import app, criar_app
-from app.models import Auditoria, Estudante, Parada, Perfil, Sessao
+from app.models import Auditoria, Parada, Perfil, Sessao
 from app.security import ALGORITMO, criar_token
+from tests.conftest import estudante_de_teste
 
 SENHA = "senha-forte-1"
 SEGREDO_FORTE = "Gq7-pX2_vL9wRt4ZkM8nB3cYh6JdF1sA"
@@ -170,6 +171,7 @@ _ROTAS_DE_CONTA = {
     ("PUT", "/auth/senha"),
     ("GET", "/auth/me"),
     ("GET", "/health"),
+    ("GET", "/fotos/{token}"),
 }
 
 
@@ -226,10 +228,8 @@ def familia(db, criar_usuario):
     )
     db.add(parada)
     db.flush()
-    filho = Estudante(nome="Bia", data_nascimento=date(2017, 3, 1), parada_id=parada.id)
-    outro = Estudante(nome="Caio", data_nascimento=date(2016, 5, 1))
-    db.add_all([filho, outro])
-    db.flush()
+    filho = estudante_de_teste(db, "Bia", parada_id=parada.id)
+    outro = estudante_de_teste(db, "Caio")
     return {
         "mae": criar_usuario(Perfil.RESPONSAVEL),
         "estranho": criar_usuario(Perfil.RESPONSAVEL),

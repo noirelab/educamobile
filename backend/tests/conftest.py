@@ -5,6 +5,7 @@ Cada teste roda em uma transação desfeita ao final, então os testes não inte
 
 import uuid
 from collections.abc import Callable, Iterator
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -24,8 +25,27 @@ settings.database_url = _url_base.set(database=_nome_banco).render_as_string(hid
 from app import db as app_db  # noqa: E402
 from app.geo import Coordenadas, para_ponto  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Escola, Perfil, Usuario  # noqa: E402
+from app.models import Escola, Estudante, Perfil, Turno, Usuario  # noqa: E402
 from app.security import criar_token, gerar_hash  # noqa: E402
+
+
+def estudante_de_teste(db: Session, nome: str = "Ana", **campos) -> Estudante:
+    """Estudante válido; cria uma escola própria quando `escola_id` não é informado."""
+    if "escola_id" not in campos:
+        escola = Escola(
+            nome=f"Escola de {nome}",
+            localizacao=para_ponto(Coordenadas(latitude=-25.4, longitude=-49.2)),
+        )
+        db.add(escola)
+        db.flush()
+        campos["escola_id"] = escola.id
+    campos.setdefault("data_nascimento", date(2015, 1, 1))
+    campos.setdefault("turno", Turno.MANHA)
+    estudante = Estudante(nome=nome, **campos)
+    db.add(estudante)
+    db.flush()
+    return estudante
+
 
 BACKEND = Path(__file__).resolve().parent.parent
 

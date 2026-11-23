@@ -31,7 +31,6 @@ def _ler_ponto(valor):
 
 
 LocalizacaoLida = Annotated[Coordenadas, BeforeValidator(_ler_ponto)]
-LocalizacaoLidaOpcional = Annotated[Coordenadas | None, BeforeValidator(_ler_ponto)]
 
 
 def buscar(db: Session, modelo, id_: int):

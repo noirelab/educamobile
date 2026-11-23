@@ -14,6 +14,8 @@ from app import auditoria
 from app.cadastros import Db, IdRota, buscar
 from app.config import settings
 from app.models import Estudante, Parada, Perfil, ResponsavelEstudante, Usuario
+from app.routers.estudantes import url_assinada
+from app.schemas.estudantes import FotoUrl
 from app.schemas.responsaveis import (
     Consentimento,
     FilhoDetalhe,
@@ -150,3 +152,9 @@ def meu_filho(estudante_id: IdRota, db: Db, usuario: Responsavel) -> FilhoDetalh
         nome=estudante.nome,
         parada=ParadaDoFilho(id=parada.id, nome=parada.nome) if parada else None,
     )
+
+
+@router.get("/responsavel/filhos/{estudante_id}/foto-url")
+def foto_do_filho(estudante_id: IdRota, db: Db, usuario: Responsavel) -> FotoUrl:
+    garantir_responsavel(db, usuario, estudante_id)
+    return url_assinada(buscar(db, Estudante, estudante_id))

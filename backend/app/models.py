@@ -30,6 +30,12 @@ class Perfil(enum.StrEnum):
 PERFIS_INTERNOS = frozenset({Perfil.ADMIN, Perfil.GESTOR})
 
 
+class Turno(enum.StrEnum):
+    MANHA = "manha"
+    TARDE = "tarde"
+    INTEGRAL = "integral"
+
+
 def _enum(tipo: type[enum.Enum], nome: str) -> Enum:
     return Enum(tipo, name=nome, values_callable=lambda e: [m.value for m in e])
 
@@ -53,16 +59,22 @@ class Parada(Base):
 
 
 class Estudante(Base):
+    """Só o necessário para o transporte. Sem endereço nem localização da casa: a parada basta."""
+
     __tablename__ = "estudante"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str]
     data_nascimento: Mapped[date]
-    nome_responsavel: Mapped[str | None]
-    localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=True)
+    escola_id: Mapped[int] = mapped_column(ForeignKey("escola.id", ondelete="RESTRICT"), index=True)
+    turno: Mapped[Turno] = mapped_column(_enum(Turno, "turno"))
     parada_id: Mapped[int | None] = mapped_column(
         ForeignKey("parada.id", ondelete="SET NULL"), index=True
     )
+    # Alergia, necessidade especial. Só gestor e a equipe da viagem leem.
+    observacoes_cuidado: Mapped[str | None]
+    # Nome do arquivo no disco, nunca devolvido pela API.
+    foto_arquivo: Mapped[str | None]
 
 
 class Rota(Base):

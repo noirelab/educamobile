@@ -4,6 +4,7 @@ import pytest
 
 from app.models import Perfil
 from app.routers.auth import MAX_FALHAS_LOGIN
+from tests.conftest import estudante_de_teste
 
 GRANDE = 2**40
 
@@ -67,9 +68,8 @@ def test_login_bloqueia_depois_de_muitas_falhas(client, criar_usuario):
     assert client.post("/auth/login", data=livre).status_code == 200
 
 
-def test_so_admin_remove_estudante(client, cabecalhos):
-    dados = {"nome": "Ana", "data_nascimento": "2015-01-01"}
-    criado = client.post("/estudantes", json=dados, headers=cabecalhos(Perfil.ADMIN))
-    url = f"/estudantes/{criado.json()['id']}"
+def test_so_admin_remove_estudante(client, db, cabecalhos):
+    estudante = estudante_de_teste(db)
+    url = f"/estudantes/{estudante.id}"
     assert client.delete(url, headers=cabecalhos(Perfil.GESTOR)).status_code == 403
     assert client.delete(url, headers=cabecalhos(Perfil.ADMIN)).status_code == 204

@@ -17,12 +17,15 @@ erDiagram
         string codigo_inep UK
         string endereco
         point localizacao }
+    ESCOLA ||--o{ ESTUDANTE : matricula
     ESTUDANTE { int id PK
         string nome
         date data_nascimento
-        string nome_responsavel
-        point localizacao
-        int parada_id FK }
+        int escola_id FK
+        enum turno
+        int parada_id FK
+        string observacoes_cuidado
+        string foto_arquivo }
     PARADA { int id PK
         string nome
         point localizacao }
@@ -71,5 +74,7 @@ erDiagram
 - **Acesso por vínculo.** O perfil diz o que a pessoa é; o vínculo diz quais crianças ela pode ver. O responsável só vê o filho depois de registrar o consentimento (LGPD, art. 14).
 - **Sessões por aparelho.** O refresh token é guardado só como hash e troca a cada uso; reuso de um token já trocado revoga todas as sessões da pessoa.
 - **Auditoria só de inclusão,** sem senha nem token.
-- **Dados pessoais mínimos.** Os estudantes são menores de idade: não há CPF, e a localização da residência é opcional.
+- **Dados pessoais mínimos.** Os estudantes são menores de idade: não há CPF nem endereço ou localização da casa (a parada basta), e o responsável é um usuário vinculado, não um nome em texto.
+- **Foto fora do JSON.** O arquivo é reencodado (sem EXIF/GPS), guardado com nome aleatório e servido por URL assinada que vale 5 minutos. Só o gestor envia.
+- **Observações de cuidado** (alergia, necessidade especial) saem só para administrador e gestor; a equipe da viagem passa a vê-las na etapa C.
 - **Removidos na etapa A:** polos, turmas, professores, matrículas, transferências e frequência, e os perfis `diretor` e `coordenador`.

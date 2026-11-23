@@ -5,7 +5,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import select
 
-from app.models import Auditoria, Convite, Estudante, Perfil, ResponsavelEstudante, Usuario
+from app.models import Auditoria, Convite, Perfil, ResponsavelEstudante, Usuario
+from tests.conftest import estudante_de_teste
 
 SENHA = "senha-forte-1"
 
@@ -132,12 +133,7 @@ def test_acoes_ficam_na_auditoria(client, db, cabecalhos):
 
 @pytest.fixture
 def filho(db):
-    from datetime import date
-
-    estudante = Estudante(nome="Bia", data_nascimento=date(2017, 3, 1))
-    db.add(estudante)
-    db.flush()
-    return estudante
+    return estudante_de_teste(db, "Bia")
 
 
 def _convidar(client, h, filho, email="mae@exemplo.com"):

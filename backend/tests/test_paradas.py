@@ -1,15 +1,13 @@
-from datetime import date
-
 import pytest
 
 from app.geo import Coordenadas, para_ponto
 from app.models import (
-    Estudante,
     Parada,
     Perfil,
     Rota,
     RotaParada,
 )
+from tests.conftest import estudante_de_teste
 
 ESCRITA = [Perfil.ADMIN, Perfil.GESTOR]
 LOCAL = {"latitude": -25.43, "longitude": -49.27}
@@ -25,10 +23,7 @@ def _parada(db, nome="P", latitude=0.0, longitude=0.0):
 
 
 def _estudante(db, nome="Ana", parada_id=None):
-    estudante = Estudante(nome=nome, data_nascimento=date(2012, 3, 1), parada_id=parada_id)
-    db.add(estudante)
-    db.flush()
-    return estudante
+    return estudante_de_teste(db, nome, parada_id=parada_id)
 
 
 @pytest.mark.parametrize("perfil", ESCRITA)
