@@ -5,6 +5,563 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/alertas": {
+      "get": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Listar",
+        "description": "Por padrão, os que ainda não foram resolvidos (abertos e reconhecidos).",
+        "operationId": "listar_alertas_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "abertos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Abertos"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "severidade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Severidade"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severidade"
+            }
+          },
+          {
+            "name": "viagem_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Viagem Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertaLer"
+                  },
+                  "title": "Response Listar Alertas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alertas/{alerta_id}/reconhecer": {
+      "post": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Reconhecer",
+        "operationId": "reconhecer_alertas__alerta_id__reconhecer_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alerta_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Alerta Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertaLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alertas/{alerta_id}/resolver": {
+      "post": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Resolver",
+        "operationId": "resolver_alertas__alerta_id__resolver_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alerta_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Alerta Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertaLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/configuracao/alertas": {
+      "get": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Ler Configuracao",
+        "operationId": "ler_configuracao_configuracao_alertas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConfiguracaoLer"
+                  },
+                  "type": "array",
+                  "title": "Response Ler Configuracao Configuracao Alertas Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Atualizar Configuracao",
+        "operationId": "atualizar_configuracao_configuracao_alertas_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfiguracaoAtualizar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConfiguracaoLer"
+                  },
+                  "type": "array",
+                  "title": "Response Atualizar Configuracao Configuracao Alertas Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/viagens/{viagem_id}/emergencia": {
+      "post": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Emergencia",
+        "description": "Motorista ou monitor aciona. Cria o alerta crítico e as notificações e responde na hora:\no envio do push fica com o worker, acordado logo depois do commit.",
+        "operationId": "emergencia_viagens__viagem_id__emergencia_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Emergencia"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergenciaResultado"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dispositivos": {
+      "post": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Registrar Dispositivo",
+        "description": "Registra o token de push do aparelho. O mesmo token passa a valer para quem o enviou por\núltimo (um aparelho que troca de dono não recebe o que é do dono antigo).",
+        "operationId": "registrar_dispositivo_dispositivos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DispositivoCriar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Remover Dispositivo",
+        "description": "Chamado no logout do app: aquele aparelho deixa de receber push desta conta.",
+        "operationId": "remover_dispositivo_dispositivos_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DispositivoCriar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/notificacoes": {
+      "get": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Minhas Notificacoes",
+        "operationId": "minhas_notificacoes_notificacoes_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "nao_lidas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Nao Lidas"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacaoLer"
+                  },
+                  "title": "Response Minhas Notificacoes Notificacoes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notificacoes/{notificacao_id}/lida": {
+      "post": {
+        "tags": [
+          "alertas"
+        ],
+        "summary": "Marcar Lida",
+        "operationId": "marcar_lida_notificacoes__notificacao_id__lida_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notificacao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Notificacao Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "tags": [
@@ -140,6 +697,77 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/auth/sessoes": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Listar Sessoes",
+        "description": "Aparelhos conectados à conta, do mais recente ao mais antigo.",
+        "operationId": "listar_sessoes_auth_sessoes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessaoLer"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Sessoes Auth Sessoes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/sessoes/{sessao_id}": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revogar Sessao",
+        "operationId": "revogar_sessao_auth_sessoes__sessao_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sessao Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/auth/senha": {
@@ -2898,6 +3526,653 @@
         }
       }
     },
+    "/auditoria": {
+      "get": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Consultar",
+        "operationId": "consultar_auditoria_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Usuario Id"
+            }
+          },
+          {
+            "name": "acao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Acao"
+            }
+          },
+          {
+            "name": "recurso",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Recurso"
+            }
+          },
+          {
+            "name": "recurso_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Recurso Id"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desde"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistroDeAuditoria"
+                  },
+                  "title": "Response Consultar Auditoria Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/viagens": {
+      "get": {
+        "tags": [
+          "relatórios"
+        ],
+        "summary": "Relatório de viagens",
+        "operationId": "relatorio_viagens_relatorios_viagens_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "rota_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rota Id"
+            }
+          },
+          {
+            "name": "escola_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Escola Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/pontualidade": {
+      "get": {
+        "tags": [
+          "relatórios"
+        ],
+        "summary": "Relatório de pontualidade",
+        "operationId": "relatorio_pontualidade_relatorios_pontualidade_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "rota_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rota Id"
+            }
+          },
+          {
+            "name": "escola_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Escola Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/ausencias": {
+      "get": {
+        "tags": [
+          "relatórios"
+        ],
+        "summary": "Relatório de ausencias",
+        "operationId": "relatorio_ausencias_relatorios_ausencias_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "rota_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rota Id"
+            }
+          },
+          {
+            "name": "escola_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Escola Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/ocorrencias": {
+      "get": {
+        "tags": [
+          "relatórios"
+        ],
+        "summary": "Relatório de ocorrencias",
+        "operationId": "relatorio_ocorrencias_relatorios_ocorrencias_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "rota_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rota Id"
+            }
+          },
+          {
+            "name": "escola_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2147483647,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Escola Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rotas": {
       "get": {
         "tags": [
@@ -4726,198 +6001,6 @@
         }
       }
     },
-    "/alertas": {
-      "get": {
-        "tags": [
-          "viagens"
-        ],
-        "summary": "Listar Alertas",
-        "operationId": "listar_alertas_alertas_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "abertos",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Abertos"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AlertaLer"
-                  },
-                  "title": "Response Listar Alertas Alertas Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/alertas/{alerta_id}/resolver": {
-      "post": {
-        "tags": [
-          "viagens"
-        ],
-        "summary": "Resolver Alerta",
-        "operationId": "resolver_alerta_alertas__alerta_id__resolver_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "alerta_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Alerta Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AlertaLer"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/responsavel/avisos": {
-      "get": {
-        "tags": [
-          "viagens"
-        ],
-        "summary": "Meus Avisos",
-        "description": "Avisos só dos filhos com consentimento registrado.",
-        "operationId": "meus_avisos_responsavel_avisos_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AvisoLer"
-                  },
-                  "title": "Response Meus Avisos Responsavel Avisos Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/health": {
       "get": {
         "tags": [
@@ -4980,6 +6063,29 @@
             "format": "date-time",
             "title": "Criado Em"
           },
+          "reconhecido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reconhecido Em"
+          },
+          "reconhecido_por_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reconhecido Por Id"
+          },
           "resolvido_em": {
             "anyOf": [
               {
@@ -4991,6 +6097,38 @@
               }
             ],
             "title": "Resolvido Em"
+          },
+          "resolvido_por_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolvido Por Id"
+          },
+          "resolvido_automaticamente": {
+            "type": "boolean",
+            "title": "Resolvido Automaticamente"
+          },
+          "dados": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dados"
+          },
+          "situacao": {
+            "type": "string",
+            "title": "Situacao",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -5001,7 +6139,13 @@
           "severidade",
           "mensagem",
           "criado_em",
-          "resolvido_em"
+          "reconhecido_em",
+          "reconhecido_por_id",
+          "resolvido_em",
+          "resolvido_por_id",
+          "resolvido_automaticamente",
+          "dados",
+          "situacao"
         ],
         "title": "AlertaLer"
       },
@@ -5070,72 +6214,6 @@
           "sentido"
         ],
         "title": "AusenciaLer"
-      },
-      "AvisoLer": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "viagem_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Viagem Id"
-          },
-          "estudante_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Estudante Id"
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo"
-          },
-          "mensagem": {
-            "type": "string",
-            "title": "Mensagem"
-          },
-          "criado_em": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Criado Em"
-          },
-          "lido_em": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Lido Em"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "viagem_id",
-          "estudante_id",
-          "tipo",
-          "mensagem",
-          "criado_em",
-          "lido_em"
-        ],
-        "title": "AvisoLer"
       },
       "Body_enviar_foto_estudantes__estudante_id__foto_put": {
         "properties": {
@@ -5254,6 +6332,47 @@
           "viagem"
         ],
         "title": "ConclusaoResultado"
+      },
+      "ConfiguracaoAtualizar": {
+        "properties": {
+          "valores": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "maxProperties": 50,
+            "minProperties": 1,
+            "title": "Valores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valores"
+        ],
+        "title": "ConfiguracaoAtualizar"
+      },
+      "ConfiguracaoLer": {
+        "properties": {
+          "chave": {
+            "type": "string",
+            "title": "Chave"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chave",
+          "valor",
+          "descricao"
+        ],
+        "title": "ConfiguracaoLer"
       },
       "Consentimento": {
         "properties": {
@@ -5460,6 +6579,32 @@
         ],
         "title": "Correcao"
       },
+      "DispositivoCriar": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 20,
+            "pattern": "^[^\\s\\x00]+$",
+            "title": "Token"
+          },
+          "plataforma": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios",
+              "web"
+            ],
+            "title": "Plataforma"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "plataforma"
+        ],
+        "title": "DispositivoCriar"
+      },
       "DocumentoVencendo": {
         "properties": {
           "usuario_id": {
@@ -5498,6 +6643,48 @@
           "dias_restantes"
         ],
         "title": "DocumentoVencendo"
+      },
+      "Emergencia": {
+        "properties": {
+          "observacao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300,
+                "pattern": "^[^\\x00]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observacao"
+          }
+        },
+        "type": "object",
+        "title": "Emergencia"
+      },
+      "EmergenciaResultado": {
+        "properties": {
+          "alerta_id": {
+            "type": "integer",
+            "title": "Alerta Id"
+          },
+          "gestores_avisados": {
+            "type": "integer",
+            "title": "Gestores Avisados"
+          },
+          "responsaveis_avisados": {
+            "type": "integer",
+            "title": "Responsaveis Avisados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alerta_id",
+          "gestores_avisados",
+          "responsaveis_avisados"
+        ],
+        "title": "EmergenciaResultado"
       },
       "Escala": {
         "properties": {
@@ -6848,6 +8035,90 @@
         ],
         "title": "MotoristasPagina"
       },
+      "NotificacaoLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "mensagem": {
+            "type": "string",
+            "title": "Mensagem"
+          },
+          "viagem_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viagem Id"
+          },
+          "estudante_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estudante Id"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "enviada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enviada Em"
+          },
+          "lido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "titulo",
+          "mensagem",
+          "viagem_id",
+          "estudante_id",
+          "criado_em",
+          "enviada_em",
+          "lido_em"
+        ],
+        "title": "NotificacaoLer"
+      },
       "OnibusDoFilho": {
         "properties": {
           "placa": {
@@ -6959,6 +8230,14 @@
           "raio_cerca_m": {
             "type": "integer",
             "title": "Raio Cerca M"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
           }
         },
         "type": "object",
@@ -6967,7 +8246,9 @@
           "ordem",
           "nome",
           "horario_previsto",
-          "raio_cerca_m"
+          "raio_cerca_m",
+          "latitude",
+          "longitude"
         ],
         "title": "ParadaDaViagem"
       },
@@ -7346,6 +8627,91 @@
         ],
         "title": "RefreshTokenEntrada"
       },
+      "RegistroDeAuditoria": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Em"
+          },
+          "usuario_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usuario Id"
+          },
+          "acao": {
+            "type": "string",
+            "title": "Acao"
+          },
+          "recurso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurso"
+          },
+          "recurso_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurso Id"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "detalhes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "em",
+          "usuario_id",
+          "acao",
+          "recurso",
+          "recurso_id",
+          "ip",
+          "detalhes"
+        ],
+        "title": "RegistroDeAuditoria"
+      },
       "ResultadoDoEvento": {
         "properties": {
           "id": {
@@ -7694,6 +9060,64 @@
           "volta"
         ],
         "title": "Sentido"
+      },
+      "SessaoLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criada Em"
+          },
+          "expira_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expira Em"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "criada_em",
+          "expira_em",
+          "ip",
+          "user_agent"
+        ],
+        "title": "SessaoLer",
+        "description": "Um aparelho conectado. Nunca inclui o token."
+      },
+      "Severidade": {
+        "type": "string",
+        "enum": [
+          "critico",
+          "aviso"
+        ],
+        "title": "Severidade"
       },
       "StatusAluno": {
         "type": "string",

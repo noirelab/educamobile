@@ -100,3 +100,11 @@ def test_so_admin_cria_usuario(client, cabecalhos, perfil):
 def test_senha_curta_rejeitada():
     with pytest.raises(ValidationError):
         UsuarioCriar(nome="D", email="d@exemplo.com", senha="curta", perfil=Perfil.ADMIN)
+
+
+def test_comandos_de_linha_importam():
+    """O script de criar o primeiro admin já quebrou em silêncio quando um schema mudou."""
+    import importlib
+
+    for modulo in ("app.criar_admin", "app.gerar_viagens", "app.worker"):
+        importlib.import_module(modulo)

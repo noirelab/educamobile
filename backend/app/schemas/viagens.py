@@ -98,6 +98,9 @@ class ParadaDaViagem(BaseModel):
     nome: str
     horario_previsto: time | None
     raio_cerca_m: int
+    # A parada é um ponto de rua, não a casa de ninguém: o app do motorista a usa para navegar.
+    latitude: float
+    longitude: float
 
 
 class ListaDaViagem(BaseModel):

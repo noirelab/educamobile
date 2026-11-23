@@ -4,6 +4,158 @@
  */
 
 export interface paths {
+    "/alertas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar
+         * @description Por padrão, os que ainda não foram resolvidos (abertos e reconhecidos).
+         */
+        get: operations["listar_alertas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alertas/{alerta_id}/reconhecer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reconhecer */
+        post: operations["reconhecer_alertas__alerta_id__reconhecer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alertas/{alerta_id}/resolver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolver */
+        post: operations["resolver_alertas__alerta_id__resolver_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/configuracao/alertas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ler Configuracao */
+        get: operations["ler_configuracao_configuracao_alertas_get"];
+        /** Atualizar Configuracao */
+        put: operations["atualizar_configuracao_configuracao_alertas_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/emergencia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emergencia
+         * @description Motorista ou monitor aciona. Cria o alerta crítico e as notificações e responde na hora:
+         *     o envio do push fica com o worker, acordado logo depois do commit.
+         */
+        post: operations["emergencia_viagens__viagem_id__emergencia_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dispositivos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar Dispositivo
+         * @description Registra o token de push do aparelho. O mesmo token passa a valer para quem o enviou por
+         *     último (um aparelho que troca de dono não recebe o que é do dono antigo).
+         */
+        post: operations["registrar_dispositivo_dispositivos_post"];
+        /**
+         * Remover Dispositivo
+         * @description Chamado no logout do app: aquele aparelho deixa de receber push desta conta.
+         */
+        delete: operations["remover_dispositivo_dispositivos_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Minhas Notificacoes */
+        get: operations["minhas_notificacoes_notificacoes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes/{notificacao_id}/lida": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marcar Lida */
+        post: operations["marcar_lida_notificacoes__notificacao_id__lida_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -73,6 +225,43 @@ export interface paths {
          */
         post: operations["logout_todos_auth_logout_todos_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sessoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Sessoes
+         * @description Aparelhos conectados à conta, do mais recente ao mais antigo.
+         */
+        get: operations["listar_sessoes_auth_sessoes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sessoes/{sessao_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revogar Sessao */
+        delete: operations["revogar_sessao_auth_sessoes__sessao_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -674,6 +863,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auditoria": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consultar */
+        get: operations["consultar_auditoria_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relatorios/viagens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Relatório de viagens */
+        get: operations["relatorio_viagens_relatorios_viagens_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relatorios/pontualidade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Relatório de pontualidade */
+        get: operations["relatorio_pontualidade_relatorios_pontualidade_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relatorios/ausencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Relatório de ausencias */
+        get: operations["relatorio_ausencias_relatorios_ausencias_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/relatorios/ocorrencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Relatório de ocorrencias */
+        get: operations["relatorio_ocorrencias_relatorios_ocorrencias_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rotas": {
         parameters: {
             query?: never;
@@ -1110,60 +1384,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/alertas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar Alertas */
-        get: operations["listar_alertas_alertas_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/alertas/{alerta_id}/resolver": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Resolver Alerta */
-        post: operations["resolver_alerta_alertas__alerta_id__resolver_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/responsavel/avisos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Meus Avisos
-         * @description Avisos só dos filhos com consentimento registrado.
-         */
-        get: operations["meus_avisos_responsavel_avisos_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/health": {
         parameters: {
             query?: never;
@@ -1202,8 +1422,22 @@ export interface components {
              * Format: date-time
              */
             criado_em: string;
+            /** Reconhecido Em */
+            reconhecido_em: string | null;
+            /** Reconhecido Por Id */
+            reconhecido_por_id: number | null;
             /** Resolvido Em */
             resolvido_em: string | null;
+            /** Resolvido Por Id */
+            resolvido_por_id: number | null;
+            /** Resolvido Automaticamente */
+            resolvido_automaticamente: boolean;
+            /** Dados */
+            dados: {
+                [key: string]: unknown;
+            } | null;
+            /** Situacao */
+            readonly situacao: string;
         };
         /** AusenciaCriar */
         AusenciaCriar: {
@@ -1228,26 +1462,6 @@ export interface components {
              */
             data: string;
             sentido: components["schemas"]["Sentido"] | null;
-        };
-        /** AvisoLer */
-        AvisoLer: {
-            /** Id */
-            id: number;
-            /** Viagem Id */
-            viagem_id: number | null;
-            /** Estudante Id */
-            estudante_id: number | null;
-            /** Tipo */
-            tipo: string;
-            /** Mensagem */
-            mensagem: string;
-            /**
-             * Criado Em
-             * Format: date-time
-             */
-            criado_em: string;
-            /** Lido Em */
-            lido_em: string | null;
         };
         /** Body_enviar_foto_estudantes__estudante_id__foto_put */
         Body_enviar_foto_estudantes__estudante_id__foto_put: {
@@ -1292,6 +1506,22 @@ export interface components {
         /** ConclusaoResultado */
         ConclusaoResultado: {
             viagem: components["schemas"]["ViagemLer"];
+        };
+        /** ConfiguracaoAtualizar */
+        ConfiguracaoAtualizar: {
+            /** Valores */
+            valores: {
+                [key: string]: number;
+            };
+        };
+        /** ConfiguracaoLer */
+        ConfiguracaoLer: {
+            /** Chave */
+            chave: string;
+            /** Valor */
+            valor: number;
+            /** Descricao */
+            descricao: string;
         };
         /** Consentimento */
         Consentimento: {
@@ -1380,6 +1610,16 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** DispositivoCriar */
+        DispositivoCriar: {
+            /** Token */
+            token: string;
+            /**
+             * Plataforma
+             * @enum {string}
+             */
+            plataforma: "android" | "ios" | "web";
+        };
         /** DocumentoVencendo */
         DocumentoVencendo: {
             /** Usuario Id */
@@ -1401,6 +1641,20 @@ export interface components {
              * @description Negativo quando já venceu
              */
             dias_restantes: number;
+        };
+        /** Emergencia */
+        Emergencia: {
+            /** Observacao */
+            observacao?: string | null;
+        };
+        /** EmergenciaResultado */
+        EmergenciaResultado: {
+            /** Alerta Id */
+            alerta_id: number;
+            /** Gestores Avisados */
+            gestores_avisados: number;
+            /** Responsaveis Avisados */
+            responsaveis_avisados: number;
         };
         /**
          * Escala
@@ -1869,6 +2123,30 @@ export interface components {
             /** Itens */
             itens: components["schemas"]["MotoristaResumo"][];
         };
+        /** NotificacaoLer */
+        NotificacaoLer: {
+            /** Id */
+            id: number;
+            /** Tipo */
+            tipo: string;
+            /** Titulo */
+            titulo: string;
+            /** Mensagem */
+            mensagem: string;
+            /** Viagem Id */
+            viagem_id: number | null;
+            /** Estudante Id */
+            estudante_id: number | null;
+            /**
+             * Criado Em
+             * Format: date-time
+             */
+            criado_em: string;
+            /** Enviada Em */
+            enviada_em: string | null;
+            /** Lido Em */
+            lido_em: string | null;
+        };
         /** OnibusDoFilho */
         OnibusDoFilho: {
             /** Placa */
@@ -1900,6 +2178,10 @@ export interface components {
             horario_previsto: string | null;
             /** Raio Cerca M */
             raio_cerca_m: number;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
         };
         /** ParadaDoFilho */
         ParadaDoFilho: {
@@ -2029,6 +2311,30 @@ export interface components {
             /** Refresh Token */
             refresh_token: string;
         };
+        /** RegistroDeAuditoria */
+        RegistroDeAuditoria: {
+            /** Id */
+            id: number;
+            /**
+             * Em
+             * Format: date-time
+             */
+            em: string;
+            /** Usuario Id */
+            usuario_id: number | null;
+            /** Acao */
+            acao: string;
+            /** Recurso */
+            recurso: string | null;
+            /** Recurso Id */
+            recurso_id: string | null;
+            /** Ip */
+            ip: string | null;
+            /** Detalhes */
+            detalhes: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** ResultadoDoEvento */
         ResultadoDoEvento: {
             /**
@@ -2121,6 +2427,33 @@ export interface components {
          * @enum {string}
          */
         Sentido: "ida" | "volta";
+        /**
+         * SessaoLer
+         * @description Um aparelho conectado. Nunca inclui o token.
+         */
+        SessaoLer: {
+            /** Id */
+            id: number;
+            /**
+             * Criada Em
+             * Format: date-time
+             */
+            criada_em: string;
+            /**
+             * Expira Em
+             * Format: date-time
+             */
+            expira_em: string;
+            /** Ip */
+            ip: string | null;
+            /** User Agent */
+            user_agent: string | null;
+        };
+        /**
+         * Severidade
+         * @enum {string}
+         */
+        Severidade: "critico" | "aviso";
         /**
          * StatusAluno
          * @enum {string}
@@ -2396,6 +2729,316 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listar_alertas_get: {
+        parameters: {
+            query?: {
+                abertos?: boolean;
+                tipo?: string | null;
+                severidade?: components["schemas"]["Severidade"] | null;
+                viagem_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertaLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reconhecer_alertas__alerta_id__reconhecer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alerta_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertaLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolver_alertas__alerta_id__resolver_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alerta_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertaLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ler_configuracao_configuracao_alertas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfiguracaoLer"][];
+                };
+            };
+        };
+    };
+    atualizar_configuracao_configuracao_alertas_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfiguracaoAtualizar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfiguracaoLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    emergencia_viagens__viagem_id__emergencia_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Emergencia"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergenciaResultado"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registrar_dispositivo_dispositivos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DispositivoCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remover_dispositivo_dispositivos_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DispositivoCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    minhas_notificacoes_notificacoes_get: {
+        parameters: {
+            query?: {
+                nao_lidas?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificacaoLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    marcar_lida_notificacoes__notificacao_id__lida_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificacao_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     login_auth_login_post: {
         parameters: {
             query?: never;
@@ -2508,6 +3151,55 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listar_sessoes_auth_sessoes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessaoLer"][];
+                };
+            };
+        };
+    };
+    revogar_sessao_auth_sessoes__sessao_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessao_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
@@ -4115,6 +4807,184 @@ export interface operations {
             };
         };
     };
+    consultar_auditoria_get: {
+        parameters: {
+            query?: {
+                usuario_id?: number | null;
+                acao?: string | null;
+                recurso?: string | null;
+                recurso_id?: string | null;
+                desde?: string | null;
+                ate?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistroDeAuditoria"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    relatorio_viagens_relatorios_viagens_get: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                rota_id?: number | null;
+                escola_id?: number | null;
+                formato?: "json" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    relatorio_pontualidade_relatorios_pontualidade_get: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                rota_id?: number | null;
+                escola_id?: number | null;
+                formato?: "json" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    relatorio_ausencias_relatorios_ausencias_get: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                rota_id?: number | null;
+                escola_id?: number | null;
+                formato?: "json" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    relatorio_ocorrencias_relatorios_ocorrencias_get: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                rota_id?: number | null;
+                escola_id?: number | null;
+                formato?: "json" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     listar_rotas_rotas_get: {
         parameters: {
             query?: {
@@ -5155,102 +6025,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConclusaoResultado"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    listar_alertas_alertas_get: {
-        parameters: {
-            query?: {
-                abertos?: boolean;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertaLer"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    resolver_alerta_alertas__alerta_id__resolver_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                alerta_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertaLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    meus_avisos_responsavel_avisos_get: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AvisoLer"][];
                 };
             };
             /** @description Validation Error */

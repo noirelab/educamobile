@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 
 from app import auditoria, fotos, rastreamento, viagens
 from app.cadastros import Db, Deslocamento, IdRota, Limite
+from app.geo import de_ponto
 from app.models import (
     Estudante,
     EventoViagem,
@@ -265,6 +266,8 @@ def lista(viagem_id: IdRota, db: Db, usuario: Equipe) -> ListaDaViagem:
                 nome=p.nome,
                 horario_previsto=p.horario_previsto,
                 raio_cerca_m=p.raio_cerca_m,
+                latitude=de_ponto(p.localizacao).latitude,
+                longitude=de_ponto(p.localizacao).longitude,
             )
             for p in paradas.values()
         ],

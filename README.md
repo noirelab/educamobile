@@ -53,8 +53,38 @@ uv run alembic revision --autogenerate -m "descrição"   # após mudar app/mode
 
 Os testes precisam do banco no ar. Cada execução cria um banco próprio e o remove ao final.
 
+## Simulador e teste de carga
+
+Dois scripts em `backend/tools/` reproduzem o que os aplicativos fariam, sem ninguém andar de ônibus. Servem para teste, para a demonstração e para o frontend trabalhar com dados vivos.
+
+```sh
+cd backend
+# Um ônibus: entra como motorista, inicia a viagem do dia, anda pelas paradas, embarca e conclui.
+uv run python -m tools.simulador --api http://localhost:8000 --email motorista@exemplo.com --senha ... \
+    --velocidade 20 [--sem-sinal] [--desvio] [--crianca-a-bordo]
+
+# Carga: cria N ônibus com motorista, veículo, rota e aluno, inicia as viagens e mede.
+uv run python -m tools.carga --api http://localhost:8000 --admin-email admin@exemplo.com --admin-senha ... \
+    --onibus 50 --paineis 5 --responsaveis 20 --duracao 60
+```
+
+- `--sem-sinal`: para de enviar no meio do trajeto e manda tudo de uma vez depois (modo offline).
+- `--desvio`: sai do trajeto previsto num trecho (alerta de desvio de rota).
+- `--crianca-a-bordo`: não registra um desembarque; a API recusa concluir a viagem e mostra quem falta.
+
+**Números medidos** (uma máquina de desenvolvimento com 8 núcleos e 16 GB, API com um único processo `uvicorn`, PostgreSQL e Redis em contêiner, 60 s de teste, sem o worker rodando):
+
+| 50 ônibus, 1 posição a cada 5 s | Resultado |
+| --- | --- |
+| POST de posição (600 requisições) | 0 erros; p50 12 ms, p95 21 ms, p99 40 ms |
+| Mensagens entregues por WebSocket (5 painéis na frota e 20 responsáveis, 3234 mensagens) | 0 inscrições recusadas; atraso do envio até a chegada p50 11 ms, p95 20 ms, p99 38 ms |
+
+É um teste de capacidade de uma máquina só, com clientes e servidor juntos; ele não substitui a medição no ambiente de produção.
+
 ## Documentação
 
-- `docs/tarefas.md`: tarefas do quadro
+- `docs/tempo-real.md`: posições, WebSocket, worker, alertas, push e relatórios
+- `docs/lgpd.md`: dados guardados, prazos e consentimento
+- `docs/tarefas.md` (obsoleto): tarefas do quadro anterior
 - `docs/modelo-er.md`: modelo de dados e decisões
 - `docs/autenticacao.md`: login, perfis e permissões
