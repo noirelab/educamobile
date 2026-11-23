@@ -139,6 +139,8 @@ class Veiculo(Base):
     ano: Mapped[int]
     vistoria_valida_ate: Mapped[date]
     ativo: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
+    # Hash do token que um rastreador veicular usa para enviar posições. Nulo: sem rastreador.
+    token_rastreador_hash: Mapped[str | None] = mapped_column(unique=True)
 
 
 class Motorista(Base):
@@ -389,6 +391,9 @@ class ViagemParada(Base):
     localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=False)
     horario_previsto: Mapped[time | None]
     raio_cerca_m: Mapped[int]
+    # Detectados pela posição do ônibus: entrou na cerca da parada e depois saiu dela.
+    chegada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    partida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ViagemAluno(Base):
@@ -476,3 +481,25 @@ class Aviso(Base):
     mensagem: Mapped[str]
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     lido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Posicao(Base):
+    """Posição do ônibus durante a viagem. A última de cada viagem também fica no Redis."""
+
+    __tablename__ = "posicao"
+    __table_args__ = (
+        UniqueConstraint("viagem_id", "registrada_em"),
+        Index("ix_posicao_viagem_registrada", "viagem_id", "registrada_em"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    viagem_id: Mapped[int] = mapped_column(ForeignKey("viagem.id", ondelete="CASCADE"))
+    registrada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    recebida_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=False)
+    velocidade_kmh: Mapped[float | None]
+    precisao_m: Mapped[float | None]
+    # aparelho do motorista ou rastreador do veículo.
+    fonte: Mapped[str] = mapped_column(default="aparelho", server_default=text("'aparelho'"))

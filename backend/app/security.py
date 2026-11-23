@@ -62,9 +62,8 @@ def invalidar_tokens_de_acesso(usuario: Usuario) -> None:
     usuario.sessoes_validas_desde = datetime.now(UTC)
 
 
-def usuario_atual(
-    token: Annotated[str, Depends(_oauth2)], db: Annotated[Session, Depends(get_db)]
-) -> Usuario:
+def autenticar_token(token: str, db: Session) -> tuple[Usuario, float]:
+    """Valida o token de acesso e devolve o usuário e o instante (epoch) em que ele vence."""
     invalido = HTTPException(
         status.HTTP_401_UNAUTHORIZED,
         "Credenciais inválidas",
@@ -81,6 +80,7 @@ def usuario_atual(
             raise invalido
         usuario_id = int(payload["sub"])
         emitido_em = float(payload["iat"])
+        vence_em = float(payload["exp"])
     except (jwt.PyJWTError, ValueError, TypeError) as erro:
         raise invalido from erro
     usuario = db.get(Usuario, usuario_id)
@@ -88,7 +88,13 @@ def usuario_atual(
         raise invalido
     if emitido_em < usuario.sessoes_validas_desde.timestamp():
         raise invalido
-    return usuario
+    return usuario, vence_em
+
+
+def usuario_atual(
+    token: Annotated[str, Depends(_oauth2)], db: Annotated[Session, Depends(get_db)]
+) -> Usuario:
+    return autenticar_token(token, db)[0]
 
 
 UsuarioAtual = Annotated[Usuario, Depends(usuario_atual)]

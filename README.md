@@ -12,6 +12,7 @@ docker compose exec api .venv/bin/python -m app.criar_admin admin@exemplo.com "A
 
 - API: http://localhost:8000
 - Swagger: http://localhost:8000/docs
+- Redis: só dentro da rede do Docker (última posição dos ônibus e tempo real)
 - Banco: `localhost:5433` (a porta muda com `DB_PORT` no `.env`)
 
 As migrações rodam sozinhas quando a API sobe.

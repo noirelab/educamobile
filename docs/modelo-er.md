@@ -24,6 +24,7 @@ erDiagram
     VIAGEM ||--o{ VIAGEM_ALUNO : "lista do motorista"
     VIAGEM ||--o{ EVENTO_VIAGEM : registra
     VIAGEM ||--o{ ALERTA : gera
+    VIAGEM ||--o{ POSICAO : percorre
     USUARIO ||--o{ AVISO : recebe
 
     ESCOLA { int id PK
@@ -111,6 +112,12 @@ erDiagram
         int autor_id FK
         string justificativa
         string anomalia }
+    POSICAO { int id PK
+        int viagem_id FK
+        timestamptz registrada_em
+        point localizacao
+        float velocidade_kmh
+        string fonte }
     ALERTA { int id PK
         int viagem_id FK
         string tipo
@@ -174,4 +181,5 @@ erDiagram
 - **Lista copiada no início.** Ao iniciar, `ViagemParada` e `ViagemAluno` são cópias da rota e das inscrições do dia; editar a rota depois não muda a lista que o motorista tem na mão.
 - **Eventos imutáveis.** `evento_viagem` recusa UPDATE e DELETE por trigger no banco. O id vem do aparelho (reenviar não duplica) e o status do aluno é derivado dos eventos pela hora do aparelho, então eventos atrasados do modo offline terminam no estado certo. Correção é um novo evento do gestor, com motivo.
 - **Conclusão segura (R2).** A viagem só termina com todo aluno em estado final e o evento `onibus_vazio` posterior ao último movimento. Sair da cerca da escola com criança a bordo, na ida, abre alerta crítico mesmo sem ninguém tentar concluir.
+- **Posição ao vivo no Redis.** A tabela `posicao` guarda o histórico (índice em `viagem_id, registrada_em`); a última de cada viagem fica no Redis para o painel e o responsável lerem sem pesar no banco. Ver `docs/tempo-real.md`.
 - **Removidos na etapa A:** polos, turmas, professores, matrículas, transferências e frequência, e os perfis `diretor` e `coordenador`.

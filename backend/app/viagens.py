@@ -14,7 +14,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import habilitacao
+from app import habilitacao, tempo_real
 from app.geo import Coordenadas, para_ponto
 from app.models import (
     STATUS_FINAIS,
@@ -198,6 +198,15 @@ def iniciar(db: Session, viagem: Viagem, hoje: date) -> None:
     viagem.status = StatusViagem.EM_ANDAMENTO
     viagem.iniciada_em = agora()
     db.flush()
+    _avisar_status(db, viagem)
+
+
+def _avisar_status(db: Session, viagem: Viagem) -> None:
+    tempo_real.enfileirar(
+        db,
+        viagem.id,
+        {"tipo": "viagem_status", "viagem_id": viagem.id, "status": viagem.status.value},
+    )
 
 
 # Eventos
@@ -356,6 +365,17 @@ def alertar(
 ) -> Alerta:
     alerta = Alerta(viagem_id=viagem.id, tipo=tipo, severidade=severidade, mensagem=mensagem)
     db.add(alerta)
+    tempo_real.enfileirar(
+        db,
+        viagem.id,
+        {
+            "tipo": "alerta",
+            "viagem_id": viagem.id,
+            "alerta": tipo,
+            "severidade": severidade.value,
+            "mensagem": mensagem,
+        },
+    )
     return alerta
 
 
@@ -385,7 +405,19 @@ def recalcular(db: Session, viagem_id: int, estudante_ids: set[int]) -> None:
                 atual = e.status_corrigido or atual
             else:
                 atual = _STATUS_DO_TIPO[e.tipo]
-        aluno.status = atual
+        if aluno.status != atual:
+            aluno.status = atual
+            # Só o responsável desse aluno recebe: o repasse filtra por estudante_id.
+            tempo_real.enfileirar(
+                db,
+                viagem_id,
+                {
+                    "tipo": "aluno",
+                    "viagem_id": viagem_id,
+                    "estudante_id": estudante_id,
+                    "status": atual.value,
+                },
+            )
     db.flush()
 
 
@@ -469,6 +501,7 @@ def concluir(db: Session, viagem: Viagem) -> None:
     viagem.status = StatusViagem.CONCLUIDA
     viagem.concluida_em = agora()
     db.flush()
+    _avisar_status(db, viagem)
 
 
 # Cerca da escola (chamado pela posição do ônibus)
@@ -576,6 +609,7 @@ def cancelar(db: Session, viagem: Viagem, gestor: Usuario, motivo: str) -> int:
             )
         )
     db.flush()
+    _avisar_status(db, viagem)
     return len(destinatarios)
 
 

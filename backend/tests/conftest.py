@@ -105,6 +105,14 @@ def banco_de_teste() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
+def redis_limpo() -> None:
+    """Última posição e pub/sub vivem no Redis: cada teste começa sem nada dos anteriores."""
+    from app import tempo_real
+
+    tempo_real.cliente().flushdb()
+
+
+@pytest.fixture(autouse=True)
 def limites_zerados(monkeypatch) -> None:
     """Todos os testes vêm do mesmo cliente; sem isso, o limite por IP vazaria entre eles."""
     from app.limite import LimiteEmMemoria

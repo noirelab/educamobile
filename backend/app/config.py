@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # Corpo maior que isso recebe 413 antes de ser lido.
     max_corpo_bytes: int = Field(default=1_000_000, ge=10_000)
     # Onde ficam as fotos dos estudantes. Em produção, um volume fora da imagem.
+    redis_url: str = "redis://localhost:6379/0"
+    # Os horários previstos das paradas são hora do relógio local.
+    fuso_horario: str = "America/Sao_Paulo"
     fotos_dir: str = "fotos"
     foto_url_validade_s: int = Field(default=300, ge=30, le=3600)
 

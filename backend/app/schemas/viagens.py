@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime, time
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
@@ -95,6 +95,8 @@ class ParadaDaViagem(BaseModel):
 
 class ListaDaViagem(BaseModel):
     viagem: ViagemLer
+    # "desembarque" quando o ônibus chegou à escola (ida) ou saiu dela (volta).
+    modo: Literal["embarque", "desembarque"]
     paradas: list[ParadaDaViagem]
     alunos: list[ItemDaLista]
 

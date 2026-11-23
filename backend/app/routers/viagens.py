@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import func, select
 
-from app import auditoria, fotos, viagens
+from app import auditoria, fotos, rastreamento, viagens
 from app.cadastros import Db, Deslocamento, IdRota, Limite
 from app.models import (
     Alerta,
@@ -262,6 +262,7 @@ def lista(viagem_id: IdRota, db: Db, usuario: Equipe) -> ListaDaViagem:
     itens.sort(key=lambda i: (i.ordem is None, i.ordem or 0, i.nome))
     return ListaDaViagem(
         viagem=_ler(db, viagem),
+        modo=rastreamento.modo_da_lista(db, viagem),
         paradas=[
             ParadaDaViagem(
                 parada_id=p.parada_id,

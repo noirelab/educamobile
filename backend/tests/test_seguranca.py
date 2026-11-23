@@ -172,6 +172,8 @@ _ROTAS_DE_CONTA = {
     ("GET", "/auth/me"),
     ("GET", "/health"),
     ("GET", "/fotos/{token}"),
+    # Autentica por token de veículo no cabeçalho, não por usuário.
+    ("POST", "/rastreador/posicoes"),
 }
 
 
@@ -181,6 +183,9 @@ _ROTAS_DA_EQUIPE = {
     ("GET", "/viagens/{viagem_id}/lista"),
     ("POST", "/viagens/{viagem_id}/eventos"),
     ("POST", "/viagens/{viagem_id}/concluir"),
+    ("GET", "/viagens/{viagem_id}/posicao"),
+    ("GET", "/viagens/{viagem_id}/percurso"),
+    ("POST", "/viagens/{viagem_id}/posicoes"),
 }
 
 
