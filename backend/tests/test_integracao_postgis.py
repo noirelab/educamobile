@@ -96,4 +96,9 @@ def test_st_contains_nao_confunde_latitude_com_longitude(db):
 def test_indices_espaciais_existem(db):
     consulta = text("SELECT indexname FROM pg_indexes WHERE indexdef ILIKE '%USING gist%'")
     nomes = set(db.scalars(consulta))
-    assert {"idx_escola_localizacao", "idx_parada_localizacao"} <= nomes
+    assert {
+        "idx_escola_localizacao",
+        "idx_parada_localizacao",
+        "idx_estudante_localizacao",
+        "idx_rota_trajeto",
+    } <= nomes

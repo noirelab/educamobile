@@ -16,6 +16,8 @@ docker compose exec api .venv/bin/python -m app.criar_admin admin@exemplo.com "A
 
 As migrações rodam sozinhas quando a API sobe.
 
+A reformulação recomeçou as migrações do zero (migração `0001`). Quem já tinha um banco local precisa recriá-lo: `docker compose down -v` e subir de novo. Isso apaga os dados locais.
+
 ## Frontend
 
 Com a API no ar, o serviço `web` sobe a interface em produção (nginx):
