@@ -12,12 +12,13 @@ import time
 
 import redis
 
-from app import alertas, notificacoes, tempo_real
+from app import alertas, notificacoes, retencao, sessoes, tempo_real
 from app.db import SessionLocal
 
 log = logging.getLogger("worker")
 CICLO_S = 5
 REGRAS_A_CADA_S = 15
+MANUTENCAO_A_CADA_S = 3600
 
 
 def ciclo(enviador: notificacoes.Enviador, rodar_regras: bool) -> None:
@@ -28,11 +29,21 @@ def ciclo(enviador: notificacoes.Enviador, rodar_regras: bool) -> None:
         db.commit()
 
 
+def manutencao() -> None:
+    """Limpezas de rotina: sessões antigas e prazos de guarda (LGPD)."""
+    with SessionLocal() as db:
+        apagadas = sessoes.limpar_antigas(db)
+        saiu = retencao.executar(db)
+        db.commit()
+    log.info("manutenção: %s sessões antigas; retenção: %s", apagadas, saiu)
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     enviador = notificacoes.obter_enviador()
     log.info("worker iniciado (%s)", type(enviador).__name__)
     ultima_regra = 0.0
+    ultima_manutencao = float("-inf")
     while True:
         try:
             agora = time.monotonic()
@@ -40,6 +51,9 @@ def main() -> None:
             if rodar:
                 ultima_regra = agora
             ciclo(enviador, rodar)
+            if agora - ultima_manutencao >= MANUTENCAO_A_CADA_S:
+                ultima_manutencao = agora
+                manutencao()
         except Exception:
             log.exception("falha no ciclo do worker")
         try:

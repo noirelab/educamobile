@@ -7,7 +7,7 @@ cópia: todas as sessões da pessoa são revogadas e os tokens de acesso deixam 
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, Request, status
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app import auditoria
@@ -16,6 +16,10 @@ from app.models import Sessao, Usuario
 from app.security import hash_refresh_token, invalidar_tokens_de_acesso, novo_refresh_token
 
 MAX_USER_AGENT = 300
+# Aparelhos conectados ao mesmo tempo. O mais antigo cai quando passa disso.
+MAX_SESSOES_ATIVAS = 10
+# Sessões expiradas ou revogadas há mais que isso são apagadas pelo worker.
+GUARDA_DE_SESSOES = timedelta(days=30)
 
 
 def _nao_autorizado() -> HTTPException:
@@ -36,7 +40,49 @@ def criar(db: Session, usuario: Usuario, request: Request) -> tuple[Sessao, str]
     )
     db.add(sessao)
     db.flush()
+    _limitar_ativas(db, usuario.id)
     return sessao, token
+
+
+def _ativas(usuario_id: int, agora: datetime):
+    return select(Sessao).where(
+        Sessao.usuario_id == usuario_id, Sessao.revogada_em.is_(None), Sessao.expira_em > agora
+    )
+
+
+def _limitar_ativas(db: Session, usuario_id: int) -> None:
+    agora = datetime.now(UTC)
+    ativas = db.scalars(_ativas(usuario_id, agora).order_by(Sessao.criada_em, Sessao.id)).all()
+    for antiga in ativas[: max(0, len(ativas) - MAX_SESSOES_ATIVAS)]:
+        antiga.revogada_em = agora
+
+
+def listar_ativas(db: Session, usuario: Usuario) -> list[Sessao]:
+    return list(
+        db.scalars(
+            _ativas(usuario.id, datetime.now(UTC)).order_by(
+                Sessao.criada_em.desc(), Sessao.id.desc()
+            )
+        )
+    )
+
+
+def revogar_uma(db: Session, usuario: Usuario, sessao_id: int) -> bool:
+    """Revoga um aparelho da própria conta. Sessão de outra pessoa é igual a inexistente."""
+    sessao = db.get(Sessao, sessao_id)
+    if sessao is None or sessao.usuario_id != usuario.id or sessao.revogada_em is not None:
+        return False
+    sessao.revogada_em = datetime.now(UTC)
+    return True
+
+
+def limpar_antigas(db: Session, agora: datetime | None = None) -> int:
+    """Apaga o que expirou ou foi revogado há mais de 30 dias. Devolve quantas linhas."""
+    limite = (agora or datetime.now(UTC)) - GUARDA_DE_SESSOES
+    resultado = db.execute(
+        delete(Sessao).where((Sessao.expira_em < limite) | (Sessao.revogada_em < limite))
+    )
+    return resultado.rowcount or 0
 
 
 def revogar_todas(db: Session, usuario: Usuario) -> None:

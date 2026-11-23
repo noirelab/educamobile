@@ -13,6 +13,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import consentimento
 from app.config import settings
 from app.db import get_db
 from app.models import PERFIS_INTERNOS, Perfil, ResponsavelEstudante, Usuario
@@ -133,6 +134,7 @@ def garantir_responsavel(
     )
     if vinculo is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Estudante não encontrado")
-    if exigir_consentimento and vinculo.consentimento_em is None:
+    if exigir_consentimento and not consentimento.esta_vigente(vinculo):
+        # Nunca consentiu ou o termo mudou desde então: em ambos, precisa aceitar de novo.
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Consentimento pendente")
     return vinculo

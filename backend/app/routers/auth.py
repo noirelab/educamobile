@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 from app import auditoria, sessoes
 from app.config import settings
 from app.db import get_db
-from app.limite import LimiteEmMemoria
+from app.limite import criar_limite
 from app.models import Convite, Perfil, ResponsavelEstudante, Usuario
-from app.schemas.auth import RefreshTokenEntrada, Token, TrocaSenha, UsuarioLer
+from app.schemas.auth import RefreshTokenEntrada, SessaoLer, Token, TrocaSenha, UsuarioLer
 from app.schemas.usuarios import ConviteAceitar
 from app.security import UsuarioAtual, criar_token, gerar_hash, hash_refresh_token, senha_confere
 
@@ -23,13 +23,13 @@ MAX_FALHAS_LOGIN = 10
 MAX_FALHAS_POR_IP = 30
 MAX_FALHAS_POR_CONTA = 50
 JANELA_LOGIN_S = 900
-limite_login = LimiteEmMemoria(maximo=MAX_FALHAS_LOGIN, janela_s=JANELA_LOGIN_S)
-limite_login_ip = LimiteEmMemoria(maximo=MAX_FALHAS_POR_IP, janela_s=JANELA_LOGIN_S)
-limite_login_conta = LimiteEmMemoria(maximo=MAX_FALHAS_POR_CONTA, janela_s=JANELA_LOGIN_S)
+limite_login = criar_limite("login", MAX_FALHAS_LOGIN, JANELA_LOGIN_S)
+limite_login_ip = criar_limite("login_ip", MAX_FALHAS_POR_IP, JANELA_LOGIN_S)
+limite_login_conta = criar_limite("login_conta", MAX_FALHAS_POR_CONTA, JANELA_LOGIN_S)
 # Troca de senha por quem já está logado: a senha atual também não pode ser adivinhada.
-limite_troca_senha = LimiteEmMemoria(maximo=5, janela_s=JANELA_LOGIN_S)
+limite_troca_senha = criar_limite("troca_senha", 5, JANELA_LOGIN_S)
 # Aceite de convite: o código é aleatório, mas o limite barra quem tenta adivinhar.
-limite_convite = LimiteEmMemoria(maximo=10, janela_s=JANELA_LOGIN_S)
+limite_convite = criar_limite("convite", 10, JANELA_LOGIN_S)
 
 
 def _muitas_tentativas() -> HTTPException:
@@ -112,6 +112,20 @@ def logout_todos(usuario: UsuarioAtual, request: Request, db: Db) -> None:
     """Encerra todas as sessões, por exemplo depois de perder o celular."""
     sessoes.revogar_todas(db, usuario)
     auditoria.registrar(db, "logout.todos", request=request, usuario=usuario)
+    db.commit()
+
+
+@router.get("/sessoes")
+def listar_sessoes(usuario: UsuarioAtual, db: Db) -> list[SessaoLer]:
+    """Aparelhos conectados à conta, do mais recente ao mais antigo."""
+    return [SessaoLer.model_validate(s) for s in sessoes.listar_ativas(db, usuario)]
+
+
+@router.delete("/sessoes/{sessao_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revogar_sessao(sessao_id: int, usuario: UsuarioAtual, request: Request, db: Db) -> None:
+    if not sessoes.revogar_uma(db, usuario, sessao_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Sessão não encontrada")
+    auditoria.registrar(db, "sessao.revogar", request=request, usuario=usuario, sessao_id=sessao_id)
     db.commit()
 
 

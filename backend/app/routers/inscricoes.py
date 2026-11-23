@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app import auditoria, viagens
+from app import auditoria, consentimento, viagens
 from app.cadastros import Db, IdRota
 from app.models import (
     Ausencia,
@@ -148,7 +148,7 @@ def minhas_ausencias(db: Db, usuario: Responsavel) -> list[AusenciaLer]:
     """Ausências de hoje em diante dos filhos do responsável."""
     filhos = select(ResponsavelEstudante.estudante_id).where(
         ResponsavelEstudante.responsavel_id == usuario.id,
-        ResponsavelEstudante.consentimento_em.is_not(None),
+        consentimento.vigente(),
     )
     consulta = (
         select(Ausencia)

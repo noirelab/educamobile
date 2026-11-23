@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     # Corpo maior que isso recebe 413 antes de ser lido.
     max_corpo_bytes: int = Field(default=1_000_000, ge=10_000)
     # Onde ficam as fotos dos estudantes. Em produção, um volume fora da imagem.
+    # "redis" compartilha os limites entre processos da API; produção exige.
+    limite_backend: Literal["memoria", "redis"] = "memoria"
     redis_url: str = "redis://localhost:6379/0"
     # Os horários previstos das paradas são hora do relógio local.
     fuso_horario: str = "America/Sao_Paulo"
@@ -48,6 +50,8 @@ class Settings(BaseSettings):
         if self.ambiente == "producao":
             if _SENHA_DE_BANCO_DE_EXEMPLO in self.database_url:
                 raise ValueError("A senha do banco ainda é a do .env.example")
+            if self.limite_backend != "redis":
+                raise ValueError("Em produção, LIMITE_BACKEND precisa ser redis")
             inseguras = [o for o in self.cors_origins if not o.startswith("https://")]
             if inseguras:
                 raise ValueError(f"Em produção, CORS só aceita origens https: {inseguras}")

@@ -104,3 +104,9 @@ Em qualquer ambiente, as respostas levam `X-Content-Type-Options: nosniff`, `X-F
 ## Convite de responsável
 
 Responsável não tem cadastro aberto. O gestor chama `POST /convites` com nome, e-mail, estudante e parentesco; a resposta traz o `codigo` uma única vez (o banco guarda só o hash, válido por 72 h). O responsável abre o link e chama `POST /auth/convites/{codigo}/aceitar` com a senha que escolheu. O convite cria a conta e o vínculo com o estudante e devolve os tokens. Depois do primeiro uso ele deixa de valer, e tentativas com código errado são limitadas por IP. O consentimento (LGPD, art. 14) continua pendente até o responsável aceitá-lo.
+
+## Sessões e limites
+
+- No máximo 10 aparelhos conectados por conta; ao passar disso, a sessão mais antiga é revogada. `GET /auth/sessoes` lista os aparelhos (sem token) e `DELETE /auth/sessoes/{id}` derruba um. O worker apaga sessões expiradas ou revogadas há mais de 30 dias.
+- O limite de tentativas (login, troca de senha, aceite de convite) e o limite geral de escritas (300 por minuto por token) e de posições (120 por minuto) usam o Redis quando `LIMITE_BACKEND=redis`, o que a produção exige: assim o bloqueio vale para todos os processos da API.
+- O logout derruba o refresh token na hora; o token de acesso do aparelho continua valendo até vencer (15 minutos). Uma lista de `jti` revogados no Redis fecharia essa janela, mas cada requisição passaria a consultá-la; para o risco atual (token de curta duração e `logout-todos` que invalida todos) a decisão é não adotá-la agora, e a avaliação fica registrada aqui.

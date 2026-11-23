@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import Settings, settings
+from app.limite import limitar_escrita
 from app.routers import (
     alertas,
     auth,
@@ -15,6 +16,7 @@ from app.routers import (
     motoristas,
     paradas,
     rastreamento,
+    registros,
     responsaveis,
     rotas,
     usuarios,
@@ -162,13 +164,15 @@ def criar_app(config: Settings = settings) -> FastAPI:
         veiculos,
         paradas,
         rastreamento,
+        registros,
         rotas,
         responsaveis,
         usuarios,
         viagens,
-        ws,
     ):
-        app.include_router(modulo.router)
+        app.include_router(modulo.router, dependencies=[Depends(limitar_escrita)])
+    # WebSocket fica de fora: a dependência de requisição HTTP não vale para ele.
+    app.include_router(ws.router)
 
     @app.get("/health", tags=["infra"])
     def health() -> dict[str, str]:

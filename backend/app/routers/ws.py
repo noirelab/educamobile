@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from app import tempo_real
+from app import consentimento, tempo_real
 from app.db import get_db
 from app.models import (
     Perfil,
@@ -62,7 +62,7 @@ def _filhos_na_viagem(db: Session, usuario: Usuario, viagem_id: int) -> set[int]
                 ViagemAluno.viagem_id == viagem_id,
                 ViagemAluno.status.in_([StatusAluno.AGUARDANDO, StatusAluno.EMBARCOU]),
                 ResponsavelEstudante.responsavel_id == usuario.id,
-                ResponsavelEstudante.consentimento_em.is_not(None),
+                consentimento.vigente(),
             )
         )
     )

@@ -170,6 +170,8 @@ _ROTAS_DE_CONTA = {
     ("POST", "/auth/logout-todos"),
     ("PUT", "/auth/senha"),
     ("GET", "/auth/me"),
+    ("GET", "/auth/sessoes"),
+    ("DELETE", "/auth/sessoes/{sessao_id}"),
     ("GET", "/health"),
     ("POST", "/dispositivos"),
     ("DELETE", "/dispositivos"),
@@ -414,6 +416,7 @@ def test_producao_desliga_swagger_e_liga_hsts():
         database_url=settings.database_url,
         jwt_secret=settings.jwt_secret,
         cors_origins=["https://educamobile.exemplo"],
+        limite_backend="redis",
     )
     with TestClient(criar_app(config)) as cliente:
         assert cliente.get("/docs").status_code == 404

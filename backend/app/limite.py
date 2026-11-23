@@ -1,11 +1,20 @@
-"""Limite de tentativas por chave (por exemplo, IP e e-mail no login).
+"""Limites por chave: tentativas de login, aceite de convite e uso geral da API.
 
-A implementação em memória vale por processo. Com mais de um worker da API, troque por uma
-implementação em Redis com a mesma interface; as rotas não mudam.
+Duas implementações com a mesma interface. A em memória vale por processo e serve para
+desenvolvimento e testes. A de Redis vale para todos os processos da API e é a que produção usa
+(`LIMITE_BACKEND=redis`); sem ela, subir mais um worker da API multiplicaria o limite.
 """
 
+import hashlib
 import time
+import uuid
 from typing import Protocol
+
+import redis
+from fastapi import HTTPException, Request, status
+
+from app import auditoria, tempo_real
+from app.config import settings
 
 
 class LimiteTentativas(Protocol):
@@ -63,3 +72,82 @@ class LimiteEmMemoria:
 
     def limpar(self, chave: str) -> None:
         self._falhas.pop(chave, None)
+
+
+class LimiteRedis:
+    """Janela deslizante num conjunto ordenado do Redis, compartilhada entre processos."""
+
+    def __init__(self, maximo: int, janela_s: int, prefixo: str = "geral") -> None:
+        self.maximo = maximo
+        self.janela_s = janela_s
+        self.prefixo = prefixo
+
+    def _k(self, chave: str) -> str:
+        return f"limite:{self.prefixo}:{chave}"
+
+    def bloqueado(self, chave: str) -> bool:
+        k = self._k(chave)
+        agora = time.time()
+        pipe = tempo_real.cliente().pipeline()
+        pipe.zremrangebyscore(k, 0, agora - self.janela_s)
+        pipe.zcard(k)
+        return pipe.execute()[1] >= self.maximo
+
+    def registrar_falha(self, chave: str) -> None:
+        k = self._k(chave)
+        agora = time.time()
+        pipe = tempo_real.cliente().pipeline()
+        pipe.zadd(k, {uuid.uuid4().hex: agora})
+        # Só as últimas `maximo` importam, e a chave some sozinha quando a janela passa.
+        pipe.zremrangebyrank(k, 0, -(self.maximo + 1))
+        pipe.expire(k, self.janela_s + 1)
+        pipe.execute()
+
+    def limpar(self, chave: str) -> None:
+        tempo_real.cliente().delete(self._k(chave))
+
+
+def criar_limite(prefixo: str, maximo: int, janela_s: int) -> LimiteTentativas:
+    """A implementação escolhida pela configuração `limite_backend`."""
+    if settings.limite_backend == "redis":
+        return LimiteRedis(maximo, janela_s, prefixo)
+    return LimiteEmMemoria(maximo, janela_s)
+
+
+# Uso geral da API: por token de acesso (ou IP, sem token), contando cada requisição.
+MAX_ESCRITAS_POR_MINUTO = 300
+MAX_POSICOES_POR_MINUTO = 120
+limite_escrita = criar_limite("escrita", MAX_ESCRITAS_POR_MINUTO, 60)
+limite_posicoes = criar_limite("posicoes", MAX_POSICOES_POR_MINUTO, 60)
+
+
+def _quem(request: Request) -> str:
+    credencial = request.headers.get("authorization") or request.headers.get("x-token-rastreador")
+    if credencial:
+        return "t:" + hashlib.sha256(credencial.encode()).hexdigest()[:32]
+    return "ip:" + (auditoria.ip_do_cliente(request) or "?")
+
+
+def _consumir(limite: LimiteTentativas, quem: str) -> None:
+    try:
+        if limite.bloqueado(quem):
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                "Muitas requisições. Aguarde um instante",
+                headers={"Retry-After": "60"},
+            )
+        limite.registrar_falha(quem)
+    except redis.RedisError:
+        # Redis fora do ar não pode derrubar a API: sem limite por alguns instantes.
+        pass
+
+
+def limitar_escrita(request: Request) -> None:
+    """Dependência global: só as rotas que escrevem entram na conta."""
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return
+    _consumir(limite_escrita, _quem(request))
+
+
+def limitar_posicoes(request: Request) -> None:
+    _consumir(limite_posicoes, _quem(request))

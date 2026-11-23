@@ -14,7 +14,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import habilitacao, notificacoes, tempo_real
+from app import consentimento, habilitacao, notificacoes, tempo_real
 from app.geo import Coordenadas, para_ponto
 from app.models import (
     STATUS_FINAIS,
@@ -609,7 +609,7 @@ def responsaveis_da_viagem(db: Session, viagem: Viagem) -> list[tuple[int, int]]
         for r in db.scalars(
             select(ResponsavelEstudante).where(
                 ResponsavelEstudante.estudante_id.in_(estudantes),
-                ResponsavelEstudante.consentimento_em.is_not(None),
+                consentimento.vigente(),
             )
         )
     ]

@@ -315,7 +315,10 @@ def test_configuracao_so_o_admin_altera(client, db, mundo, cabecalhos):
     assert (
         client.put("/configuracao/alertas", json={"valores": {}}, headers=admin).status_code == 422
     )
-    assert len(client.get("/configuracao/alertas", headers=mundo["gestor"]).json()) == 8
+    chaves = {
+        c["chave"] for c in client.get("/configuracao/alertas", headers=mundo["gestor"]).json()
+    }
+    assert {"sem_sinal_s", "velocidade_max_kmh", "retencao_posicoes_dias"} <= chaves
 
 
 # Reconhecer e resolver

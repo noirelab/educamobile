@@ -6,12 +6,13 @@ from typing import Annotated
 from zoneinfo import ZoneInfo
 
 import redis
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlalchemy import func, select, text
 
 from app import auditoria, rastreamento, tempo_real
 from app.cadastros import Db, IdRota
 from app.config import settings
+from app.limite import limitar_posicoes
 from app.models import (
     Alerta,
     Estudante,
@@ -71,7 +72,7 @@ def _resultados(rs: list[rastreamento.Resultado]) -> list[ResultadoPosicao]:
     ]
 
 
-@router.post("/viagens/{viagem_id}/posicoes")
+@router.post("/viagens/{viagem_id}/posicoes", dependencies=[Depends(limitar_posicoes)])
 def receber_posicoes(
     viagem_id: IdRota, dados: LotePosicoes, db: Db, motorista: SoMotorista
 ) -> list[ResultadoPosicao]:
@@ -86,7 +87,7 @@ def receber_posicoes(
     return _resultados(resultados)
 
 
-@router.post("/rastreador/posicoes")
+@router.post("/rastreador/posicoes", dependencies=[Depends(limitar_posicoes)])
 def receber_do_rastreador(
     dados: LotePosicoes,
     db: Db,

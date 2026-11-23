@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 
-from app import auditoria
+from app import auditoria, consentimento
 from app.cadastros import Db, IdRota, buscar
 from app.config import settings
 from app.models import Estudante, Parada, Perfil, ResponsavelEstudante, Usuario
@@ -110,7 +110,7 @@ def meus_filhos(db: Db, usuario: Responsavel) -> list[FilhoResumo]:
             estudante_id=v.estudante_id,
             nome=nome,
             parentesco=v.parentesco,
-            consentimento_pendente=v.consentimento_em is None,
+            consentimento_pendente=not consentimento.esta_vigente(v),
         )
         for v, nome in linhas
     ]

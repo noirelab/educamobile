@@ -127,6 +127,11 @@ def limites_zerados(monkeypatch) -> None:
     ):
         atual = getattr(auth, nome)
         monkeypatch.setattr(auth, nome, LimiteEmMemoria(atual.maximo, atual.janela_s))
+    from app import limite
+
+    for nome in ("limite_escrita", "limite_posicoes"):
+        atual = getattr(limite, nome)
+        monkeypatch.setattr(limite, nome, LimiteEmMemoria(atual.maximo, atual.janela_s))
 
 
 @pytest.fixture

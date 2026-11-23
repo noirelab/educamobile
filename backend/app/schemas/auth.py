@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
@@ -37,3 +38,28 @@ class UsuarioLer(BaseModel):
     email: EmailStr
     perfil: Perfil
     ativo: bool
+
+
+class SessaoLer(BaseModel):
+    """Um aparelho conectado. Nunca inclui o token."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    criada_em: datetime
+    expira_em: datetime
+    ip: str | None
+    user_agent: str | None
+
+
+class RegistroDeAuditoria(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    em: datetime
+    usuario_id: int | None
+    acao: str
+    recurso: str | None
+    recurso_id: str | None
+    ip: str | None
+    detalhes: dict | None

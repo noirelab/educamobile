@@ -15,6 +15,7 @@ import httpx
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app import consentimento
 from app.models import Dispositivo, Estudante, Notificacao, Perfil, ResponsavelEstudante, Usuario
 
 log = logging.getLogger(__name__)
@@ -71,7 +72,7 @@ def para_responsaveis(
     ids = db.scalars(
         select(ResponsavelEstudante.responsavel_id).where(
             ResponsavelEstudante.estudante_id == estudante_id,
-            ResponsavelEstudante.consentimento_em.is_not(None),
+            consentimento.vigente(),
         )
     ).all()
     for usuario_id in ids:
