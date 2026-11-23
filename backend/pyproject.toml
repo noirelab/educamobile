@@ -40,6 +40,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "pip-audit>=2.10.1",
     "pytest>=9.2.0",
     "ruff>=0.17.3",
 ]
