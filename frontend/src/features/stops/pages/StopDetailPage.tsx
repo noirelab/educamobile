@@ -140,7 +140,7 @@ export function StopDetailPage() {
         <StopMiniMap stop={stop} />
       </Panel>
       <Panel title="Estudantes desta parada">
-        <StopStudents stopId={stop.id} canWrite={canEdit} />
+        <StopStudents stopId={stop.id} />
       </Panel>
     </div>
   )

@@ -998,6 +998,1020 @@
         }
       }
     },
+    "/rotas/{rota_id}/inscricoes": {
+      "get": {
+        "tags": [
+          "inscrições"
+        ],
+        "summary": "Listar Inscricoes",
+        "operationId": "listar_inscricoes_rotas__rota_id__inscricoes_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rota_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Rota Id"
+            }
+          },
+          {
+            "name": "historico",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Historico"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InscricaoLer"
+                  },
+                  "title": "Response Listar Inscricoes Rotas  Rota Id  Inscricoes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "inscrições"
+        ],
+        "summary": "Substituir Inscricoes",
+        "operationId": "substituir_inscricoes_rotas__rota_id__inscricoes_put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rota_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Rota Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InscricoesSubstituir"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InscricaoLer"
+                  },
+                  "title": "Response Substituir Inscricoes Rotas  Rota Id  Inscricoes Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ausencias": {
+      "get": {
+        "tags": [
+          "inscrições"
+        ],
+        "summary": "Minhas Ausencias",
+        "description": "Ausências de hoje em diante dos filhos do responsável.",
+        "operationId": "minhas_ausencias_ausencias_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AusenciaLer"
+                  },
+                  "type": "array",
+                  "title": "Response Minhas Ausencias Ausencias Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "inscrições"
+        ],
+        "summary": "Avisar Ausencia",
+        "operationId": "avisar_ausencia_ausencias_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AusenciaCriar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AusenciaLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/ausencias/{ausencia_id}": {
+      "delete": {
+        "tags": [
+          "inscrições"
+        ],
+        "summary": "Cancelar Ausencia",
+        "operationId": "cancelar_ausencia_ausencias__ausencia_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ausencia_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Ausencia Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/motoristas": {
+      "get": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Listar",
+        "operationId": "listar_motoristas_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pode_dirigir",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pode Dirigir"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotoristasPagina"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Criar",
+        "operationId": "criar_motoristas_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MotoristaCriar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotoristaDetalhe"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/motoristas/vencendo": {
+      "get": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Vencendo",
+        "description": "Documentos que vencem nos próximos `dias`, e os já vencidos, do mais urgente ao menos.",
+        "operationId": "vencendo_motoristas_vencendo_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dias",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Dias"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentoVencendo"
+                  },
+                  "title": "Response Vencendo Motoristas Vencendo Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/motoristas/{usuario_id}": {
+      "get": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Obter",
+        "operationId": "obter_motoristas__usuario_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Usuario Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotoristaDetalhe"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Atualizar",
+        "operationId": "atualizar_motoristas__usuario_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Usuario Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MotoristaAtualizar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotoristaDetalhe"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Remover",
+        "operationId": "remover_motoristas__usuario_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Usuario Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/motoristas/{usuario_id}/habilitacao": {
+      "get": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Habilitacao Do Motorista",
+        "operationId": "habilitacao_do_motorista_motoristas__usuario_id__habilitacao_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Usuario Id"
+            }
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Habilitacao"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/motorista/eu": {
+      "get": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Meu Cadastro",
+        "operationId": "meu_cadastro_motorista_eu_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MotoristaDetalhe"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/motorista/eu/habilitacao": {
+      "get": {
+        "tags": [
+          "motoristas"
+        ],
+        "summary": "Minha Habilitacao",
+        "description": "Funciona também sem cadastro de documentos: aí a resposta é \"não pode\" com o motivo.",
+        "operationId": "minha_habilitacao_motorista_eu_habilitacao_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Habilitacao"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/veiculos": {
+      "get": {
+        "tags": [
+          "veículos"
+        ],
+        "summary": "Listar",
+        "operationId": "listar_veiculos_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "placa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 10
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Placa"
+            }
+          },
+          {
+            "name": "vistoria_vencida",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vistoria Vencida"
+            }
+          },
+          {
+            "name": "ativo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ativo"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VeiculosPagina"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "veículos"
+        ],
+        "summary": "Criar",
+        "operationId": "criar_veiculos_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VeiculoCriar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VeiculoLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/veiculos/{veiculo_id}": {
+      "get": {
+        "tags": [
+          "veículos"
+        ],
+        "summary": "Obter",
+        "operationId": "obter_veiculos__veiculo_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "veiculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Veiculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VeiculoLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "veículos"
+        ],
+        "summary": "Atualizar",
+        "operationId": "atualizar_veiculos__veiculo_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "veiculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Veiculo Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VeiculoCriar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VeiculoLer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "veículos"
+        ],
+        "summary": "Remover",
+        "operationId": "remover_veiculos__veiculo_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "veiculo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Veiculo Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/paradas": {
       "get": {
         "tags": [
@@ -1381,110 +2395,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/paradas/{parada_id}/estudantes/{estudante_id}": {
-      "put": {
-        "tags": [
-          "paradas"
-        ],
-        "summary": "Associar Estudante",
-        "operationId": "associar_estudante_paradas__parada_id__estudantes__estudante_id__put",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "parada_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Parada Id"
-            }
-          },
-          {
-            "name": "estudante_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Estudante Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "paradas"
-        ],
-        "summary": "Desassociar Estudante",
-        "operationId": "desassociar_estudante_paradas__parada_id__estudantes__estudante_id__delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "parada_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Parada Id"
-            }
-          },
-          {
-            "name": "estudante_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Estudante Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -2672,6 +3582,72 @@
   },
   "components": {
     "schemas": {
+      "AusenciaCriar": {
+        "properties": {
+          "estudante_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Estudante Id"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "title": "Data"
+          },
+          "sentido": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sentido"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_id",
+          "data"
+        ],
+        "title": "AusenciaCriar"
+      },
+      "AusenciaLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "estudante_id": {
+            "type": "integer",
+            "title": "Estudante Id"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "title": "Data"
+          },
+          "sentido": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sentido"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "estudante_id",
+          "data",
+          "sentido"
+        ],
+        "title": "AusenciaLer"
+      },
       "Body_enviar_foto_estudantes__estudante_id__foto_put": {
         "properties": {
           "foto": {
@@ -2923,6 +3899,45 @@
         ],
         "title": "Coordenadas"
       },
+      "DocumentoVencendo": {
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "documento": {
+            "type": "string",
+            "enum": [
+              "cnh",
+              "curso_transporte_escolar"
+            ],
+            "title": "Documento"
+          },
+          "vence_em": {
+            "type": "string",
+            "format": "date",
+            "title": "Vence Em"
+          },
+          "dias_restantes": {
+            "type": "integer",
+            "title": "Dias Restantes",
+            "description": "Negativo quando já venceu"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "nome",
+          "documento",
+          "vence_em",
+          "dias_restantes"
+        ],
+        "title": "DocumentoVencendo"
+      },
       "EscolaCriar": {
         "properties": {
           "nome": {
@@ -2960,6 +3975,13 @@
           },
           "localizacao": {
             "$ref": "#/components/schemas/Coordenadas"
+          },
+          "raio_cerca_m": {
+            "type": "integer",
+            "maximum": 2000.0,
+            "minimum": 20.0,
+            "title": "Raio Cerca M",
+            "default": 150
           }
         },
         "type": "object",
@@ -3003,6 +4025,10 @@
           },
           "localizacao": {
             "$ref": "#/components/schemas/Coordenadas"
+          },
+          "raio_cerca_m": {
+            "type": "integer",
+            "title": "Raio Cerca M"
           }
         },
         "type": "object",
@@ -3011,7 +4037,8 @@
           "nome",
           "codigo_inep",
           "endereco",
-          "localizacao"
+          "localizacao",
+          "raio_cerca_m"
         ],
         "title": "EscolaLer"
       },
@@ -3269,6 +4296,421 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "Habilitacao": {
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "date",
+            "title": "Data"
+          },
+          "pode_dirigir": {
+            "type": "boolean",
+            "title": "Pode Dirigir"
+          },
+          "motivos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Motivos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "pode_dirigir",
+          "motivos"
+        ],
+        "title": "Habilitacao",
+        "description": "Se o motorista pode dirigir na data, e os motivos quando não pode."
+      },
+      "InscricaoItem": {
+        "properties": {
+          "estudante_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Estudante Id"
+          },
+          "parada_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Parada Id"
+          },
+          "dias_semana": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 7,
+            "minItems": 1,
+            "title": "Dias Semana",
+            "default": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "vigencia_inicio": {
+            "type": "string",
+            "format": "date",
+            "title": "Vigencia Inicio"
+          },
+          "vigencia_fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigencia Fim"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_id",
+          "parada_id",
+          "vigencia_inicio"
+        ],
+        "title": "InscricaoItem"
+      },
+      "InscricaoLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "estudante_id": {
+            "type": "integer",
+            "title": "Estudante Id"
+          },
+          "estudante_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estudante Nome"
+          },
+          "rota_id": {
+            "type": "integer",
+            "title": "Rota Id"
+          },
+          "parada_id": {
+            "type": "integer",
+            "title": "Parada Id"
+          },
+          "dias_semana": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Dias Semana"
+          },
+          "vigencia_inicio": {
+            "type": "string",
+            "format": "date",
+            "title": "Vigencia Inicio"
+          },
+          "vigencia_fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigencia Fim"
+          },
+          "ativa": {
+            "type": "boolean",
+            "title": "Ativa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "estudante_id",
+          "rota_id",
+          "parada_id",
+          "dias_semana",
+          "vigencia_inicio",
+          "vigencia_fim",
+          "ativa"
+        ],
+        "title": "InscricaoLer"
+      },
+      "InscricoesSubstituir": {
+        "properties": {
+          "inscricoes": {
+            "items": {
+              "$ref": "#/components/schemas/InscricaoItem"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Inscricoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inscricoes"
+        ],
+        "title": "InscricoesSubstituir",
+        "description": "A lista completa de inscrições ativas da rota. Quem não estiver nela é desativado."
+      },
+      "ItemDoItinerario": {
+        "properties": {
+          "parada_id": {
+            "type": "integer",
+            "title": "Parada Id"
+          },
+          "ordem": {
+            "type": "integer",
+            "title": "Ordem"
+          },
+          "horario_previsto": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horario Previsto"
+          },
+          "raio_cerca_m": {
+            "type": "integer",
+            "title": "Raio Cerca M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "parada_id",
+          "ordem",
+          "horario_previsto",
+          "raio_cerca_m"
+        ],
+        "title": "ItemDoItinerario"
+      },
+      "MotoristaAtualizar": {
+        "properties": {
+          "cnh": {
+            "type": "string",
+            "pattern": "^\\d{11}$",
+            "title": "Cnh"
+          },
+          "categoria_cnh": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "AB",
+              "AC",
+              "AD",
+              "AE"
+            ],
+            "title": "Categoria Cnh"
+          },
+          "cnh_valida_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Cnh Valida Ate"
+          },
+          "curso_transporte_escolar_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Curso Transporte Escolar Ate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cnh",
+          "categoria_cnh",
+          "cnh_valida_ate",
+          "curso_transporte_escolar_ate"
+        ],
+        "title": "MotoristaAtualizar"
+      },
+      "MotoristaCriar": {
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Usuario Id"
+          },
+          "cnh": {
+            "type": "string",
+            "pattern": "^\\d{11}$",
+            "title": "Cnh"
+          },
+          "categoria_cnh": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "AB",
+              "AC",
+              "AD",
+              "AE"
+            ],
+            "title": "Categoria Cnh"
+          },
+          "cnh_valida_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Cnh Valida Ate"
+          },
+          "curso_transporte_escolar_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Curso Transporte Escolar Ate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "cnh",
+          "categoria_cnh",
+          "cnh_valida_ate",
+          "curso_transporte_escolar_ate"
+        ],
+        "title": "MotoristaCriar"
+      },
+      "MotoristaDetalhe": {
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "cnh": {
+            "type": "string",
+            "title": "Cnh"
+          },
+          "categoria_cnh": {
+            "type": "string",
+            "title": "Categoria Cnh"
+          },
+          "cnh_valida_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Cnh Valida Ate"
+          },
+          "curso_transporte_escolar_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Curso Transporte Escolar Ate"
+          },
+          "habilitacao": {
+            "$ref": "#/components/schemas/Habilitacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "nome",
+          "email",
+          "cnh",
+          "categoria_cnh",
+          "cnh_valida_ate",
+          "curso_transporte_escolar_ate",
+          "habilitacao"
+        ],
+        "title": "MotoristaDetalhe"
+      },
+      "MotoristaResumo": {
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "cnh_final": {
+            "type": "string",
+            "title": "Cnh Final"
+          },
+          "categoria_cnh": {
+            "type": "string",
+            "title": "Categoria Cnh"
+          },
+          "cnh_valida_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Cnh Valida Ate"
+          },
+          "curso_transporte_escolar_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Curso Transporte Escolar Ate"
+          },
+          "habilitacao": {
+            "$ref": "#/components/schemas/Habilitacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "nome",
+          "cnh_final",
+          "categoria_cnh",
+          "cnh_valida_ate",
+          "curso_transporte_escolar_ate",
+          "habilitacao"
+        ],
+        "title": "MotoristaResumo",
+        "description": "Listagem: o número da CNH sai mascarado."
+      },
+      "MotoristasPagina": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/MotoristaResumo"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "itens"
+        ],
+        "title": "MotoristasPagina"
+      },
       "ParadaAtualizar": {
         "properties": {
           "nome": {
@@ -3359,6 +4801,40 @@
         ],
         "title": "ParadaLer"
       },
+      "ParadaNaRota": {
+        "properties": {
+          "parada_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Parada Id"
+          },
+          "horario_previsto": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horario Previsto"
+          },
+          "raio_cerca_m": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 10.0,
+            "title": "Raio Cerca M",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "parada_id"
+        ],
+        "title": "ParadaNaRota"
+      },
       "ParadaProxima": {
         "properties": {
           "id": {
@@ -3416,18 +4892,82 @@
       "RotaAtualizar": {
         "properties": {
           "nome": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
-            "pattern": "^[^\\x00]+$",
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "pattern": "^[^\\x00]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Nome"
+          },
+          "escola_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escola Id"
+          },
+          "turno": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Turno"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sentido": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sentido"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "veiculo_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Veiculo Id"
+          },
+          "motorista_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Id"
           }
         },
         "type": "object",
-        "required": [
-          "nome"
-        ],
-        "title": "RotaAtualizar"
+        "title": "RotaAtualizar",
+        "description": "Só os campos enviados mudam; veiculo_id e motorista_id aceitam null para limpar."
       },
       "RotaCriar": {
         "properties": {
@@ -3437,11 +4977,52 @@
             "minLength": 1,
             "pattern": "^[^\\x00]+$",
             "title": "Nome"
+          },
+          "escola_id": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Escola Id"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/Sentido"
+          },
+          "veiculo_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Veiculo Id"
+          },
+          "motorista_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Id"
           }
         },
         "type": "object",
         "required": [
-          "nome"
+          "nome",
+          "escola_id",
+          "turno",
+          "sentido"
         ],
         "title": "RotaCriar"
       },
@@ -3454,6 +5035,38 @@
           "nome": {
             "type": "string",
             "title": "Nome"
+          },
+          "escola_id": {
+            "type": "integer",
+            "title": "Escola Id"
+          },
+          "turno": {
+            "$ref": "#/components/schemas/Turno"
+          },
+          "sentido": {
+            "$ref": "#/components/schemas/Sentido"
+          },
+          "veiculo_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Veiculo Id"
+          },
+          "motorista_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motorista Id"
           },
           "distancia_m": {
             "anyOf": [
@@ -3473,6 +5086,13 @@
             "type": "array",
             "title": "Paradas"
           },
+          "itinerario": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDoItinerario"
+            },
+            "type": "array",
+            "title": "Itinerario"
+          },
           "trajeto": {
             "anyOf": [
               {
@@ -3488,8 +5108,14 @@
         "required": [
           "id",
           "nome",
+          "escola_id",
+          "turno",
+          "sentido",
+          "veiculo_id",
+          "motorista_id",
           "distancia_m",
           "paradas",
+          "itinerario",
           "trajeto"
         ],
         "title": "RotaLer"
@@ -3497,21 +5123,49 @@
       "RotaSequencia": {
         "properties": {
           "parada_ids": {
-            "items": {
-              "type": "integer",
-              "maximum": 2147483647.0,
-              "minimum": 1.0
-            },
-            "type": "array",
-            "maxItems": 500,
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer",
+                  "maximum": 2147483647.0,
+                  "minimum": 1.0
+                },
+                "type": "array",
+                "maxItems": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Parada Ids"
+          },
+          "paradas": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ParadaNaRota"
+                },
+                "type": "array",
+                "maxItems": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paradas"
           }
         },
         "type": "object",
-        "required": [
-          "parada_ids"
+        "title": "RotaSequencia",
+        "description": "Paradas em ordem. Envie `parada_ids` (só a ordem) ou `paradas` (com horário e cerca)."
+      },
+      "Sentido": {
+        "type": "string",
+        "enum": [
+          "ida",
+          "volta"
         ],
-        "title": "RotaSequencia"
+        "title": "Sentido"
       },
       "Token": {
         "properties": {
@@ -3762,6 +5416,123 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VeiculoCriar": {
+        "properties": {
+          "placa": {
+            "type": "string",
+            "title": "Placa"
+          },
+          "capacidade": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Capacidade"
+          },
+          "modelo": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^\\x00]+$",
+            "title": "Modelo"
+          },
+          "ano": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1980.0,
+            "title": "Ano"
+          },
+          "vistoria_valida_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Vistoria Valida Ate"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "placa",
+          "capacidade",
+          "modelo",
+          "ano",
+          "vistoria_valida_ate"
+        ],
+        "title": "VeiculoCriar"
+      },
+      "VeiculoLer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "placa": {
+            "type": "string",
+            "title": "Placa"
+          },
+          "capacidade": {
+            "type": "integer",
+            "title": "Capacidade"
+          },
+          "modelo": {
+            "type": "string",
+            "title": "Modelo"
+          },
+          "ano": {
+            "type": "integer",
+            "title": "Ano"
+          },
+          "vistoria_valida_ate": {
+            "type": "string",
+            "format": "date",
+            "title": "Vistoria Valida Ate"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          },
+          "vistoria_vencida": {
+            "type": "boolean",
+            "title": "Vistoria Vencida",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "placa",
+          "capacidade",
+          "modelo",
+          "ano",
+          "vistoria_valida_ate",
+          "ativo",
+          "vistoria_vencida"
+        ],
+        "title": "VeiculoLer"
+      },
+      "VeiculosPagina": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/VeiculoLer"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "itens"
+        ],
+        "title": "VeiculosPagina"
       },
       "VinculoCriar": {
         "properties": {

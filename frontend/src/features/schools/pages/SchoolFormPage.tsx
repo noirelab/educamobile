@@ -19,7 +19,7 @@ type Coordenadas = components['schemas']['Coordenadas']
 
 const INEP_CONFLICT = 'Código INEP já cadastrado'
 
-const FORM_FIELDS = ['nome', 'codigo_inep', 'endereco', 'localizacao'] as const
+const FORM_FIELDS = ['nome', 'codigo_inep', 'endereco', 'localizacao', 'raio_cerca_m'] as const
 type FormField = (typeof FORM_FIELDS)[number]
 
 function isFormField(field: string): field is FormField {
@@ -32,6 +32,7 @@ function toPayload(values: SchoolFormValues, localizacao: Coordenadas): EscolaCr
     codigo_inep: values.codigo_inep === '' ? null : values.codigo_inep,
     endereco: values.endereco === '' ? null : values.endereco,
     localizacao,
+    raio_cerca_m: Number(values.raio_cerca_m),
   }
 }
 
@@ -53,6 +54,7 @@ function SchoolForm({ school }: SchoolFormProps) {
       codigo_inep: school?.codigo_inep ?? '',
       endereco: school?.endereco ?? '',
       localizacao: school?.localizacao ?? null,
+      raio_cerca_m: String(school?.raio_cerca_m ?? 150),
     },
   })
 
@@ -101,6 +103,12 @@ function SchoolForm({ school }: SchoolFormProps) {
             inputMode="numeric"
             error={errors.codigo_inep?.message}
             {...register('codigo_inep')}
+          />
+          <FloatingField
+            label="Raio da cerca virtual (m)"
+            inputMode="numeric"
+            error={errors.raio_cerca_m?.message}
+            {...register('raio_cerca_m')}
           />
           <div className="sm:col-span-2">
             <FloatingField label="Endereço" error={errors.endereco?.message} {...register('endereco')} />

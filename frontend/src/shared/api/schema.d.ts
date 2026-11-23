@@ -264,6 +264,210 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rotas/{rota_id}/inscricoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Inscricoes */
+        get: operations["listar_inscricoes_rotas__rota_id__inscricoes_get"];
+        /** Substituir Inscricoes */
+        put: operations["substituir_inscricoes_rotas__rota_id__inscricoes_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ausencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Minhas Ausencias
+         * @description Ausências de hoje em diante dos filhos do responsável.
+         */
+        get: operations["minhas_ausencias_ausencias_get"];
+        put?: never;
+        /** Avisar Ausencia */
+        post: operations["avisar_ausencia_ausencias_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ausencias/{ausencia_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancelar Ausencia */
+        delete: operations["cancelar_ausencia_ausencias__ausencia_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motoristas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["listar_motoristas_get"];
+        put?: never;
+        /** Criar */
+        post: operations["criar_motoristas_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motoristas/vencendo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vencendo
+         * @description Documentos que vencem nos próximos `dias`, e os já vencidos, do mais urgente ao menos.
+         */
+        get: operations["vencendo_motoristas_vencendo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motoristas/{usuario_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter */
+        get: operations["obter_motoristas__usuario_id__get"];
+        /** Atualizar */
+        put: operations["atualizar_motoristas__usuario_id__put"];
+        post?: never;
+        /** Remover */
+        delete: operations["remover_motoristas__usuario_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motoristas/{usuario_id}/habilitacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Habilitacao Do Motorista */
+        get: operations["habilitacao_do_motorista_motoristas__usuario_id__habilitacao_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motorista/eu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meu Cadastro */
+        get: operations["meu_cadastro_motorista_eu_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/motorista/eu/habilitacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Minha Habilitacao
+         * @description Funciona também sem cadastro de documentos: aí a resposta é "não pode" com o motivo.
+         */
+        get: operations["minha_habilitacao_motorista_eu_habilitacao_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veiculos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["listar_veiculos_get"];
+        put?: never;
+        /** Criar */
+        post: operations["criar_veiculos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veiculos/{veiculo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter */
+        get: operations["obter_veiculos__veiculo_id__get"];
+        /** Atualizar */
+        put: operations["atualizar_veiculos__veiculo_id__put"];
+        post?: never;
+        /** Remover */
+        delete: operations["remover_veiculos__veiculo_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/paradas": {
         parameters: {
             query?: never;
@@ -330,24 +534,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/paradas/{parada_id}/estudantes/{estudante_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Associar Estudante */
-        put: operations["associar_estudante_paradas__parada_id__estudantes__estudante_id__put"];
-        post?: never;
-        /** Desassociar Estudante */
-        delete: operations["desassociar_estudante_paradas__parada_id__estudantes__estudante_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -619,6 +805,30 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AusenciaCriar */
+        AusenciaCriar: {
+            /** Estudante Id */
+            estudante_id: number;
+            /**
+             * Data
+             * Format: date
+             */
+            data: string;
+            sentido?: components["schemas"]["Sentido"] | null;
+        };
+        /** AusenciaLer */
+        AusenciaLer: {
+            /** Id */
+            id: number;
+            /** Estudante Id */
+            estudante_id: number;
+            /**
+             * Data
+             * Format: date
+             */
+            data: string;
+            sentido: components["schemas"]["Sentido"] | null;
+        };
         /** Body_enviar_foto_estudantes__estudante_id__foto_put */
         Body_enviar_foto_estudantes__estudante_id__foto_put: {
             /** Foto */
@@ -727,6 +937,28 @@ export interface components {
             /** Longitude */
             longitude: number;
         };
+        /** DocumentoVencendo */
+        DocumentoVencendo: {
+            /** Usuario Id */
+            usuario_id: number;
+            /** Nome */
+            nome: string;
+            /**
+             * Documento
+             * @enum {string}
+             */
+            documento: "cnh" | "curso_transporte_escolar";
+            /**
+             * Vence Em
+             * Format: date
+             */
+            vence_em: string;
+            /**
+             * Dias Restantes
+             * @description Negativo quando já venceu
+             */
+            dias_restantes: number;
+        };
         /** EscolaCriar */
         EscolaCriar: {
             /** Nome */
@@ -736,6 +968,11 @@ export interface components {
             /** Endereco */
             endereco?: string | null;
             localizacao: components["schemas"]["Coordenadas"];
+            /**
+             * Raio Cerca M
+             * @default 150
+             */
+            raio_cerca_m: number;
         };
         /** EscolaLer */
         EscolaLer: {
@@ -748,6 +985,8 @@ export interface components {
             /** Endereco */
             endereco: string | null;
             localizacao: components["schemas"]["Coordenadas"];
+            /** Raio Cerca M */
+            raio_cerca_m: number;
         };
         /** EstudanteCriar */
         EstudanteCriar: {
@@ -844,6 +1083,187 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * Habilitacao
+         * @description Se o motorista pode dirigir na data, e os motivos quando não pode.
+         */
+        Habilitacao: {
+            /**
+             * Data
+             * Format: date
+             */
+            data: string;
+            /** Pode Dirigir */
+            pode_dirigir: boolean;
+            /** Motivos */
+            motivos: string[];
+        };
+        /** InscricaoItem */
+        InscricaoItem: {
+            /** Estudante Id */
+            estudante_id: number;
+            /** Parada Id */
+            parada_id: number;
+            /**
+             * Dias Semana
+             * @default [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            dias_semana: number[];
+            /**
+             * Vigencia Inicio
+             * Format: date
+             */
+            vigencia_inicio: string;
+            /** Vigencia Fim */
+            vigencia_fim?: string | null;
+        };
+        /** InscricaoLer */
+        InscricaoLer: {
+            /** Id */
+            id: number;
+            /** Estudante Id */
+            estudante_id: number;
+            /** Estudante Nome */
+            estudante_nome?: string | null;
+            /** Rota Id */
+            rota_id: number;
+            /** Parada Id */
+            parada_id: number;
+            /** Dias Semana */
+            dias_semana: number[];
+            /**
+             * Vigencia Inicio
+             * Format: date
+             */
+            vigencia_inicio: string;
+            /** Vigencia Fim */
+            vigencia_fim: string | null;
+            /** Ativa */
+            ativa: boolean;
+        };
+        /**
+         * InscricoesSubstituir
+         * @description A lista completa de inscrições ativas da rota. Quem não estiver nela é desativado.
+         */
+        InscricoesSubstituir: {
+            /** Inscricoes */
+            inscricoes: components["schemas"]["InscricaoItem"][];
+        };
+        /** ItemDoItinerario */
+        ItemDoItinerario: {
+            /** Parada Id */
+            parada_id: number;
+            /** Ordem */
+            ordem: number;
+            /** Horario Previsto */
+            horario_previsto: string | null;
+            /** Raio Cerca M */
+            raio_cerca_m: number;
+        };
+        /** MotoristaAtualizar */
+        MotoristaAtualizar: {
+            /** Cnh */
+            cnh: string;
+            /**
+             * Categoria Cnh
+             * @enum {string}
+             */
+            categoria_cnh: "A" | "B" | "C" | "D" | "E" | "AB" | "AC" | "AD" | "AE";
+            /**
+             * Cnh Valida Ate
+             * Format: date
+             */
+            cnh_valida_ate: string;
+            /**
+             * Curso Transporte Escolar Ate
+             * Format: date
+             */
+            curso_transporte_escolar_ate: string;
+        };
+        /** MotoristaCriar */
+        MotoristaCriar: {
+            /** Usuario Id */
+            usuario_id: number;
+            /** Cnh */
+            cnh: string;
+            /**
+             * Categoria Cnh
+             * @enum {string}
+             */
+            categoria_cnh: "A" | "B" | "C" | "D" | "E" | "AB" | "AC" | "AD" | "AE";
+            /**
+             * Cnh Valida Ate
+             * Format: date
+             */
+            cnh_valida_ate: string;
+            /**
+             * Curso Transporte Escolar Ate
+             * Format: date
+             */
+            curso_transporte_escolar_ate: string;
+        };
+        /** MotoristaDetalhe */
+        MotoristaDetalhe: {
+            /** Usuario Id */
+            usuario_id: number;
+            /** Nome */
+            nome: string;
+            /** Email */
+            email: string;
+            /** Cnh */
+            cnh: string;
+            /** Categoria Cnh */
+            categoria_cnh: string;
+            /**
+             * Cnh Valida Ate
+             * Format: date
+             */
+            cnh_valida_ate: string;
+            /**
+             * Curso Transporte Escolar Ate
+             * Format: date
+             */
+            curso_transporte_escolar_ate: string;
+            habilitacao: components["schemas"]["Habilitacao"];
+        };
+        /**
+         * MotoristaResumo
+         * @description Listagem: o número da CNH sai mascarado.
+         */
+        MotoristaResumo: {
+            /** Usuario Id */
+            usuario_id: number;
+            /** Nome */
+            nome: string;
+            /** Cnh Final */
+            cnh_final: string;
+            /** Categoria Cnh */
+            categoria_cnh: string;
+            /**
+             * Cnh Valida Ate
+             * Format: date
+             */
+            cnh_valida_ate: string;
+            /**
+             * Curso Transporte Escolar Ate
+             * Format: date
+             */
+            curso_transporte_escolar_ate: string;
+            habilitacao: components["schemas"]["Habilitacao"];
+        };
+        /** MotoristasPagina */
+        MotoristasPagina: {
+            /** Total */
+            total: number;
+            /** Itens */
+            itens: components["schemas"]["MotoristaResumo"][];
+        };
         /** ParadaAtualizar */
         ParadaAtualizar: {
             /** Nome */
@@ -871,6 +1291,18 @@ export interface components {
             nome: string;
             localizacao: components["schemas"]["Coordenadas"];
         };
+        /** ParadaNaRota */
+        ParadaNaRota: {
+            /** Parada Id */
+            parada_id: number;
+            /** Horario Previsto */
+            horario_previsto?: string | null;
+            /**
+             * Raio Cerca M
+             * @default 50
+             */
+            raio_cerca_m: number;
+        };
         /** ParadaProxima */
         ParadaProxima: {
             /** Id */
@@ -891,15 +1323,34 @@ export interface components {
             /** Refresh Token */
             refresh_token: string;
         };
-        /** RotaAtualizar */
+        /**
+         * RotaAtualizar
+         * @description Só os campos enviados mudam; veiculo_id e motorista_id aceitam null para limpar.
+         */
         RotaAtualizar: {
             /** Nome */
-            nome: string;
+            nome?: string | null;
+            /** Escola Id */
+            escola_id?: number | null;
+            turno?: components["schemas"]["Turno"] | null;
+            sentido?: components["schemas"]["Sentido"] | null;
+            /** Veiculo Id */
+            veiculo_id?: number | null;
+            /** Motorista Id */
+            motorista_id?: number | null;
         };
         /** RotaCriar */
         RotaCriar: {
             /** Nome */
             nome: string;
+            /** Escola Id */
+            escola_id: number;
+            turno: components["schemas"]["Turno"];
+            sentido: components["schemas"]["Sentido"];
+            /** Veiculo Id */
+            veiculo_id?: number | null;
+            /** Motorista Id */
+            motorista_id?: number | null;
         };
         /** RotaLer */
         RotaLer: {
@@ -907,17 +1358,37 @@ export interface components {
             id: number;
             /** Nome */
             nome: string;
+            /** Escola Id */
+            escola_id: number;
+            turno: components["schemas"]["Turno"];
+            sentido: components["schemas"]["Sentido"];
+            /** Veiculo Id */
+            veiculo_id: number | null;
+            /** Motorista Id */
+            motorista_id: number | null;
             /** Distancia M */
             distancia_m: number | null;
             /** Paradas */
             paradas: components["schemas"]["ParadaLer"][];
+            /** Itinerario */
+            itinerario: components["schemas"]["ItemDoItinerario"][];
             trajeto: components["schemas"]["TrajetoGeoJSON"] | null;
         };
-        /** RotaSequencia */
+        /**
+         * RotaSequencia
+         * @description Paradas em ordem. Envie `parada_ids` (só a ordem) ou `paradas` (com horário e cerca).
+         */
         RotaSequencia: {
             /** Parada Ids */
-            parada_ids: number[];
+            parada_ids?: number[] | null;
+            /** Paradas */
+            paradas?: components["schemas"]["ParadaNaRota"][] | null;
         };
+        /**
+         * Sentido
+         * @enum {string}
+         */
+        Sentido: "ida" | "volta";
         /** Token */
         Token: {
             /** Access Token */
@@ -1012,6 +1483,56 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VeiculoCriar */
+        VeiculoCriar: {
+            /** Placa */
+            placa: string;
+            /** Capacidade */
+            capacidade: number;
+            /** Modelo */
+            modelo: string;
+            /** Ano */
+            ano: number;
+            /**
+             * Vistoria Valida Ate
+             * Format: date
+             */
+            vistoria_valida_ate: string;
+            /**
+             * Ativo
+             * @default true
+             */
+            ativo: boolean;
+        };
+        /** VeiculoLer */
+        VeiculoLer: {
+            /** Id */
+            id: number;
+            /** Placa */
+            placa: string;
+            /** Capacidade */
+            capacidade: number;
+            /** Modelo */
+            modelo: string;
+            /** Ano */
+            ano: number;
+            /**
+             * Vistoria Valida Ate
+             * Format: date
+             */
+            vistoria_valida_ate: string;
+            /** Ativo */
+            ativo: boolean;
+            /** Vistoria Vencida */
+            readonly vistoria_vencida: boolean;
+        };
+        /** VeiculosPagina */
+        VeiculosPagina: {
+            /** Total */
+            total: number;
+            /** Itens */
+            itens: components["schemas"]["VeiculoLer"][];
         };
         /** VinculoCriar */
         VinculoCriar: {
@@ -1695,6 +2216,595 @@ export interface operations {
             };
         };
     };
+    listar_inscricoes_rotas__rota_id__inscricoes_get: {
+        parameters: {
+            query?: {
+                historico?: boolean;
+            };
+            header?: never;
+            path: {
+                rota_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InscricaoLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    substituir_inscricoes_rotas__rota_id__inscricoes_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rota_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InscricoesSubstituir"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InscricaoLer"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    minhas_ausencias_ausencias_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AusenciaLer"][];
+                };
+            };
+        };
+    };
+    avisar_ausencia_ausencias_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AusenciaCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AusenciaLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelar_ausencia_ausencias__ausencia_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ausencia_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_motoristas_get: {
+        parameters: {
+            query?: {
+                pode_dirigir?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotoristasPagina"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    criar_motoristas_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotoristaCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotoristaDetalhe"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vencendo_motoristas_vencendo_get: {
+        parameters: {
+            query?: {
+                dias?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentoVencendo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    obter_motoristas__usuario_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotoristaDetalhe"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    atualizar_motoristas__usuario_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotoristaAtualizar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotoristaDetalhe"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remover_motoristas__usuario_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    habilitacao_do_motorista_motoristas__usuario_id__habilitacao_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Habilitacao"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meu_cadastro_motorista_eu_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotoristaDetalhe"];
+                };
+            };
+        };
+    };
+    minha_habilitacao_motorista_eu_habilitacao_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Habilitacao"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_veiculos_get: {
+        parameters: {
+            query?: {
+                placa?: string | null;
+                vistoria_vencida?: boolean | null;
+                ativo?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VeiculosPagina"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    criar_veiculos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VeiculoCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VeiculoLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    obter_veiculos__veiculo_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                veiculo_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VeiculoLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    atualizar_veiculos__veiculo_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                veiculo_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VeiculoCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VeiculoLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remover_veiculos__veiculo_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                veiculo_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     listar_paradas_paradas_get: {
         parameters: {
             query?: {
@@ -1908,66 +3018,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EstudanteDaParada"][];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    associar_estudante_paradas__parada_id__estudantes__estudante_id__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                parada_id: number;
-                estudante_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    desassociar_estudante_paradas__parada_id__estudantes__estudante_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                parada_id: number;
-                estudante_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {

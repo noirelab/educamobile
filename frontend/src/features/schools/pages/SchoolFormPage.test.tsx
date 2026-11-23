@@ -49,6 +49,7 @@ describe('SchoolFormPage', () => {
         codigo_inep: null,
         endereco: null,
         localizacao: { latitude: -25.43, longitude: -49.27 },
+        raio_cerca_m: 150,
       }),
     )
   })
@@ -116,6 +117,7 @@ describe('SchoolFormPage', () => {
           codigo_inep: '41000011',
           endereco: 'Rua A, 10',
           localizacao: { latitude: -25.5, longitude: -49.3 },
+          raio_cerca_m: 200,
         }),
       ),
       http.put(`${API}/escolas/3`, async ({ request }) => {
@@ -138,6 +140,7 @@ describe('SchoolFormPage', () => {
         codigo_inep: '41000011',
         endereco: 'Rua A, 10',
         localizacao: { latitude: -25.5, longitude: -49.3 },
+        raio_cerca_m: 200,
       }),
     )
   })
