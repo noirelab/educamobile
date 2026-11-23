@@ -22,8 +22,8 @@ const ROUTES = [
   { path: '/students/:id', element: <p>Detalhe do estudante</p> },
 ]
 
-const TURMAS = [
-  { id: 3, escola_id: 1, nome: '6A', serie: '6º ano', turno: 'manha', ano_letivo: 2026 },
+const ESCOLAS = [
+  { id: 2, nome: 'EMEF Centro', codigo_inep: null, endereco: null, localizacao: { latitude: -25.4, longitude: -49.2 } },
 ]
 
 const PARADAS = [
@@ -34,14 +34,16 @@ const ESTUDANTE = {
   id: 1,
   nome: 'Lucas Ferreira',
   data_nascimento: '2015-01-01',
-  nome_responsavel: 'Maria Ferreira',
-  localizacao: null,
+  escola_id: 2,
+  turno: 'tarde',
   parada_id: 5,
+  observacoes_cuidado: null,
+  tem_foto: false,
 }
 
 function mockLookups() {
   server.use(
-    http.get(`${API}/turmas`, () => HttpResponse.json(TURMAS)),
+    http.get(`${API}/escolas`, () => HttpResponse.json(ESCOLAS)),
     http.get(`${API}/paradas`, () => HttpResponse.json(PARADAS)),
     http.get(`${API}/estudantes/1`, () => HttpResponse.json(ESTUDANTE)),
   )
@@ -53,7 +55,7 @@ async function fillRequiredStudent(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('StudentFormPage', () => {
-  it('blocks diretor create without matrícula and hides the parada field', async () => {
+  it('blocks the save without a school and does not post', async () => {
     mockLookups()
     let posted = false
     server.use(
@@ -62,20 +64,28 @@ describe('StudentFormPage', () => {
         return HttpResponse.json(ESTUDANTE, { status: 201 })
       }),
     )
-    renderWithRoutes('/students/new', ROUTES, 'diretor', 1)
+    renderWithRoutes('/students/new', ROUTES, 'gestor')
     const user = userEvent.setup()
 
-    await screen.findByRole('option', { name: '6A' })
+    await screen.findByRole('option', { name: 'EMEF Centro' })
     await fillRequiredStudent(user)
-    await user.clear(screen.getByLabelText('Data de início'))
     await user.click(screen.getByRole('button', { name: 'Salvar' }))
 
-    expect(await screen.findByText('Informe a turma e a data de início')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Parada')).not.toBeInTheDocument()
+    expect(await screen.findByText('Informe a escola')).toBeInTheDocument()
     expect(posted).toBe(false)
   })
 
-  it('shows parada and keeps matrícula optional for admin create', async () => {
+  it('asks for no home address, location or guardian name', async () => {
+    mockLookups()
+    renderWithRoutes('/students/new', ROUTES, 'gestor')
+
+    await screen.findByRole('option', { name: 'EMEF Centro' })
+    expect(screen.queryByLabelText('Responsável')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Latitude')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Localização/)).not.toBeInTheDocument()
+  })
+
+  it('posts school, shift, stop and care notes', async () => {
     mockLookups()
     let body: Record<string, unknown> | undefined
     server.use(
@@ -88,18 +98,25 @@ describe('StudentFormPage', () => {
     const user = userEvent.setup()
 
     await screen.findByRole('option', { name: 'Parada Centro' })
-    expect(screen.getByLabelText('Parada')).toBeInTheDocument()
-    expect(screen.getByText('Opcional para administrador')).toBeInTheDocument()
     await fillRequiredStudent(user)
+    await user.selectOptions(screen.getByLabelText('Escola'), '2')
+    await user.selectOptions(screen.getByLabelText('Turno'), 'tarde')
     await user.selectOptions(screen.getByLabelText('Parada'), '5')
+    await user.type(screen.getByLabelText(/Observações de cuidado/), 'Alergia a amendoim')
     await user.click(screen.getByRole('button', { name: 'Salvar' }))
 
     await waitFor(() => expect(body).toBeDefined())
-    expect(body).not.toHaveProperty('matricula')
-    expect(body).toMatchObject({ nome: 'Lucas Ferreira', parada_id: 5 })
+    expect(body).toEqual({
+      nome: 'Lucas Ferreira',
+      data_nascimento: '2015-01-01',
+      escola_id: 2,
+      turno: 'tarde',
+      parada_id: 5,
+      observacoes_cuidado: 'Alergia a amendoim',
+    })
   })
 
-  it('edit sends PUT without matrícula and without parada for diretor', async () => {
+  it('edit loads the student and sends PUT', async () => {
     mockLookups()
     let body: Record<string, unknown> | undefined
     server.use(
@@ -108,16 +125,13 @@ describe('StudentFormPage', () => {
         return HttpResponse.json(ESTUDANTE)
       }),
     )
-    renderWithRoutes('/students/1/edit', ROUTES, 'diretor', 1)
+    renderWithRoutes('/students/1/edit', ROUTES, 'gestor')
     const user = userEvent.setup()
 
     expect(await screen.findByDisplayValue('Lucas Ferreira')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Turma')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Parada')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Salvar' }))
 
     await waitFor(() => expect(body).toBeDefined())
-    expect(body).not.toHaveProperty('matricula')
-    expect(body).not.toHaveProperty('parada_id')
+    expect(body).toMatchObject({ escola_id: 2, turno: 'tarde', parada_id: 5, observacoes_cuidado: null })
   })
 })

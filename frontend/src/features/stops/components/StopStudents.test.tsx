@@ -12,8 +12,10 @@ const STUDENT = {
   id: 7,
   nome: 'Ana Lima',
   data_nascimento: '2014-03-02',
-  nome_responsavel: null,
-  localizacao: null,
+  escola_id: 1,
+  turno: 'manha',
+  observacoes_cuidado: null,
+  tem_foto: false,
   parada_id: null,
 }
 
@@ -25,7 +27,7 @@ describe('StopStudents', () => {
       http.get(`${API}/paradas/3/estudantes`, () =>
         HttpResponse.json(associated ? [{ id: 7, nome: 'Ana Lima' }] : []),
       ),
-      http.get(`${API}/estudantes`, () => HttpResponse.json([STUDENT])),
+      http.get(`${API}/estudantes`, () => HttpResponse.json({ total: 1, itens: [STUDENT] })),
       http.put(`${API}/paradas/3/estudantes/7`, () => {
         putCalled = true
         associated = true

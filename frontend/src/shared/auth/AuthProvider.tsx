@@ -3,8 +3,8 @@ import { flushSync } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { onUnauthorized } from '@/shared/api/client'
-import { loginRequest, meRequest } from '@/features/auth/api'
-import { clearToken, getToken, setToken } from '@/shared/auth/session'
+import { loginRequest, logoutAllRequest, logoutRequest, meRequest } from '@/features/auth/api'
+import { clearToken, getRefreshToken, getToken, saveSession } from '@/shared/auth/session'
 import { AuthContext, type AuthState, type Usuario } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -41,20 +41,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const token = await loginRequest(email, password)
-    setToken(token.access_token)
+    saveSession(token)
     setUser(await meRequest())
   }, [])
 
-  const logout = useCallback(() => {
+  const endSession = useCallback(() => {
     clearToken()
     queryClient.clear()
     setUser(null)
     navigate('/login')
   }, [navigate, queryClient])
 
+  // A sessão local sempre termina, mesmo que o aviso ao servidor falhe (sem rede, por exemplo).
+  const logout = useCallback(() => {
+    const refresh = getRefreshToken()
+    const aviso = refresh ? logoutRequest(refresh).catch(() => undefined) : Promise.resolve()
+    void aviso.finally(endSession)
+  }, [endSession])
+
+  const logoutAll = useCallback(() => {
+    void logoutAllRequest()
+      .catch(() => undefined)
+      .finally(endSession)
+  }, [endSession])
+
   const value = useMemo<AuthState>(
-    () => ({ user, role: user?.perfil ?? null, login, logout, ready }),
-    [user, login, logout, ready],
+    () => ({ user, role: user?.perfil ?? null, login, logout, logoutAll, ready }),
+    [user, login, logout, logoutAll, ready],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -2,31 +2,30 @@ import { describe, expect, it } from 'vitest'
 import { breadcrumbFor, visibleNav } from './nav'
 
 describe('visibleNav', () => {
-  it('lists the menu items a coordenador can access', () => {
-    expect(visibleNav('coordenador').map((item) => item.path)).toEqual([
+  it('lists the menu items a gestor can access', () => {
+    expect(visibleNav('gestor').map((item) => item.path)).toEqual([
       '/',
-      '/poles',
       '/schools',
-      '/classes',
       '/students',
       '/stops',
       '/routes',
+      '/users',
     ])
   })
 
-  it('excludes users for diretor', () => {
-    expect(visibleNav('diretor').map((item) => item.path)).not.toContain('/users')
+  it.each(['motorista', 'monitor', 'responsavel'] as const)('shows no registration menu for %s', (role) => {
+    expect(visibleNav(role)).toEqual([])
   })
 })
 
 describe('breadcrumbFor', () => {
   it('labels the section of a path', () => {
     expect(breadcrumbFor('/')).toEqual(['Painel'])
-    expect(breadcrumbFor('/classes')).toEqual(['Turmas'])
+    expect(breadcrumbFor('/students')).toEqual(['Estudantes'])
   })
 
   it('labels nested pages with the action or detail', () => {
-    expect(breadcrumbFor('/poles/new')).toEqual(['Polos', 'Novo'])
+    expect(breadcrumbFor('/students/new')).toEqual(['Estudantes', 'Novo'])
     expect(breadcrumbFor('/schools/1/edit')).toEqual(['Escolas', 'Detalhe', 'Editar'])
   })
 

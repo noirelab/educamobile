@@ -21,6 +21,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Renovar */
+        post: operations["renovar_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Encerra a sessão deste aparelho. Responde 204 mesmo para token desconhecido.
+         */
+        post: operations["logout_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout-todos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout Todos
+         * @description Encerra todas as sessões, por exemplo depois de perder o celular.
+         */
+        post: operations["logout_todos_auth_logout_todos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/senha": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Trocar Senha
+         * @description Troca a senha e encerra todas as sessões, inclusive a atual.
+         */
+        put: operations["trocar_senha_auth_senha_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me": {
         parameters: {
             query?: never;
@@ -38,7 +115,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/usuarios": {
+    "/auth/convites/{codigo}/aceitar": {
         parameters: {
             query?: never;
             header?: never;
@@ -47,65 +124,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Criar Usuario */
-        post: operations["criar_usuario_auth_usuarios_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/polos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar */
-        get: operations["listar_polos_get"];
-        put?: never;
-        /** Criar */
-        post: operations["criar_polos_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/polos/{polo_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obter */
-        get: operations["obter_polos__polo_id__get"];
-        /** Atualizar */
-        put: operations["atualizar_polos__polo_id__put"];
-        post?: never;
-        /** Remover */
-        delete: operations["remover_polos__polo_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/polos/{polo_id}/escolas-na-area": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         /**
-         * Escolas Na Area
-         * @description Escolas dentro da área do polo, pela localização, mesmo sem vínculo por polo_id.
+         * Aceitar Convite
+         * @description O responsável define a senha e entra. O convite já traz o vínculo com o estudante.
          */
-        get: operations["escolas_na_area_polos__polo_id__escolas_na_area_get"];
-        put?: never;
-        post?: never;
+        post: operations["aceitar_convite_auth_convites__codigo__aceitar_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -149,43 +172,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/turmas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar */
-        get: operations["listar_turmas_get"];
-        put?: never;
-        /** Criar */
-        post: operations["criar_turmas_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/turmas/{turma_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Obter */
-        get: operations["obter_turmas__turma_id__get"];
-        /** Atualizar */
-        put: operations["atualizar_turmas__turma_id__put"];
-        post?: never;
-        /** Remover */
-        delete: operations["remover_turmas__turma_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/estudantes": {
         parameters: {
             query?: never;
@@ -223,38 +209,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/professores": {
+    "/estudantes/{estudante_id}/foto": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Listar */
-        get: operations["listar_professores_get"];
+        get?: never;
+        /** Enviar Foto */
+        put: operations["enviar_foto_estudantes__estudante_id__foto_put"];
+        post?: never;
+        /** Remover Foto */
+        delete: operations["remover_foto_estudantes__estudante_id__foto_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estudantes/{estudante_id}/foto-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Url Da Foto */
+        get: operations["url_da_foto_estudantes__estudante_id__foto_url_get"];
         put?: never;
-        /** Criar */
-        post: operations["criar_professores_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/professores/{professor_id}": {
+    "/fotos/{token}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Obter */
-        get: operations["obter_professores__professor_id__get"];
-        /** Atualizar */
-        put: operations["atualizar_professores__professor_id__put"];
+        /**
+         * Servir Foto
+         * @description A autorização está na assinatura da URL, que vence em poucos minutos.
+         */
+        get: operations["servir_foto_fotos__token__get"];
+        put?: never;
         post?: never;
-        /** Remover */
-        delete: operations["remover_professores__professor_id__delete"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -403,7 +407,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/matriculas": {
+    "/estudantes/{estudante_id}/responsaveis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar Vinculos */
+        get: operations["listar_vinculos_estudantes__estudante_id__responsaveis_get"];
+        put?: never;
+        /** Vincular */
+        post: operations["vincular_estudantes__estudante_id__responsaveis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estudantes/{estudante_id}/responsaveis/{responsavel_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Desvincular */
+        delete: operations["desvincular_estudantes__estudante_id__responsaveis__responsavel_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/responsavel/filhos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meus Filhos */
+        get: operations["meus_filhos_responsavel_filhos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/responsavel/filhos/{estudante_id}/consentimento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Consentir */
+        post: operations["consentir_responsavel_filhos__estudante_id__consentimento_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/responsavel/filhos/{estudante_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meu Filho */
+        get: operations["meu_filho_responsavel_filhos__estudante_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/responsavel/filhos/{estudante_id}/foto-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Foto Do Filho */
+        get: operations["foto_do_filho_responsavel_filhos__estudante_id__foto_url_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usuarios": {
         parameters: {
             query?: never;
             header?: never;
@@ -411,37 +518,35 @@ export interface paths {
             cookie?: never;
         };
         /** Listar */
-        get: operations["listar_matriculas_get"];
+        get: operations["listar_usuarios_get"];
         put?: never;
         /** Criar */
-        post: operations["criar_matriculas_post"];
+        post: operations["criar_usuarios_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/matriculas/historico/{estudante_id}": {
+    "/usuarios/{usuario_id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Historico
-         * @description Vínculos do estudante, do mais antigo ao mais recente. Diretor vê os da própria escola.
-         */
-        get: operations["historico_matriculas_historico__estudante_id__get"];
+        /** Obter */
+        get: operations["obter_usuarios__usuario_id__get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Atualizar */
+        patch: operations["atualizar_usuarios__usuario_id__patch"];
         trace?: never;
     };
-    "/matriculas/transferencias": {
+    "/usuarios/{usuario_id}/desativar": {
         parameters: {
             query?: never;
             header?: never;
@@ -450,32 +555,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Transferir */
-        post: operations["transferir_matriculas_transferencias_post"];
+        /** Desativar */
+        post: operations["desativar_usuarios__usuario_id__desativar_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/matriculas/{matricula_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Consultar */
-        get: operations["consultar_matriculas__matricula_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/matriculas/{matricula_id}/encerrar": {
+    "/usuarios/{usuario_id}/reativar": {
         parameters: {
             query?: never;
             header?: never;
@@ -484,60 +572,26 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Encerrar */
-        post: operations["encerrar_matriculas__matricula_id__encerrar_post"];
+        /** Reativar */
+        post: operations["reativar_usuarios__usuario_id__reativar_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/frequencias": {
+    "/convites": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Listar */
-        get: operations["listar_frequencias_get"];
+        /** Listar Convites */
+        get: operations["listar_convites_convites_get"];
         put?: never;
-        /** Lancar */
-        post: operations["lancar_frequencias_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/frequencias/lote": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Lancar Lote */
-        post: operations["lancar_lote_frequencias_lote_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/frequencias/agregada": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Agregada */
-        get: operations["agregada_frequencias_agregada_get"];
-        put?: never;
-        post?: never;
+        /** Criar Convite */
+        post: operations["criar_convite_convites_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -565,11 +619,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /**
-         * Agrupamento
-         * @enum {string}
-         */
-        Agrupamento: "escola" | "polo" | "turma";
+        /** Body_enviar_foto_estudantes__estudante_id__foto_put */
+        Body_enviar_foto_estudantes__estudante_id__foto_put: {
+            /** Foto */
+            foto: string;
+        };
         /** Body_login_auth_login_post */
         Body_login_auth_login_post: {
             /** Grant Type */
@@ -594,6 +648,78 @@ export interface components {
              */
             client_secret?: string | null;
         };
+        /** Consentimento */
+        Consentimento: {
+            /** Versao Termo */
+            versao_termo: string;
+        };
+        /** ConviteAceitar */
+        ConviteAceitar: {
+            /** Senha */
+            senha: string;
+        };
+        /** ConviteCriar */
+        ConviteCriar: {
+            /** Nome */
+            nome: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Estudante Id */
+            estudante_id: number;
+            /** Parentesco */
+            parentesco: string;
+            /**
+             * Principal
+             * @default false
+             */
+            principal: boolean;
+        };
+        /**
+         * ConviteLer
+         * @description O código só aparece nesta resposta: depois disso o banco guarda apenas o hash.
+         */
+        ConviteLer: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Estudante Id */
+            estudante_id: number;
+            /**
+             * Expira Em
+             * Format: date-time
+             */
+            expira_em: string;
+        };
+        /** ConviteResumo */
+        ConviteResumo: {
+            /** Id */
+            id: number;
+            /** Nome */
+            nome: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Estudante Id */
+            estudante_id: number;
+            /**
+             * Expira Em
+             * Format: date-time
+             */
+            expira_em: string;
+            /** Usado Em */
+            usado_em: string | null;
+        };
         /** Coordenadas */
         Coordenadas: {
             /** Latitude */
@@ -609,8 +735,6 @@ export interface components {
             codigo_inep?: string | null;
             /** Endereco */
             endereco?: string | null;
-            /** Polo Id */
-            polo_id?: number | null;
             localizacao: components["schemas"]["Coordenadas"];
         };
         /** EscolaLer */
@@ -623,28 +747,7 @@ export interface components {
             codigo_inep: string | null;
             /** Endereco */
             endereco: string | null;
-            /** Polo Id */
-            polo_id: number | null;
             localizacao: components["schemas"]["Coordenadas"];
-        };
-        /**
-         * EstudanteCadastrar
-         * @description Na criação, a matrícula é opcional para o administrador e obrigatória para o diretor.
-         */
-        EstudanteCadastrar: {
-            /** Nome */
-            nome: string;
-            /**
-             * Data Nascimento
-             * Format: date
-             */
-            data_nascimento: string;
-            /** Nome Responsavel */
-            nome_responsavel?: string | null;
-            localizacao?: components["schemas"]["Coordenadas"] | null;
-            /** Parada Id */
-            parada_id?: number | null;
-            matricula?: components["schemas"]["MatriculaInicial"] | null;
         };
         /** EstudanteCriar */
         EstudanteCriar: {
@@ -655,11 +758,13 @@ export interface components {
              * Format: date
              */
             data_nascimento: string;
-            /** Nome Responsavel */
-            nome_responsavel?: string | null;
-            localizacao?: components["schemas"]["Coordenadas"] | null;
+            /** Escola Id */
+            escola_id: number;
+            turno: components["schemas"]["Turno"];
             /** Parada Id */
             parada_id?: number | null;
+            /** Observacoes Cuidado */
+            observacoes_cuidado?: string | null;
         };
         /** EstudanteDaParada */
         EstudanteDaParada: {
@@ -668,7 +773,10 @@ export interface components {
             /** Nome */
             nome: string;
         };
-        /** EstudanteLer */
+        /**
+         * EstudanteLer
+         * @description Nenhum campo de endereço ou localização da casa. A foto sai por URL assinada à parte.
+         */
         EstudanteLer: {
             /** Id */
             id: number;
@@ -679,129 +787,62 @@ export interface components {
              * Format: date
              */
             data_nascimento: string;
-            /** Nome Responsavel */
-            nome_responsavel: string | null;
-            localizacao: components["schemas"]["Coordenadas"] | null;
+            /** Escola Id */
+            escola_id: number;
+            turno: components["schemas"]["Turno"];
             /** Parada Id */
             parada_id: number | null;
+            /** Observacoes Cuidado */
+            observacoes_cuidado: string | null;
+            /** Tem Foto */
+            readonly tem_foto: boolean;
         };
-        /** FrequenciaAgregada */
-        FrequenciaAgregada: {
-            /** Grupo Id */
-            grupo_id: number | null;
-            /** Grupo Nome */
-            grupo_nome: string | null;
-            /** Total Registros */
-            total_registros: number;
-            /** Presencas */
-            presencas: number;
-            /** Faltas */
-            faltas: number;
-            /** Taxa Infrequencia */
-            taxa_infrequencia: number;
+        /** EstudantesPagina */
+        EstudantesPagina: {
+            /** Total */
+            total: number;
+            /** Itens */
+            itens: components["schemas"]["EstudanteLer"][];
         };
-        /** FrequenciaCriar */
-        FrequenciaCriar: {
-            /** Matricula Id */
-            matricula_id: number;
+        /**
+         * FilhoDetalhe
+         * @description Dados mínimos para o acompanhamento. Endereço e localização da casa não saem daqui.
+         */
+        FilhoDetalhe: {
+            /** Estudante Id */
+            estudante_id: number;
+            /** Nome */
+            nome: string;
+            parada: components["schemas"]["ParadaDoFilho"] | null;
+        };
+        /**
+         * FilhoResumo
+         * @description O que o responsável vê antes de consentir: só o necessário para reconhecer o filho.
+         */
+        FilhoResumo: {
+            /** Estudante Id */
+            estudante_id: number;
+            /** Nome */
+            nome: string;
+            /** Parentesco */
+            parentesco: string;
+            /** Consentimento Pendente */
+            consentimento_pendente: boolean;
+        };
+        /** FotoUrl */
+        FotoUrl: {
+            /** Url */
+            url: string;
             /**
-             * Data
-             * Format: date
+             * Expira Em
+             * Format: date-time
              */
-            data: string;
-            /** Presente */
-            presente: boolean;
-        };
-        /** FrequenciaLer */
-        FrequenciaLer: {
-            /** Id */
-            id: number;
-            /** Matricula Id */
-            matricula_id: number;
-            /**
-             * Data
-             * Format: date
-             */
-            data: string;
-            /** Presente */
-            presente: boolean;
-        };
-        /** FrequenciaLote */
-        FrequenciaLote: {
-            /** Turma Id */
-            turma_id: number;
-            /**
-             * Data
-             * Format: date
-             */
-            data: string;
-            /** Registros */
-            registros: components["schemas"]["RegistroLote"][];
+            expira_em: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
-        };
-        /** MatriculaCriar */
-        MatriculaCriar: {
-            /** Estudante Id */
-            estudante_id: number;
-            /** Turma Id */
-            turma_id: number;
-            /**
-             * Data Inicio
-             * Format: date
-             */
-            data_inicio: string;
-        };
-        /** MatriculaEncerrar */
-        MatriculaEncerrar: {
-            /**
-             * Data Fim
-             * Format: date
-             */
-            data_fim: string;
-        };
-        /** MatriculaInicial */
-        MatriculaInicial: {
-            /** Turma Id */
-            turma_id: number;
-            /**
-             * Data Inicio
-             * Format: date
-             */
-            data_inicio: string;
-        };
-        /** MatriculaLer */
-        MatriculaLer: {
-            /** Id */
-            id: number;
-            /** Estudante Id */
-            estudante_id: number;
-            /** Turma Id */
-            turma_id: number;
-            /**
-             * Data Inicio
-             * Format: date
-             */
-            data_inicio: string;
-            /** Data Fim */
-            data_fim: string | null;
-            status: components["schemas"]["StatusMatricula"];
-        };
-        /** MultiPolygonGeoJSON */
-        MultiPolygonGeoJSON: {
-            /**
-             * Type
-             * @constant
-             */
-            type: "MultiPolygon";
-            /** Coordinates */
-            coordinates: [
-                number,
-                number
-            ][][][];
         };
         /** ParadaAtualizar */
         ParadaAtualizar: {
@@ -814,6 +855,13 @@ export interface components {
             /** Nome */
             nome: string;
             localizacao: components["schemas"]["Coordenadas"];
+        };
+        /** ParadaDoFilho */
+        ParadaDoFilho: {
+            /** Id */
+            id: number;
+            /** Nome */
+            nome: string;
         };
         /** ParadaLer */
         ParadaLer: {
@@ -837,53 +885,11 @@ export interface components {
          * Perfil
          * @enum {string}
          */
-        Perfil: "admin" | "diretor" | "coordenador";
-        /** PoloCriar */
-        PoloCriar: {
-            /** Nome */
-            nome: string;
-            area?: components["schemas"]["MultiPolygonGeoJSON"] | null;
-        };
-        /** PoloLer */
-        PoloLer: {
-            /** Id */
-            id: number;
-            /** Nome */
-            nome: string;
-            area: components["schemas"]["MultiPolygonGeoJSON"] | null;
-        };
-        /** ProfessorCriar */
-        ProfessorCriar: {
-            /** Nome */
-            nome: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Escola Id */
-            escola_id?: number | null;
-        };
-        /** ProfessorLer */
-        ProfessorLer: {
-            /** Id */
-            id: number;
-            /** Nome */
-            nome: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Escola Id */
-            escola_id: number | null;
-        };
-        /** RegistroLote */
-        RegistroLote: {
-            /** Matricula Id */
-            matricula_id: number;
-            /** Presente */
-            presente: boolean;
+        Perfil: "admin" | "gestor" | "motorista" | "monitor" | "responsavel";
+        /** RefreshTokenEntrada */
+        RefreshTokenEntrada: {
+            /** Refresh Token */
+            refresh_token: string;
         };
         /** RotaAtualizar */
         RotaAtualizar: {
@@ -912,11 +918,6 @@ export interface components {
             /** Parada Ids */
             parada_ids: number[];
         };
-        /**
-         * StatusMatricula
-         * @enum {string}
-         */
-        StatusMatricula: "ativa" | "transferida" | "encerrada";
         /** Token */
         Token: {
             /** Access Token */
@@ -926,6 +927,10 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+            /** Expires In */
+            expires_in: number;
+            /** Refresh Token */
+            refresh_token: string;
         };
         /** TrajetoGeoJSON */
         TrajetoGeoJSON: {
@@ -941,49 +946,25 @@ export interface components {
                 number
             ][];
         };
-        /** TransferenciaCriar */
-        TransferenciaCriar: {
-            /** Estudante Id */
-            estudante_id: number;
-            /** Turma Destino Id */
-            turma_destino_id: number;
-            /**
-             * Data
-             * Format: date
-             */
-            data: string;
-        };
-        /** TurmaCriar */
-        TurmaCriar: {
-            /** Escola Id */
-            escola_id: number;
-            /** Nome */
-            nome: string;
-            /** Serie */
-            serie: string;
-            turno: components["schemas"]["Turno"];
-            /** Ano Letivo */
-            ano_letivo: number;
-        };
-        /** TurmaLer */
-        TurmaLer: {
-            /** Id */
-            id: number;
-            /** Escola Id */
-            escola_id: number;
-            /** Nome */
-            nome: string;
-            /** Serie */
-            serie: string;
-            turno: components["schemas"]["Turno"];
-            /** Ano Letivo */
-            ano_letivo: number;
+        /** TrocaSenha */
+        TrocaSenha: {
+            /** Senha Atual */
+            senha_atual: string;
+            /** Senha Nova */
+            senha_nova: string;
         };
         /**
          * Turno
          * @enum {string}
          */
-        Turno: "manha" | "tarde" | "noite" | "integral";
+        Turno: "manha" | "tarde" | "integral";
+        /** UsuarioAtualizar */
+        UsuarioAtualizar: {
+            /** Nome */
+            nome?: string | null;
+            /** Email */
+            email?: string | null;
+        };
         /** UsuarioCriar */
         UsuarioCriar: {
             /** Nome */
@@ -996,8 +977,6 @@ export interface components {
             /** Senha */
             senha: string;
             perfil: components["schemas"]["Perfil"];
-            /** Escola Id */
-            escola_id?: number | null;
         };
         /** UsuarioLer */
         UsuarioLer: {
@@ -1011,10 +990,15 @@ export interface components {
              */
             email: string;
             perfil: components["schemas"]["Perfil"];
-            /** Escola Id */
-            escola_id: number | null;
             /** Ativo */
             ativo: boolean;
+        };
+        /** UsuariosPagina */
+        UsuariosPagina: {
+            /** Total */
+            total: number;
+            /** Itens */
+            itens: components["schemas"]["UsuarioLer"][];
         };
         /** ValidationError */
         ValidationError: {
@@ -1028,6 +1012,33 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VinculoCriar */
+        VinculoCriar: {
+            /** Responsavel Id */
+            responsavel_id: number;
+            /** Parentesco */
+            parentesco: string;
+            /**
+             * Principal
+             * @default false
+             */
+            principal: boolean;
+        };
+        /** VinculoLer */
+        VinculoLer: {
+            /** Responsavel Id */
+            responsavel_id: number;
+            /** Estudante Id */
+            estudante_id: number;
+            /** Parentesco */
+            parentesco: string;
+            /** Principal */
+            principal: boolean;
+            /** Consentimento Em */
+            consentimento_em: string | null;
+            /** Consentimento Versao */
+            consentimento_versao: string | null;
         };
     };
     responses: never;
@@ -1071,6 +1082,119 @@ export interface operations {
             };
         };
     };
+    renovar_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenEntrada"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Token"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenEntrada"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_todos_auth_logout_todos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    trocar_senha_auth_senha_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrocaSenha"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     me_auth_me_get: {
         parameters: {
             query?: never;
@@ -1091,16 +1215,18 @@ export interface operations {
             };
         };
     };
-    criar_usuario_auth_usuarios_post: {
+    aceitar_convite_auth_convites__codigo__aceitar_post: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                codigo: string;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UsuarioCriar"];
+                "application/json": components["schemas"]["ConviteAceitar"];
             };
         };
         responses: {
@@ -1110,198 +1236,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UsuarioLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    listar_polos_get: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PoloLer"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    criar_polos_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PoloCriar"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PoloLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    obter_polos__polo_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                polo_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PoloLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    atualizar_polos__polo_id__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                polo_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PoloCriar"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PoloLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remover_polos__polo_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                polo_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    escolas_na_area_polos__polo_id__escolas_na_area_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                polo_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EscolaLer"][];
+                    "application/json": components["schemas"]["Token"];
                 };
             };
             /** @description Validation Error */
@@ -1318,7 +1253,6 @@ export interface operations {
     listar_escolas_get: {
         parameters: {
             query?: {
-                polo_id?: number | null;
                 limit?: number;
                 offset?: number;
             };
@@ -1476,170 +1410,12 @@ export interface operations {
             };
         };
     };
-    listar_turmas_get: {
-        parameters: {
-            query?: {
-                escola_id?: number | null;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TurmaLer"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    criar_turmas_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TurmaCriar"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TurmaLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    obter_turmas__turma_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                turma_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TurmaLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    atualizar_turmas__turma_id__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                turma_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TurmaCriar"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TurmaLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remover_turmas__turma_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                turma_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     listar_estudantes_get: {
         parameters: {
             query?: {
+                q?: string | null;
+                escola_id?: number | null;
+                turno?: components["schemas"]["Turno"] | null;
                 limit?: number;
                 offset?: number;
             };
@@ -1655,7 +1431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EstudanteLer"][];
+                    "application/json": components["schemas"]["EstudantesPagina"];
                 };
             };
             /** @description Validation Error */
@@ -1678,7 +1454,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["EstudanteCadastrar"];
+                "application/json": components["schemas"]["EstudanteCriar"];
             };
         };
         responses: {
@@ -1797,126 +1573,27 @@ export interface operations {
             };
         };
     };
-    listar_professores_get: {
-        parameters: {
-            query?: {
-                escola_id?: number | null;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProfessorLer"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    criar_professores_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProfessorCriar"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProfessorLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    obter_professores__professor_id__get: {
+    enviar_foto_estudantes__estudante_id__foto_put: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                professor_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProfessorLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    atualizar_professores__professor_id__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                professor_id: number;
+                estudante_id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ProfessorCriar"];
+                "multipart/form-data": components["schemas"]["Body_enviar_foto_estudantes__estudante_id__foto_put"];
             };
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["ProfessorLer"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -1929,12 +1606,12 @@ export interface operations {
             };
         };
     };
-    remover_professores__professor_id__delete: {
+    remover_foto_estudantes__estudante_id__foto_delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                professor_id: number;
+                estudante_id: number;
             };
             cookie?: never;
         };
@@ -1942,6 +1619,66 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    url_da_foto_estudantes__estudante_id__foto_url_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estudante_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FotoUrl"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    servir_foto_fotos__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2438,75 +2175,7 @@ export interface operations {
             };
         };
     };
-    listar_matriculas_get: {
-        parameters: {
-            query?: {
-                estudante_id?: number | null;
-                turma_id?: number | null;
-                status?: components["schemas"]["StatusMatricula"] | null;
-                limite?: number;
-                deslocamento?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MatriculaLer"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    criar_matriculas_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MatriculaCriar"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MatriculaLer"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    historico_matriculas_historico__estudante_id__get: {
+    listar_vinculos_estudantes__estudante_id__responsaveis_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2523,7 +2192,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MatriculaLer"][];
+                    "application/json": components["schemas"]["VinculoLer"][];
                 };
             };
             /** @description Validation Error */
@@ -2537,16 +2206,18 @@ export interface operations {
             };
         };
     };
-    transferir_matriculas_transferencias_post: {
+    vincular_estudantes__estudante_id__responsaveis_post: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                estudante_id: number;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TransferenciaCriar"];
+                "application/json": components["schemas"]["VinculoCriar"];
             };
         };
         responses: {
@@ -2556,7 +2227,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MatriculaLer"];
+                    "application/json": components["schemas"]["VinculoLer"];
                 };
             };
             /** @description Validation Error */
@@ -2570,12 +2241,97 @@ export interface operations {
             };
         };
     };
-    consultar_matriculas__matricula_id__get: {
+    desvincular_estudantes__estudante_id__responsaveis__responsavel_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                matricula_id: number;
+                estudante_id: number;
+                responsavel_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meus_filhos_responsavel_filhos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilhoResumo"][];
+                };
+            };
+        };
+    };
+    consentir_responsavel_filhos__estudante_id__consentimento_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estudante_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Consentimento"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VinculoLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meu_filho_responsavel_filhos__estudante_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estudante_id: number;
             };
             cookie?: never;
         };
@@ -2587,7 +2343,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MatriculaLer"];
+                    "application/json": components["schemas"]["FilhoDetalhe"];
                 };
             };
             /** @description Validation Error */
@@ -2601,20 +2357,16 @@ export interface operations {
             };
         };
     };
-    encerrar_matriculas__matricula_id__encerrar_post: {
+    foto_do_filho_responsavel_filhos__estudante_id__foto_url_get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                matricula_id: number;
+                estudante_id: number;
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MatriculaEncerrar"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -2622,7 +2374,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MatriculaLer"];
+                    "application/json": components["schemas"]["FotoUrl"];
                 };
             };
             /** @description Validation Error */
@@ -2636,16 +2388,14 @@ export interface operations {
             };
         };
     };
-    listar_frequencias_get: {
+    listar_usuarios_get: {
         parameters: {
             query?: {
-                matricula_id?: number | null;
-                estudante_id?: number | null;
-                turma_id?: number | null;
-                data_inicio?: string | null;
-                data_fim?: string | null;
-                limite?: number;
-                deslocamento?: number;
+                perfil?: components["schemas"]["Perfil"] | null;
+                q?: string | null;
+                ativo?: boolean | null;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -2659,7 +2409,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FrequenciaLer"][];
+                    "application/json": components["schemas"]["UsuariosPagina"];
                 };
             };
             /** @description Validation Error */
@@ -2673,7 +2423,7 @@ export interface operations {
             };
         };
     };
-    lancar_frequencias_post: {
+    criar_usuarios_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2682,7 +2432,73 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["FrequenciaCriar"];
+                "application/json": components["schemas"]["UsuarioCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsuarioLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    obter_usuarios__usuario_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsuarioLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    atualizar_usuarios__usuario_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UsuarioAtualizar"];
             };
         };
         responses: {
@@ -2692,7 +2508,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FrequenciaLer"];
+                    "application/json": components["schemas"]["UsuarioLer"];
                 };
             };
             /** @description Validation Error */
@@ -2706,18 +2522,16 @@ export interface operations {
             };
         };
     };
-    lancar_lote_frequencias_lote_post: {
+    desativar_usuarios__usuario_id__desativar_post: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                usuario_id: number;
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FrequenciaLote"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -2725,7 +2539,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FrequenciaLer"][];
+                    "application/json": components["schemas"]["UsuarioLer"];
                 };
             };
             /** @description Validation Error */
@@ -2739,12 +2553,43 @@ export interface operations {
             };
         };
     };
-    agregada_frequencias_agregada_get: {
+    reativar_usuarios__usuario_id__reativar_post: {
         parameters: {
-            query: {
-                agrupar: components["schemas"]["Agrupamento"];
-                data_inicio: string;
-                data_fim: string;
+            query?: never;
+            header?: never;
+            path: {
+                usuario_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsuarioLer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listar_convites_convites_get: {
+        parameters: {
+            query?: {
+                pendentes?: boolean;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -2758,7 +2603,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FrequenciaAgregada"][];
+                    "application/json": components["schemas"]["ConviteResumo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    criar_convite_convites_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConviteCriar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConviteLer"];
                 };
             };
             /** @description Validation Error */

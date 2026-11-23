@@ -9,7 +9,6 @@ export type SchoolFormValues = {
   nome: string
   codigo_inep: string
   endereco: string
-  polo_id: string
   localizacao: z.infer<typeof pointSchema> | null
 }
 
@@ -20,6 +19,5 @@ export const schoolSchema: z.ZodType<SchoolFormValues, SchoolFormValues> = z.obj
     .trim()
     .refine((value) => value === '' || /^\d{8}$/.test(value), 'O código INEP tem 8 dígitos'),
   endereco: z.string().trim(),
-  polo_id: z.string(),
   localizacao: pointSchema.nullable().refine((value) => value !== null, 'Marque a localização no mapa'),
 })

@@ -9,6 +9,7 @@ export type AuthState = {
   role: Role | null
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  logoutAll: () => void
   ready: boolean
 }
 

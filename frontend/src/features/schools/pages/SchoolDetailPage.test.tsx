@@ -25,69 +25,35 @@ const SCHOOL = {
   nome: 'EMEF Centro',
   codigo_inep: '41000011',
   endereco: 'Rua A',
-  polo_id: 1,
   localizacao: { latitude: -25.43, longitude: -49.27 },
 }
 
-const CLASSES = [{ id: 5, escola_id: 1, nome: '6A', serie: '6º ano', turno: 'manha', ano_letivo: 2026 }]
-
-function mockDetail(attendance: unknown[] = [], attendanceCalls?: { count: number }) {
-  server.use(
-    http.get(`${API}/escolas/1`, () => HttpResponse.json(SCHOOL)),
-    http.get(`${API}/polos`, () => HttpResponse.json([{ id: 1, nome: 'Polo Centro', area: null }])),
-    http.get(`${API}/turmas`, () => HttpResponse.json(CLASSES)),
-    http.get(`${API}/professores`, () =>
-      HttpResponse.json([{ id: 2, nome: 'Carla', email: 'carla@educa.test', escola_id: 1 }]),
-    ),
-    http.get(`${API}/frequencias/agregada`, () => {
-      if (attendanceCalls) attendanceCalls.count += 1
-      return HttpResponse.json(attendance)
-    }),
-  )
-}
-
-const ATTENDANCE = [
-  { grupo_id: 5, grupo_nome: '6A', total_registros: 10, presencas: 8, faltas: 2, taxa_infrequencia: 0.2 },
-]
-
 describe('SchoolDetailPage', () => {
-  it('shows the Infrequência por turma block for diretor', async () => {
-    mockDetail(ATTENDANCE)
-    renderWithRoutes('/schools/1', ROUTES, 'diretor')
-
-    expect(await screen.findByRole('heading', { name: 'Infrequência por turma' })).toBeInTheDocument()
-    expect(await screen.findByText('20,0%')).toBeInTheDocument()
-  })
-
-  it('does not show or request the attendance block for admin', async () => {
-    const calls = { count: 0 }
-    mockDetail(ATTENDANCE, calls)
+  it('shows the school data without the old pole, class and attendance blocks', async () => {
+    server.use(http.get(`${API}/escolas/1`, () => HttpResponse.json(SCHOOL)))
     renderWithRoutes('/schools/1', ROUTES, 'admin')
 
-    expect(await screen.findByRole('heading', { name: 'Turmas' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Infrequência por turma' })).not.toBeInTheDocument()
-    expect(calls.count).toBe(0)
-  })
-
-  it('shows the empty attendance message when there are no records', async () => {
-    mockDetail([])
-    renderWithRoutes('/schools/1', ROUTES, 'diretor')
-
-    expect(await screen.findByText('Nenhum registro de frequência no período')).toBeInTheDocument()
-  })
-
-  it('hides the Professores section for coordenador', async () => {
-    mockDetail()
-    renderWithRoutes('/schools/1', ROUTES, 'coordenador')
-
-    expect(await screen.findByRole('heading', { name: 'Turmas' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'EMEF Centro' })).toBeInTheDocument()
+    expect(screen.getByText('Rua A')).toBeInTheDocument()
+    expect(screen.queryByText('Polo')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Turmas' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Professores' })).not.toBeInTheDocument()
   })
 
-  it('shows the Professores section for diretor', async () => {
-    mockDetail()
-    renderWithRoutes('/schools/1', ROUTES, 'diretor')
+  it('offers edit and delete to the admin', async () => {
+    server.use(http.get(`${API}/escolas/1`, () => HttpResponse.json(SCHOOL)))
+    renderWithRoutes('/schools/1', ROUTES, 'admin')
 
-    expect(await screen.findByText('Carla')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Editar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Excluir' })).toBeInTheDocument()
+  })
+
+  it('is read-only for the gestor', async () => {
+    server.use(http.get(`${API}/escolas/1`, () => HttpResponse.json(SCHOOL)))
+    renderWithRoutes('/schools/1', ROUTES, 'gestor')
+
+    expect(await screen.findByRole('heading', { name: 'EMEF Centro' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Editar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument()
   })
 })

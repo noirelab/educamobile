@@ -100,13 +100,4 @@ describe('StopsPage', () => {
 
     await waitFor(() => expect(body).toEqual({ localizacao: { latitude: -25.2, longitude: -49.2 } }))
   })
-
-  it('hides create and drag actions for diretor', async () => {
-    mockStops()
-    renderWithRoutes('/stops', ROUTES, 'diretor')
-
-    expect(await screen.findByTestId('marker-Parada Centro')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Nova parada' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Arrastar Parada Centro' })).not.toBeInTheDocument()
-  })
 })

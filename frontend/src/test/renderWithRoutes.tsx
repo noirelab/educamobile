@@ -13,7 +13,6 @@ export function renderWithRoutes(
   path: string,
   routes: RouteObject[],
   perfil: Role = 'admin',
-  escolaId: number | null = null,
 ) {
   setToken('tok')
   server.use(
@@ -23,7 +22,6 @@ export function renderWithRoutes(
         nome: 'Ana',
         email: 'ana@educa.test',
         perfil,
-        escola_id: escolaId,
         ativo: true,
       }),
     ),

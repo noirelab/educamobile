@@ -1,60 +1,37 @@
 import { describe, expect, it } from 'vitest'
-import { access, canWrite, type Access, type Resource, type Role } from './permissions'
+import { access, canWrite, usesPanel, type Access, type Resource, type Role } from './permissions'
 
-const RESOURCES: Resource[] = [
-  'dashboard',
-  'poles',
-  'schools',
-  'classes',
-  'teachers',
-  'students',
-  'enrollments',
-  'attendance',
-  'stops',
-  'routes',
-  'users',
-]
+const RESOURCES: Resource[] = ['dashboard', 'schools', 'students', 'stops', 'routes', 'users']
+
+const NONE: Record<Resource, Access> = {
+  dashboard: 'none',
+  schools: 'none',
+  students: 'none',
+  stops: 'none',
+  routes: 'none',
+  users: 'none',
+}
 
 const expected: Record<Role, Record<Resource, Access>> = {
   admin: {
-    dashboard: 'write',
-    poles: 'write',
+    dashboard: 'read',
     schools: 'write',
-    classes: 'write',
-    teachers: 'write',
     students: 'write',
-    enrollments: 'write',
-    attendance: 'write',
     stops: 'write',
     routes: 'write',
     users: 'write',
   },
-  diretor: {
+  gestor: {
     dashboard: 'read',
-    poles: 'read',
     schools: 'read',
-    classes: 'write',
-    teachers: 'write',
     students: 'write',
-    enrollments: 'write',
-    attendance: 'write',
-    stops: 'read',
-    routes: 'read',
-    users: 'none',
-  },
-  coordenador: {
-    dashboard: 'read',
-    poles: 'read',
-    schools: 'read',
-    classes: 'read',
-    teachers: 'none',
-    students: 'read',
-    enrollments: 'none',
-    attendance: 'none',
     stops: 'write',
     routes: 'write',
-    users: 'none',
+    users: 'write',
   },
+  motorista: NONE,
+  monitor: NONE,
+  responsavel: NONE,
 }
 
 const cases = (Object.keys(expected) as Role[]).flatMap((role) =>
@@ -62,8 +39,8 @@ const cases = (Object.keys(expected) as Role[]).flatMap((role) =>
 )
 
 describe('permissions matrix', () => {
-  it('covers all 33 role x resource pairs', () => {
-    expect(cases).toHaveLength(33)
+  it('covers all 30 role x resource pairs', () => {
+    expect(cases).toHaveLength(30)
   })
 
   it.each(cases)('%s on %s grants %s', (role, resource, level) => {
@@ -72,5 +49,9 @@ describe('permissions matrix', () => {
 
   it.each(cases)('canWrite(%s, %s) is true only for write', (role, resource, level) => {
     expect(canWrite(role, resource)).toBe(level === 'write')
+  })
+
+  it('only admin and gestor use the panel', () => {
+    expect((Object.keys(expected) as Role[]).filter(usesPanel)).toEqual(['admin', 'gestor'])
   })
 })
