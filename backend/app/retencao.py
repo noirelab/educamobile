@@ -2,7 +2,8 @@
 
 Posições brutas saem em 90 dias. Viagens e tudo que depende delas (lista, eventos, alertas,
 notificações, ausências) saem no prazo definido com a secretaria; o registro de auditoria fica
-mais tempo porque é a prova de quem viu o quê. Os prazos moram na tabela `configuracao`.
+mais tempo porque é a prova de quem viu o quê. Convites (nome e e-mail de quem foi convidado)
+saem 30 dias depois de usados ou vencidos. Os prazos moram na tabela `configuracao`.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -11,9 +12,12 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
 from app.alertas import limites
-from app.models import Auditoria, Ausencia, Notificacao, Posicao, Viagem
+from app.models import Auditoria, Ausencia, Convite, Notificacao, Posicao, Viagem
 
 PADRAO = {"retencao_posicoes_dias": 90, "retencao_dados_dias": 365, "retencao_auditoria_dias": 730}
+# Usado, o nome e o e-mail já estão na conta; vencido, não serve para nada. A folga deixa a
+# gestão ver o convite vencido e mandar outro.
+GUARDA_CONVITE = timedelta(days=30)
 
 
 def executar(db: Session, agora: datetime | None = None) -> dict[str, int]:
@@ -47,6 +51,12 @@ def executar(db: Session, agora: datetime | None = None) -> dict[str, int]:
     ).rowcount
     saiu["notificacao"] = db.execute(
         delete(Notificacao).where(Notificacao.criado_em < corte_dados)
+    ).rowcount
+    corte_convite = agora - GUARDA_CONVITE
+    saiu["convite"] = db.execute(
+        delete(Convite).where(
+            (Convite.usado_em < corte_convite) | (Convite.expira_em < corte_convite)
+        )
     ).rowcount
     saiu["auditoria"] = db.execute(delete(Auditoria).where(Auditoria.em < corte_auditoria)).rowcount
     db.flush()

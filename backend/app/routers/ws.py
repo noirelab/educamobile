@@ -35,7 +35,12 @@ router = APIRouter(tags=["tempo real"])
 
 CODIGO_NAO_AUTENTICADO = 4401
 CODIGO_SEM_PERMISSAO = 4403
+CODIGO_MUITAS_CONEXOES = 4429
 TEMPO_PARA_AUTENTICAR_S = 10
+# Conexões abertas ao mesmo tempo por usuário, em cada processo da API. Painel e app abertos em
+# alguns aparelhos cabem; um script abrindo centenas, não.
+MAX_CONEXOES_POR_USUARIO = 5
+_conexoes: dict[int, int] = {}
 CANAL_FROTA = "frota"
 # O que o responsável pode receber de uma viagem: a posição, a situação da viagem e o próprio filho.
 TIPOS_DO_RESPONSAVEL = frozenset({"posicao", "viagem_status", "aluno"})
@@ -164,6 +169,20 @@ async def tempo_real_ws(websocket: WebSocket, db: Annotated[Session, Depends(get
             await websocket.close(CODIGO_NAO_AUTENTICADO)
         return
 
+    if _conexoes.get(usuario.id, 0) >= MAX_CONEXOES_POR_USUARIO:
+        with contextlib.suppress(RuntimeError):
+            await websocket.close(CODIGO_MUITAS_CONEXOES)
+        return
+    _conexoes[usuario.id] = _conexoes.get(usuario.id, 0) + 1
+    try:
+        await _sessao(websocket, db, usuario, vence_em)
+    finally:
+        _conexoes[usuario.id] -= 1
+        if not _conexoes[usuario.id]:
+            del _conexoes[usuario.id]
+
+
+async def _sessao(websocket: WebSocket, db: Session, usuario: Usuario, vence_em: float) -> None:
     redis = tempo_real.cliente_async()
     pubsub = redis.pubsub()
     await _enviar(websocket, {"tipo": "autenticado", "expira_em": vence_em})

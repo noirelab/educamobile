@@ -1,9 +1,11 @@
 """Regras de alerta que dependem do tempo passar, executadas pelo worker.
 
-R6 viagem não iniciada, R7 sem sinal, R8 desvio de rota, R9 parada não prevista, R10 velocidade.
+R6 viagem não iniciada, R7 sem sinal, R8 desvio de rota, R9 parada não prevista, R10 velocidade
+e a regra crítica de criança possivelmente esquecida a bordo.
 Os limites vêm da tabela `configuracao`. Cada regra abre no máximo um alerta aberto por viagem.
 """
 
+import logging
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -26,6 +28,8 @@ from app.models import (
 )
 from app.viagens import alertar
 
+log = logging.getLogger(__name__)
+
 PADRAO = {
     "viagem_nao_iniciada_min": 10,
     "sem_sinal_s": 120,
@@ -35,6 +39,25 @@ PADRAO = {
     "velocidade_max_kmh": 80,
     "atraso_aviso_min": 10,
     "emergencia_avisa_responsaveis": 0,
+    "crianca_a_bordo_min": 15,
+}
+
+
+# Faixa aceita para cada chave. Sem ela, `sem_sinal_s = 1e9` desligaria a regra sem ninguém
+# perceber, e um prazo de guarda zero apagaria todas as viagens no próximo ciclo do worker.
+FAIXAS: dict[str, tuple[float, float]] = {
+    "viagem_nao_iniciada_min": (1, 120),
+    "sem_sinal_s": (30, 1800),
+    "desvio_max_m": (50, 5000),
+    "parada_nao_prevista_min": (1, 60),
+    "parado_raio_m": (5, 500),
+    "velocidade_max_kmh": (20, 150),
+    "atraso_aviso_min": (1, 120),
+    "emergencia_avisa_responsaveis": (0, 1),
+    "crianca_a_bordo_min": (5, 60),
+    "retencao_posicoes_dias": (7, 3650),
+    "retencao_dados_dias": (7, 3650),
+    "retencao_auditoria_dias": (7, 3650),
 }
 
 
@@ -265,6 +288,79 @@ def parada_nao_prevista(db: Session, agora: datetime, lim: dict) -> list[Alerta]
     return criados
 
 
+# Criança possivelmente esquecida a bordo (crítico)
+
+_ESQUECIDA = text(
+    """
+    SELECT
+        (SELECT count(*) FROM viagem_aluno
+         WHERE viagem_id = :v AND status = 'embarcou') AS a_bordo,
+        (SELECT max(registrada_em) FROM posicao WHERE viagem_id = :v) AS ultima_posicao,
+        u.horario_previsto AS ultimo_horario,
+        ST_DWithin(u.localizacao::geography, e.localizacao::geography, e.raio_cerca_m)
+            AS ultima_na_escola
+    FROM escola e
+    LEFT JOIN LATERAL (
+        SELECT horario_previsto, localizacao FROM viagem_parada
+        WHERE viagem_id = :v AND horario_previsto IS NOT NULL
+        ORDER BY ordem DESC LIMIT 1
+    ) u ON true
+    WHERE e.id = :escola
+    """
+)
+
+
+def crianca_a_bordo(db: Session, agora: datetime, lim: dict) -> list[Alerta]:
+    """Criança em `embarcou` e o ônibus sem sinal, ou já passada a hora da última parada.
+
+    É o caso do celular desligado depois de chegar à escola: sem posição, a saída da cerca não
+    dispara, e sem o motorista tentar concluir, a R2 também não. Lê a última posição do banco,
+    não do Redis, para continuar valendo com o Redis fora do ar.
+    """
+    fuso = ZoneInfo(settings.fuso_horario)
+    tolerancia = timedelta(minutes=lim["crianca_a_bordo_min"])
+    criados = []
+    for viagem in _em_andamento(db):
+        r = db.execute(_ESQUECIDA, {"v": viagem.id, "escola": viagem.escola_id}).one()
+        if not r.a_bordo:
+            continue
+        ultima = r.ultima_posicao or viagem.iniciada_em or agora
+        sem_sinal_ha = agora - ultima
+        atrasada = False
+        # Na ida, a hora da última parada só vale se ela for a escola: se for a última coleta,
+        # as crianças seguem a bordo até a escola, e o alerta seria falso em toda viagem.
+        horario_vale = r.ultimo_horario is not None and (
+            viagem.sentido.value != "ida" or r.ultima_na_escola
+        )
+        if horario_vale:
+            # Na data da viagem, não na de hoje: a viagem pode ter ficado aberta desde ontem.
+            previsto = datetime.combine(viagem.data, r.ultimo_horario, tzinfo=fuso)
+            atrasada = agora - previsto > tolerancia
+        if sem_sinal_ha <= tolerancia and not atrasada:
+            continue
+        motivo = (
+            f"sem sinal há {int(sem_sinal_ha.total_seconds() // 60)} min"
+            if sem_sinal_ha > tolerancia
+            else f"passou da hora prevista da última parada ({r.ultimo_horario:%H:%M})"
+        )
+        alerta = _abrir(
+            db,
+            viagem,
+            "crianca_a_bordo_sem_confirmacao",
+            Severidade.CRITICO,
+            f"{r.a_bordo} criança(s) ainda constam a bordo e o ônibus está {motivo}",
+            {
+                "a_bordo": r.a_bordo,
+                "segundos_sem_sinal": round(sem_sinal_ha.total_seconds()),
+                "passou_da_ultima_parada": atrasada,
+                "limite_min": lim["crianca_a_bordo_min"],
+            },
+        )
+        if alerta:
+            criados.append(alerta)
+    return criados
+
+
 # Aviso de atraso aos responsáveis
 
 
@@ -292,6 +388,8 @@ def avisar_atraso(db: Session, agora: datetime, lim: dict) -> int:
                     ViagemAluno.viagem_id == viagem.id,
                     ViagemAluno.parada_id == parada_id,
                     ViagemAluno.status == StatusAluno.AGUARDANDO,
+                    # Ausência avisada depois da saída: os pais já sabem que a criança não vai.
+                    ViagemAluno.ausencia_avisada_em.is_(None),
                 )
             ).all()
             for aluno in alunos:
@@ -316,7 +414,15 @@ def avisar_atraso(db: Session, agora: datetime, lim: dict) -> int:
     return enviados
 
 
-REGRAS = (viagem_nao_iniciada, sem_sinal, desvio_de_rota, parada_nao_prevista, velocidade_excessiva)
+# A crítica vem primeiro: uma falha nas outras não pode atrasá-la.
+REGRAS = (
+    crianca_a_bordo,
+    viagem_nao_iniciada,
+    sem_sinal,
+    desvio_de_rota,
+    parada_nao_prevista,
+    velocidade_excessiva,
+)
 
 
 def executar_regras(db: Session, agora: datetime | None = None) -> list[Alerta]:
@@ -327,14 +433,18 @@ def executar_regras(db: Session, agora: datetime | None = None) -> list[Alerta]:
         return []
     lim = limites(db)
     criados: list[Alerta] = []
-    for regra in REGRAS:
+    for regra in (*REGRAS, avisar_atraso):
+        # Cada regra no próprio savepoint: um erro numa delas não leva as outras nem o que elas
+        # já abriram. Redis fora do ar só pula a regra que depende dele.
         try:
-            criados += regra(db, agora, lim)
+            with db.begin_nested():
+                resultado = regra(db, agora, lim)
         except redis.RedisError:
             continue
-    try:
-        avisar_atraso(db, agora, lim)
-    except redis.RedisError:
-        pass
+        except Exception:
+            log.exception("falha na regra %s", regra.__name__)
+            continue
+        if isinstance(resultado, list):
+            criados += resultado
     db.flush()
     return criados

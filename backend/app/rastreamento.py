@@ -4,7 +4,8 @@ import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select, text
+import redis
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -93,6 +94,8 @@ def _avisar_chegada(db: Session, viagem: Viagem, parada_id: int) -> None:
             ViagemAluno.viagem_id == viagem.id,
             ViagemAluno.parada_id == parada_id,
             ViagemAluno.status == StatusAluno.AGUARDANDO,
+            # Quem avisou a ausência depois da saída já sabe que a criança não vai.
+            ViagemAluno.ausencia_avisada_em.is_(None),
         )
     ).all()
     for aluno in esperando:
@@ -146,6 +149,16 @@ def ingerir(
             {"v": viagem.id, "t": ordenadas[0].registrada_em},
         ).first()
     ref = (anterior.registrada_em, anterior.lat, anterior.lon) if anterior else None
+    # A cerca da escola só anda com posições mais novas que a última processada. Um ponto
+    # antigo (lote offline, ou rastreador e celular juntos) entra só no histórico: tratado como
+    # atual, ele tiraria o ônibus da escola e abriria um alerta crítico falso.
+    # Só conta o que já não está no futuro: uma posição adiantada (dentro da tolerância do
+    # relógio) faria as reais seguintes parecerem antigas e calaria a cerca por minutos.
+    ultima_processada = db.scalar(
+        select(func.max(Posicao.registrada_em)).where(
+            Posicao.viagem_id == viagem.id, Posicao.registrada_em <= agora
+        )
+    )
 
     aceitas: list[PosicaoEntrada] = []
     for e in ordenadas:
@@ -205,7 +218,8 @@ def ingerir(
                 viagem.id,
                 {"tipo": f"{tipo}_parada", "viagem_id": viagem.id, "parada_id": parada_id},
             )
-        viagens.verificar_saida_da_cerca(db, viagem, ponto)
+        if ultima_processada is None or e.registrada_em > ultima_processada:
+            viagens.verificar_saida_da_cerca(db, viagem, ponto)
         mais_recente = e
     if mais_recente is not None:
         ponto = Coordenadas(latitude=mais_recente.latitude, longitude=mais_recente.longitude)
@@ -218,7 +232,12 @@ def ingerir(
             "velocidade_kmh": mais_recente.velocidade_kmh,
             "desvio_m": desvio_m(db, viagem, ponto),
         }
-        if tempo_real.guardar_posicao(viagem.id, dados):
+        try:
+            mais_nova = tempo_real.guardar_posicao(viagem.id, dados)
+        except redis.RedisError:
+            # As posições já estão no banco; sem o Redis só o mapa ao vivo fica parado.
+            mais_nova = False
+        if mais_nova:
             tempo_real.enfileirar(db, viagem.id, {"tipo": "posicao", **dados})
     db.flush()
     return resultados

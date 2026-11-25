@@ -10,6 +10,7 @@ from pydantic import (
     field_validator,
 )
 
+from app import tempo
 from app.cadastros import IdBanco, Texto
 from app.models import Turno
 
@@ -30,7 +31,7 @@ class EstudanteCriar(BaseModel):
     @field_validator("data_nascimento")
     @classmethod
     def nascimento_no_passado(cls, valor: date) -> date:
-        if valor >= date.today():
+        if valor >= tempo.hoje():
             raise ValueError("A data de nascimento deve estar no passado")
         return valor
 

@@ -6,6 +6,7 @@ desenvolvimento e testes. A de Redis vale para todos os processos da API e é a 
 """
 
 import hashlib
+import logging
 import time
 import uuid
 from typing import Protocol
@@ -15,6 +16,20 @@ from fastapi import HTTPException, Request, status
 
 from app import auditoria, tempo_real
 from app.config import settings
+from app.security import id_do_token
+
+log = logging.getLogger(__name__)
+_ultimo_aviso_redis = 0.0
+
+
+def _avisar_redis_fora() -> None:
+    """Sem o Redis o limite deixa de valer, inclusive o do login. Fica no log, uma vez por
+    minuto, para o monitoramento pegar."""
+    global _ultimo_aviso_redis
+    agora = time.monotonic()
+    if agora - _ultimo_aviso_redis >= 60:
+        _ultimo_aviso_redis = agora
+        log.warning("Redis indisponível: limites de tentativas e de uso suspensos")
 
 
 class LimiteTentativas(Protocol):
@@ -97,6 +112,7 @@ class LimiteRedis:
             pipe.zcard(k)
             return pipe.execute()[1] >= self.maximo
         except redis.RedisError:
+            _avisar_redis_fora()
             return False
 
     def registrar_falha(self, chave: str) -> None:
@@ -126,7 +142,7 @@ def criar_limite(prefixo: str, maximo: int, janela_s: int) -> LimiteTentativas:
     return LimiteEmMemoria(maximo, janela_s)
 
 
-# Uso geral da API: por token de acesso (ou IP, sem token), contando cada requisição.
+# Uso geral da API: por usuário (ou token do rastreador, ou IP), contando cada requisição.
 MAX_ESCRITAS_POR_MINUTO = 300
 MAX_POSICOES_POR_MINUTO = 120
 limite_escrita = criar_limite("escrita", MAX_ESCRITAS_POR_MINUTO, 60)
@@ -138,9 +154,16 @@ limite_ip = criar_limite("ip", MAX_REQUISICOES_POR_IP_POR_MINUTO, 60)
 
 
 def _quem(request: Request) -> str:
-    credencial = request.headers.get("authorization") or request.headers.get("x-token-rastreador")
-    if credencial:
-        return "t:" + hashlib.sha256(credencial.encode()).hexdigest()[:32]
+    """Pelo id do usuário, e não pelo token: cada renovação (a cada 15 min) e cada aparelho
+    trariam um token novo e abririam outro contador. Token inválido ou inventado conta no IP."""
+    autorizacao = request.headers.get("authorization") or ""
+    if autorizacao[:7].lower() == "bearer ":
+        usuario_id = id_do_token(autorizacao[7:])
+        if usuario_id is not None:
+            return f"u:{usuario_id}"
+    rastreador = request.headers.get("x-token-rastreador")
+    if rastreador:
+        return "r:" + hashlib.sha256(rastreador.encode()).hexdigest()[:32]
     return "ip:" + (auditoria.ip_do_cliente(request) or "?")
 
 

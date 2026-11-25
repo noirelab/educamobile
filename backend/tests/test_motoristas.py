@@ -2,8 +2,9 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.models import Motorista, Perfil
+from app.models import Motorista, Perfil, StatusViagem, Viagem
 from app.security import criar_token
+from tests.conftest import rota_de_teste
 
 HOJE = date.today()
 
@@ -218,3 +219,47 @@ def test_atualizar_e_remover(client, db, cabecalhos, criar_usuario):
     assert client.put(url, json=corpo, headers=h).json()["categoria_cnh"] == "E"
     assert client.delete(url, headers=h).status_code == 204
     assert client.get(url, headers=h).status_code == 404
+
+
+@pytest.mark.parametrize("situacao", [StatusViagem.AGENDADA, StatusViagem.EM_ANDAMENTO])
+def test_nao_remove_motorista_escalado_em_viagem(client, db, cabecalhos, criar_usuario, situacao):
+    """O caso da revisão: `SET NULL` tirava o ônibus do mapa no meio da viagem."""
+    h = cabecalhos(Perfil.GESTOR)
+    usuario = criar_usuario(Perfil.MOTORISTA)
+    _cadastrar(db, usuario)
+    rota = rota_de_teste(db, motorista_id=usuario.id)
+    db.add(
+        Viagem(
+            rota_id=rota.id,
+            data=HOJE,
+            turno=rota.turno,
+            sentido=rota.sentido,
+            escola_id=rota.escola_id,
+            motorista_id=usuario.id,
+            status=situacao,
+        )
+    )
+    db.flush()
+    assert client.delete(f"/motoristas/{usuario.id}", headers=h).status_code == 409
+    assert client.get(f"/motoristas/{usuario.id}", headers=h).status_code == 200
+
+
+def test_viagem_agendada_de_dia_que_passou_nao_trava_a_remocao(
+    client, db, cabecalhos, criar_usuario
+):
+    h = cabecalhos(Perfil.GESTOR)
+    usuario = criar_usuario(Perfil.MOTORISTA)
+    _cadastrar(db, usuario)
+    rota = rota_de_teste(db, motorista_id=usuario.id)
+    db.add(
+        Viagem(
+            rota_id=rota.id,
+            data=HOJE - timedelta(days=7),
+            turno=rota.turno,
+            sentido=rota.sentido,
+            escola_id=rota.escola_id,
+            motorista_id=usuario.id,
+        )
+    )
+    db.flush()
+    assert client.delete(f"/motoristas/{usuario.id}", headers=h).status_code == 204

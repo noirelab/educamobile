@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 
-from app import auditoria, relatorios
+from app import auditoria, relatorios, tempo
 from app.cadastros import Db
 from app.models import Perfil, Usuario
 from app.relatorios import Filtro
@@ -21,7 +21,7 @@ ESCOLA_E_ROTA = Annotated[int | None, Query(ge=1, le=2_147_483_647)]
 def _filtro(
     de: date | None, ate: date | None, rota_id: int | None, escola_id: int | None
 ) -> Filtro:
-    fim = ate or date.today()
+    fim = ate or tempo.hoje()
     inicio = de or fim - timedelta(days=29)
     if inicio > fim:
         raise HTTPException(

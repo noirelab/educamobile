@@ -14,6 +14,7 @@ from app.models import (
     Auditoria,
     Ausencia,
     Configuracao,
+    Convite,
     EventoViagem,
     Notificacao,
     Perfil,
@@ -268,3 +269,30 @@ def test_sem_novo_aceite_nao_chegam_notificacoes_nem_avisos(db, mae, monkeypatch
     assert notificacoes.para_responsaveis(db, filho.id, "x", "t", "m") == 1
     monkeypatch.setattr(settings, "versao_termo_consentimento", "2027-02")
     assert notificacoes.para_responsaveis(db, filho.id, "x", "t", "m") == 0
+
+
+def test_convite_usado_ou_vencido_sai_depois_de_30_dias(db):
+    """O caso da revisão: nome e e-mail do convidado ficavam para sempre."""
+    filho = estudante_de_teste(db)
+    agora = datetime.now(UTC)
+
+    def convite(codigo, expira_dias, usado_dias=None):
+        db.add(
+            Convite(
+                codigo_hash=codigo,
+                nome="Mãe",
+                email=f"{codigo}@exemplo.com",
+                estudante_id=filho.id,
+                parentesco="mãe",
+                expira_em=agora + timedelta(days=expira_dias),
+                usado_em=agora - timedelta(days=usado_dias) if usado_dias is not None else None,
+            )
+        )
+
+    convite("pendente", 2)
+    convite("vencido-ha-pouco", -5)
+    convite("vencido-ha-muito", -40)
+    convite("usado-ha-muito", -37, usado_dias=40)
+    db.flush()
+    assert retencao.executar(db, agora)["convite"] == 2
+    assert set(db.scalars(select(Convite.codigo_hash))) == {"pendente", "vencido-ha-pouco"}

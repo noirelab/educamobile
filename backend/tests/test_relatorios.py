@@ -351,3 +351,20 @@ def test_csv_nao_estraga_numero_negativo(client, mundo):
 def test_ausencias_por_rota_nao_traz_aluno_de_outra_rota(client, mundo):
     r = _get(client, mundo, "ausencias", rota_id=mundo["rota_b"].id)
     assert r["linhas"] == []
+
+
+def test_ausencia_avisada_depois_da_saida_conta_como_ausencia_avisada(client, db, mundo):
+    """O motorista confirma `nao_embarcou`, mas a família tinha avisado: não é falta sem aviso."""
+    aluno = db.scalar(
+        select(ViagemAluno).where(
+            ViagemAluno.viagem_id == mundo["v1"].id,
+            ViagemAluno.status == StatusAluno.NAO_EMBARCOU,
+        )
+    )
+    aluno.ausencia_avisada_em = datetime.now(UTC)
+    db.flush()
+    v1 = next(
+        x for x in _get(client, mundo, "viagens")["linhas"] if x["viagem_id"] == mundo["v1"].id
+    )
+    assert v1["nao_embarcaram"] == 0
+    assert v1["ausencias_avisadas"] == 2

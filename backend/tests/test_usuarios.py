@@ -159,9 +159,9 @@ def test_responsavel_entra_so_pelo_convite_e_o_convite_nao_funciona_duas_vezes(
     client, db, cabecalhos, filho
 ):
     codigo = _convidar(client, cabecalhos(Perfil.GESTOR), filho).json()["codigo"]
-    url = f"/auth/convites/{codigo}/aceitar"
+    url = "/auth/convites/aceitar"
 
-    aceite = client.post(url, json={"senha": "senha-da-mae-1"})
+    aceite = client.post(url, json={"codigo": codigo, "senha": "senha-da-mae-1"})
     assert aceite.status_code == 201
     acesso = {"Authorization": f"Bearer {aceite.json()['access_token']}"}
     assert client.get("/auth/me", headers=acesso).json()["perfil"] == "responsavel"
@@ -169,7 +169,7 @@ def test_responsavel_entra_so_pelo_convite_e_o_convite_nao_funciona_duas_vezes(
     assert [f["estudante_id"] for f in filhos] == [filho.id]
     assert filhos[0]["consentimento_pendente"] is True
 
-    assert client.post(url, json={"senha": "outra-senha-2"}).status_code == 404
+    assert client.post(url, json={"codigo": codigo, "senha": "outra-senha-2"}).status_code == 404
     entrada = client.post(
         "/auth/login", data={"username": "mae@exemplo.com", "password": "senha-da-mae-1"}
     )
@@ -182,8 +182,13 @@ def test_convite_expirado_ou_inexistente_da_404(client, db, cabecalhos, filho):
     db.scalars(select(Convite)).one().expira_em = datetime.now(UTC) - timedelta(seconds=1)
     db.flush()
     corpo = {"senha": "senha-da-mae-1"}
-    assert client.post(f"/auth/convites/{codigo}/aceitar", json=corpo).status_code == 404
-    assert client.post("/auth/convites/inventado/aceitar", json=corpo).status_code == 404
+    assert (
+        client.post("/auth/convites/aceitar", json={**corpo, "codigo": codigo}).status_code == 404
+    )
+    assert (
+        client.post("/auth/convites/aceitar", json={**corpo, "codigo": "inventado"}).status_code
+        == 404
+    )
     assert db.scalar(select(Usuario).where(Usuario.email == "mae@exemplo.com")) is None
 
 
@@ -195,9 +200,9 @@ def test_convite_valido_por_72_horas(client, db, cabecalhos, filho):
 
 def test_senha_fraca_nao_consome_o_convite(client, cabecalhos, filho):
     codigo = _convidar(client, cabecalhos(Perfil.GESTOR), filho).json()["codigo"]
-    url = f"/auth/convites/{codigo}/aceitar"
-    assert client.post(url, json={"senha": "curta"}).status_code == 422
-    assert client.post(url, json={"senha": "senha-da-mae-1"}).status_code == 201
+    url = "/auth/convites/aceitar"
+    assert client.post(url, json={"codigo": codigo, "senha": "curta"}).status_code == 422
+    assert client.post(url, json={"codigo": codigo, "senha": "senha-da-mae-1"}).status_code == 201
 
 
 def test_convite_recusa_email_com_conta_e_estudante_inexistente(
@@ -213,15 +218,39 @@ def test_convite_recusa_email_com_conta_e_estudante_inexistente(
 def test_limite_de_tentativas_no_aceite(client):
     corpo = {"senha": "senha-da-mae-1"}
     for _ in range(10):
-        assert client.post("/auth/convites/errado/aceitar", json=corpo).status_code == 404
-    bloqueado = client.post("/auth/convites/errado/aceitar", json=corpo)
+        assert (
+            client.post("/auth/convites/aceitar", json={**corpo, "codigo": "errado"}).status_code
+            == 404
+        )
+    bloqueado = client.post("/auth/convites/aceitar", json={**corpo, "codigo": "errado"})
     assert bloqueado.status_code == 429
     assert "Retry-After" in bloqueado.headers
 
 
 def test_convite_e_aceite_ficam_na_auditoria(client, db, cabecalhos, filho):
     codigo = _convidar(client, cabecalhos(Perfil.GESTOR), filho).json()["codigo"]
-    client.post(f"/auth/convites/{codigo}/aceitar", json={"senha": "senha-da-mae-1"})
+    client.post("/auth/convites/aceitar", json={"codigo": codigo, "senha": "senha-da-mae-1"})
     registros = list(db.scalars(select(Auditoria).where(Auditoria.acao.like("convite.%"))))
     assert {r.acao for r in registros} == {"convite.criar", "convite.aceitar"}
     assert codigo not in str([r.detalhes for r in registros])
+
+
+def test_gestor_nao_lista_admin_nem_gestor(client, cabecalhos, criar_usuario):
+    """O caso da revisão: `obter` dava 404, mas `?perfil=admin` listava todos com e-mail."""
+    h = cabecalhos(Perfil.GESTOR)
+    admin = criar_usuario(Perfil.ADMIN)
+    criar_usuario(Perfil.GESTOR)
+    _criar(client, h, "motorista", "j@exemplo.com", "João")
+    assert client.get("/usuarios?perfil=admin", headers=h).json()["total"] == 0
+    assert client.get("/usuarios?perfil=gestor", headers=h).json()["total"] == 0
+    todos = client.get("/usuarios", headers=h).json()
+    assert {u["perfil"] for u in todos["itens"]} == {"motorista"}
+    assert admin.email not in str(todos)
+
+
+def test_codigo_do_convite_nao_vai_na_url(client, cabecalhos, filho):
+    codigo = _convidar(client, cabecalhos(Perfil.GESTOR), filho).json()["codigo"]
+    corpo = {"senha": "senha-da-mae-1"}
+    assert client.post(f"/auth/convites/{codigo}/aceitar", json=corpo).status_code in (404, 405)
+    aceite = client.post("/auth/convites/aceitar", json={**corpo, "codigo": codigo})
+    assert aceite.status_code == 201

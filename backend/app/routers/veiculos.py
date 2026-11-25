@@ -1,11 +1,10 @@
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from app import auditoria
+from app import auditoria, tempo
 from app.cadastros import Db, Deslocamento, IdRota, Limite, buscar, salvar
 from app.models import Perfil, Usuario, Veiculo
 from app.schemas.veiculos import VeiculoCriar, VeiculoLer, VeiculosPagina
@@ -31,7 +30,7 @@ def listar(
         trecho = "".join(c for c in placa.upper() if c.isalnum())
         filtros.append(Veiculo.placa.like(f"%{trecho}%"))
     if vistoria_vencida is not None:
-        hoje = date.today()
+        hoje = tempo.hoje()
         filtros.append(
             Veiculo.vistoria_valida_ate < hoje
             if vistoria_vencida

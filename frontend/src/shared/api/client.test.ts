@@ -204,5 +204,44 @@ describe('api client', () => {
       expect(refreshCalls).toBe(0)
       expect(spy).toHaveBeenCalledOnce()
     })
+
+    it('keeps the session when the renewal fails with 429 or 5xx', async () => {
+      login(10)
+      server.use(
+        http.post('*/auth/refresh', () => new HttpResponse(null, { status: 503 })),
+        http.get('*/escolas', () => HttpResponse.json([])),
+      )
+
+      await api('/escolas')
+
+      expect(getToken()).toBe('velho')
+      expect(getRefreshToken()).toBe('refresh-1')
+    })
+
+    it('does not sign out on a 401 when the renewal itself is unavailable', async () => {
+      login()
+      const spy = vi.fn()
+      onUnauthorized(spy)
+      server.use(
+        http.post('*/auth/refresh', () => new HttpResponse(null, { status: 503 })),
+        http.get('*/escolas', () => new HttpResponse(null, { status: 401 })),
+      )
+
+      await expect(api('/escolas')).rejects.toMatchObject({ status: 0 })
+
+      expect(spy).not.toHaveBeenCalled()
+      expect(getRefreshToken()).toBe('refresh-1')
+    })
+
+    it('adopts the tokens another tab got by renewing the same refresh token', async () => {
+      login()
+      const outraAba = new BroadcastChannel('educamobile.sessao')
+      outraAba.postMessage({ previous: 'refresh-1', tokens: NOVO })
+      await vi.waitFor(() => expect(getRefreshToken()).toBe('refresh-2'))
+      outraAba.postMessage({ previous: 'refresh-de-outra-conta', tokens: { ...NOVO, refresh_token: 'x' } })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(getRefreshToken()).toBe('refresh-2')
+      outraAba.close()
+    })
   })
 })

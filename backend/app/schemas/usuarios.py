@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Self
+from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.cadastros import IdBanco, Texto
 from app.models import Perfil
@@ -59,6 +59,8 @@ class ConviteLer(BaseModel):
 
 
 class ConviteAceitar(BaseModel):
+    # No corpo e não no caminho da URL: o caminho fica no log do nginx, do uvicorn e do proxy.
+    codigo: Annotated[str, Field(max_length=1000)]
     senha: str = Senha
 
 

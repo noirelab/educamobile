@@ -1,5 +1,6 @@
 """Worker de alertas: uma regra por teste, mais reconhecer, resolver, limites e emergência."""
 
+import uuid
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -529,3 +530,135 @@ def test_so_uma_instancia_roda_as_regras_por_vez(client, db, mundo):
     assert db.scalar(sql("SELECT pg_try_advisory_xact_lock(7001)")) is True
     # Quem já segura o lock é a própria sessão (reentrante); o ponto é que a regra o pede.
     assert [a.tipo for a in alertas.executar_regras(db, AGORA)] == ["sem_sinal"]
+
+
+# Criança possivelmente esquecida a bordo (crítico)
+
+
+def _embarcar(client, m):
+    corpo = {
+        "eventos": [
+            {
+                "id": str(uuid.uuid4()),
+                "tipo": "embarque",
+                "estudante_id": m["ana"].id,
+                "hora_aparelho": datetime.now(UTC).isoformat(),
+            }
+        ]
+    }
+    assert client.post(
+        f"/viagens/{m['viagem']['id']}/eventos", json=corpo, headers=m["hm"]
+    ).is_success
+
+
+def _local(hora, minuto):
+    local = datetime.now(ZoneInfo(settings.fuso_horario))
+    return local.replace(hour=hora, minute=minuto, second=0, microsecond=0).astimezone(UTC)
+
+
+def test_crianca_a_bordo_com_o_celular_desligado_vira_alerta_critico(
+    client, db, mundo, monkeypatch
+):
+    """O caso da revisão: ônibus chega, o motorista desliga o celular e a Ana fica a bordo."""
+    _iniciar(client, mundo)
+    _embarcar(client, mundo)
+    quando = _local(7, 0)  # antes da hora da última parada (07:10)
+    viagem = db.get(Viagem, mundo["viagem"]["id"])
+    viagem.iniciada_em = quando - timedelta(minutes=40)
+    _gravar_em(db, viagem.id, LAT_ESCOLA, quando - timedelta(minutes=20))
+    db.flush()
+
+    # Vale mesmo com o Redis fora do ar: a última posição sai do banco.
+    def sem_redis(_):
+        raise alertas.redis.ConnectionError
+
+    monkeypatch.setattr(tempo_real, "ler_posicao", sem_redis)
+    criados = alertas.executar_regras(db, quando)
+    assert _tipos(criados) == ["crianca_a_bordo_sem_confirmacao"]
+    assert criados[0].severidade.value == "critico"
+    assert criados[0].dados["a_bordo"] == 1
+    gestao = db.scalars(
+        select(Notificacao).where(Notificacao.tipo == "alerta_crianca_a_bordo_sem_confirmacao")
+    ).all()
+    assert gestao, "alerta crítico precisa chegar à gestão por push"
+    assert alertas.executar_regras(db, quando) == []  # não repete
+
+
+def test_crianca_a_bordo_depois_da_hora_da_ultima_parada(client, db, mundo):
+    _iniciar(client, mundo)
+    _embarcar(client, mundo)
+    quando = _local(7, 30)  # 20 min depois da última parada (07:10), tolerância de 15
+    _gravar_em(db, mundo["viagem"]["id"], LAT_ESCOLA, quando - timedelta(minutes=1))
+    db.flush()
+    [alerta] = [
+        a for a in alertas.executar_regras(db, quando) if a.tipo.startswith("crianca_a_bordo")
+    ]
+    assert alerta.dados["passou_da_ultima_parada"] is True
+
+
+def test_sem_crianca_a_bordo_nao_ha_alerta_critico(client, db, mundo):
+    _iniciar(client, mundo)
+    quando = _local(7, 30)
+    viagem = db.get(Viagem, mundo["viagem"]["id"])
+    viagem.iniciada_em = quando - timedelta(hours=3)
+    db.flush()
+    tipos = _tipos(alertas.executar_regras(db, quando))
+    assert "crianca_a_bordo_sem_confirmacao" not in tipos
+
+
+def _gravar_em(db, viagem_id, lat, quando):
+    from geoalchemy2.shape import from_shape
+    from shapely.geometry import Point
+
+    db.add(
+        Posicao(
+            viagem_id=viagem_id,
+            registrada_em=quando,
+            localizacao=from_shape(Point(0.0, lat), srid=4326),
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "valores",
+    [
+        {"sem_sinal_s": 1e9},
+        {"sem_sinal_s": 5},
+        {"crianca_a_bordo_min": 0},
+        {"retencao_dados_dias": 1},
+    ],
+)
+def test_configuracao_fora_da_faixa_e_recusada(client, cabecalhos, valores):
+    r = client.put(
+        "/configuracao/alertas", json={"valores": valores}, headers=cabecalhos(Perfil.ADMIN)
+    )
+    assert r.status_code == 422
+    assert next(iter(valores)) in r.json()["detail"]
+
+
+def test_ida_cuja_ultima_parada_nao_e_a_escola_nao_dispara_por_horario(client, db, mundo):
+    """Revisão de código: na ida, depois da última coleta as crianças seguem a bordo."""
+    _iniciar(client, mundo)
+    _embarcar(client, mundo)
+    db.execute(
+        text("DELETE FROM viagem_parada WHERE viagem_id = :v AND parada_id <> :a"),
+        {"v": mundo["viagem"]["id"], "a": mundo["a"].id},
+    )
+    quando = _local(7, 30)  # uma hora depois da coleta das 06:30, com sinal
+    _gravar_em(db, mundo["viagem"]["id"], 0.02, quando - timedelta(minutes=1))
+    db.flush()
+    assert "crianca_a_bordo_sem_confirmacao" not in _tipos(alertas.executar_regras(db, quando))
+
+
+def test_regra_com_defeito_nao_derruba_a_critica(client, db, mundo, monkeypatch):
+    _iniciar(client, mundo)
+    _embarcar(client, mundo)
+    quando = _local(7, 0)
+    db.get(Viagem, mundo["viagem"]["id"]).iniciada_em = quando - timedelta(minutes=40)
+    db.flush()
+
+    def quebrada(*_):
+        raise RuntimeError("defeito")
+
+    monkeypatch.setattr(alertas, "REGRAS", (quebrada, *alertas.REGRAS))
+    assert "crianca_a_bordo_sem_confirmacao" in _tipos(alertas.executar_regras(db, quando))

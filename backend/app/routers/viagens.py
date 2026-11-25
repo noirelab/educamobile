@@ -235,11 +235,15 @@ def lista(viagem_id: IdRota, db: Db, usuario: Equipe) -> ListaDaViagem:
         .join(Estudante, Estudante.id == ViagemAluno.estudante_id)
         .where(ViagemAluno.viagem_id == viagem.id)
     ).all()
+    gestao = usuario.perfil in (Perfil.ADMIN, Perfil.GESTOR)
     itens = []
     for aluno, estudante in linhas:
         parada = paradas.get(aluno.parada_id) if aluno.parada_id is not None else None
+        # Fora da lista, a equipe do ônibus vê só o nome: informar um id não pode bastar para
+        # ler foto e observações de saúde de qualquer criança da escola.
+        completo = gestao or not aluno.fora_da_lista
         foto_url = None
-        if estudante.foto_arquivo:
+        if completo and estudante.foto_arquivo:
             token, _ = fotos.assinar(estudante.id)
             foto_url = f"/fotos/{token}"
         itens.append(
@@ -253,7 +257,7 @@ def lista(viagem_id: IdRota, db: Db, usuario: Equipe) -> ListaDaViagem:
                 status=aluno.status,
                 fora_da_lista=aluno.fora_da_lista,
                 ausencia_avisada_depois=aluno.ausencia_avisada_em is not None,
-                observacoes_cuidado=estudante.observacoes_cuidado,
+                observacoes_cuidado=estudante.observacoes_cuidado if completo else None,
             )
         )
     itens.sort(key=lambda i: (i.ordem is None, i.ordem or 0, i.nome))

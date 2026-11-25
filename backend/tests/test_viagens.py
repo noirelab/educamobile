@@ -9,6 +9,7 @@ from PIL import Image
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 
+from app import viagens as viagens_mod
 from app.config import settings
 from app.geo import Coordenadas
 from app.models import (
@@ -28,7 +29,7 @@ from app.models import (
     ViagemAluno,
 )
 from app.security import criar_token
-from app.viagens import verificar_saida_da_cerca
+from app.viagens import pendencias_para_concluir, verificar_saida_da_cerca
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 from tests.test_rotas import _parada
 
@@ -919,7 +920,8 @@ def test_ausencia_avisada_com_a_viagem_andando_vira_aviso_na_lista(
     assert r.status_code == 201
     lista = client.get(f"/viagens/{em_andamento['id']}/lista", headers=mundo["hm"]).json()
     beto = next(a for a in lista["alunos"] if a["nome"] == "Beto")
-    assert beto["status"] == "ausencia_avisada"
+    # Continua esperada: o aviso aparece, mas só o toque do motorista tira a criança da lista.
+    assert beto["status"] == "aguardando"
     assert beto["ausencia_avisada_depois"] is True
     # Se mesmo assim a criança aparecer, o toque do motorista prevalece.
     _eventos(client, mundo, em_andamento, _ev("embarque", mundo["beto"], 1))
@@ -955,9 +957,31 @@ def test_cancelar_a_ausencia_com_a_viagem_andando_devolve_a_crianca_a_lista(
         json={"estudante_id": mundo["beto"].id, "data": HOJE.isoformat()},
         headers=_h(mae),
     ).json()
-    assert _status(client, mundo, em_andamento)["Beto"] == "ausencia_avisada"
+
+    def aviso() -> bool:
+        lista = client.get(f"/viagens/{em_andamento['id']}/lista", headers=mundo["hm"]).json()
+        return next(a for a in lista["alunos"] if a["nome"] == "Beto")["ausencia_avisada_depois"]
+
+    assert aviso() is True
     assert client.delete(f"/ausencias/{criada['id']}", headers=_h(mae)).status_code == 204
+    assert aviso() is False
     assert _status(client, mundo, em_andamento)["Beto"] == "aguardando"
+
+
+def test_ausencia_avisada_depois_da_saida_nao_libera_a_conclusao(
+    client, db, mundo, em_andamento, criar_usuario
+):
+    mae = criar_usuario(Perfil.RESPONSAVEL)
+    _vincular(db, mae, mundo["beto"])
+    client.post(
+        "/ausencias",
+        json={"estudante_id": mundo["beto"].id, "data": HOJE.isoformat()},
+        headers=_h(mae),
+    )
+    viagem = db.get(Viagem, em_andamento["id"])
+    assert any(p.startswith("Beto") for p in pendencias_para_concluir(db, viagem))
+    _eventos(client, mundo, em_andamento, _ev("nao_embarcou", mundo["beto"], 1))
+    assert not any(p.startswith("Beto") for p in pendencias_para_concluir(db, viagem))
 
 
 def test_correcao_do_gestor_vence_evento_de_aparelho_com_relogio_adiantado(
@@ -985,3 +1009,34 @@ def test_alerta_critico_de_crianca_a_bordo_notifica_a_gestao(client, db, mundo, 
 
 def test_gerar_duas_vezes_em_seguida_nao_quebra(client, mundo):
     assert _gerar(client, mundo)["id"] == _gerar(client, mundo)["id"]
+
+
+def test_fora_da_lista_a_equipe_ve_so_o_nome(client, db, mundo, em_andamento):
+    """O caso da revisão: com uma justificativa qualquer o motorista lia saúde de qualquer aluno."""
+    escola_id = db.get(Viagem, em_andamento["id"]).escola_id
+    alheio = estudante_de_teste(
+        db, "Carla", escola_id=escola_id, observacoes_cuidado="Epilepsia, medicação X"
+    )
+    ev = _ev("embarque_fora_da_lista", alheio, 1, justificativa="Troca de carona")
+    assert _eventos(client, mundo, em_andamento, ev).json()[0]["resultado"] == "aceito"
+    url = f"/viagens/{em_andamento['id']}/lista"
+    da_equipe = next(
+        a for a in client.get(url, headers=mundo["hm"]).json()["alunos"] if a["nome"] == "Carla"
+    )
+    assert da_equipe["observacoes_cuidado"] is None and da_equipe["foto_url"] is None
+    da_gestao = next(
+        a for a in client.get(url, headers=mundo["gestor"]).json()["alunos"] if a["nome"] == "Carla"
+    )
+    assert da_gestao["observacoes_cuidado"] == "Epilepsia, medicação X"
+
+
+def test_limite_de_embarques_fora_da_lista_por_viagem(client, db, mundo, em_andamento):
+    escola_id = db.get(Viagem, em_andamento["id"]).escola_id
+    limite = viagens_mod.MAX_FORA_DA_LISTA_POR_VIAGEM
+    extras = [estudante_de_teste(db, f"Extra {i}", escola_id=escola_id) for i in range(limite + 1)]
+    eventos = [
+        _ev("embarque_fora_da_lista", e, i + 1, justificativa="Troca de carona")
+        for i, e in enumerate(extras)
+    ]
+    resultados = [r["resultado"] for r in _eventos(client, mundo, em_andamento, *eventos).json()]
+    assert resultados == ["aceito"] * limite + ["rejeitado"]

@@ -137,16 +137,13 @@ def atualizar_configuracao(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, f"Chaves desconhecidas: {desconhecidas}"
         )
-    if any(v < 0 for v in dados.valores.values()):
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "Os limites não podem ser negativos"
-        )
-    curtos = [c for c, v in dados.valores.items() if c.startswith("retencao_") and v < 7]
-    if curtos:
-        # Zero apagaria todas as viagens e eventos no próximo ciclo do worker.
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, f"Prazo de guarda mínimo é 7 dias: {curtos}"
-        )
+    fora = [
+        f"{c} (de {alertas.FAIXAS[c][0]:g} a {alertas.FAIXAS[c][1]:g})"
+        for c, v in sorted(dados.valores.items())
+        if c in alertas.FAIXAS and not alertas.FAIXAS[c][0] <= v <= alertas.FAIXAS[c][1]
+    ]
+    if fora:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"Fora da faixa: {fora}")
     for chave, valor in dados.valores.items():
         existentes[chave].valor = valor
     auditoria.registrar(
@@ -246,7 +243,11 @@ def registrar_dispositivo(
     """Registra o token de push do aparelho. O mesmo token passa a valer para quem o enviou por
     último (um aparelho que troca de dono não recebe o que é do dono antigo)."""
     atual = db.scalar(select(Dispositivo).where(Dispositivo.token == dados.token))
+    dono_anterior = None
     if atual is not None:
+        if atual.usuario_id != usuario.id:
+            # Fica a trilha: quem tiver o token FCM de outra pessoa passa a receber os avisos.
+            dono_anterior = atual.usuario_id
         atual.usuario_id = usuario.id
         atual.plataforma = dados.plataforma
     else:
@@ -263,7 +264,17 @@ def registrar_dispositivo(
             ).all()
             db.execute(delete(Dispositivo).where(Dispositivo.id.in_(antigos)))
         db.add(Dispositivo(usuario_id=usuario.id, token=dados.token, plataforma=dados.plataforma))
-    auditoria.registrar(db, "dispositivo.registrar", request=request, usuario=usuario)
+    if dono_anterior is not None:
+        auditoria.registrar(
+            db,
+            "dispositivo.transferir",
+            request=request,
+            usuario=usuario,
+            recurso="usuario",
+            recurso_id=dono_anterior,
+        )
+    else:
+        auditoria.registrar(db, "dispositivo.registrar", request=request, usuario=usuario)
     try:
         db.commit()
     except IntegrityError:

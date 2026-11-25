@@ -152,9 +152,10 @@ def me(usuario: UsuarioAtual) -> UsuarioLer:
     return UsuarioLer.model_validate(usuario)
 
 
-@router.post("/convites/{codigo}/aceitar", status_code=status.HTTP_201_CREATED)
-def aceitar_convite(codigo: str, dados: ConviteAceitar, request: Request, db: Db) -> Token:
+@router.post("/convites/aceitar", status_code=status.HTTP_201_CREATED)
+def aceitar_convite(dados: ConviteAceitar, request: Request, db: Db) -> Token:
     """O responsável define a senha e entra. O convite já traz o vínculo com o estudante."""
+    codigo = dados.codigo
     ip = auditoria.ip_do_cliente(request) or ""
     if limite_convite.bloqueado(ip):
         raise _muitas_tentativas()

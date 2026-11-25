@@ -4,6 +4,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, computed_field
 
+from app import tempo
 from app.cadastros import Texto
 
 # Placa antiga (ABC1234) e Mercosul (ABC1D23).
@@ -43,7 +44,7 @@ class VeiculoLer(BaseModel):
     @computed_field
     @property
     def vistoria_vencida(self) -> bool:
-        return self.vistoria_valida_ate < date.today()
+        return self.vistoria_valida_ate < tempo.hoje()
 
 
 class VeiculosPagina(BaseModel):

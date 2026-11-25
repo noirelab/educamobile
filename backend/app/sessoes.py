@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app import auditoria
 from app.config import settings
-from app.models import Sessao, Usuario
+from app.models import Dispositivo, Sessao, Usuario
 from app.security import hash_refresh_token, invalidar_tokens_de_acesso, novo_refresh_token
 
 MAX_USER_AGENT = 300
@@ -85,13 +85,20 @@ def limpar_antigas(db: Session, agora: datetime | None = None) -> int:
     return resultado.rowcount or 0
 
 
-def revogar_todas(db: Session, usuario: Usuario) -> None:
+def revogar_todas(db: Session, usuario: Usuario, *, apagar_aparelhos: bool = True) -> None:
+    """Encerra todas as sessões e apaga os aparelhos de push: sem sessão, sem aviso no celular.
+    O app registra o aparelho de novo quando a pessoa entra.
+
+    No reuso de refresh token os aparelhos ficam: senão quem guardou um token antigo poderia
+    cortar, quando quisesse, os avisos que o responsável recebe sobre o filho."""
     agora = datetime.now(UTC)
     db.execute(
         update(Sessao)
         .where(Sessao.usuario_id == usuario.id, Sessao.revogada_em.is_(None))
         .values(revogada_em=agora)
     )
+    if apagar_aparelhos:
+        db.execute(delete(Dispositivo).where(Dispositivo.usuario_id == usuario.id))
     invalidar_tokens_de_acesso(usuario)
 
 
@@ -109,14 +116,17 @@ def rotacionar(db: Session, token: str, request: Request) -> tuple[Usuario, str]
     usuario = db.get(Usuario, sessao.usuario_id)
     if sessao.revogada_em is not None:
         if sessao.substituida_por_id is not None:
-            revogar_todas(db, usuario)
+            revogar_todas(db, usuario, apagar_aparelhos=False)
             auditoria.registrar(db, "sessao.reuso", request=request, usuario=usuario)
             db.commit()
         raise _nao_autorizado()
     if sessao.expira_em <= datetime.now(UTC) or not usuario.ativo:
         raise _nao_autorizado()
-    nova, novo_token = criar(db, usuario, request)
+    # A antiga sai antes de a nova entrar: senão o limite de sessões ativas derrubaria outro
+    # aparelho a cada renovação.
     sessao.revogada_em = datetime.now(UTC)
+    db.flush()
+    nova, novo_token = criar(db, usuario, request)
     sessao.substituida_por_id = nova.id
     db.commit()
     return usuario, novo_token

@@ -54,7 +54,7 @@ def _email_em_uso() -> HTTPException:
 @router.get("/usuarios")
 def listar(
     db: Db,
-    _: Gestao,
+    ator: Gestao,
     perfil: Perfil | None = None,
     q: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
     ativo: bool | None = None,
@@ -62,6 +62,9 @@ def listar(
     offset: Deslocamento = 0,
 ) -> UsuariosPagina:
     filtros = []
+    if ator.perfil != Perfil.ADMIN:
+        # Como em `obter`: o gestor não descobre quem é administrador nem outro gestor.
+        filtros.append(Usuario.perfil.in_(GERIDOS_PELO_GESTOR))
     if perfil is not None:
         filtros.append(Usuario.perfil == perfil)
     if q:

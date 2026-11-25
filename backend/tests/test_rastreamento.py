@@ -4,7 +4,8 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
-from sqlalchemy import select, text
+import redis
+from sqlalchemy import func, select, text
 
 from app import tempo_real
 from app.config import settings
@@ -628,3 +629,44 @@ def test_posicao_com_precisao_ruim_nao_vira_referencia(client, db, mundo):
     r = _enviar(client, mundo, ruim, _pos(0.0, 20))
     assert [x["resultado"] for x in r.json()] == ["rejeitada", "aceita"]
     assert r.json()[0]["motivo"] == "Precisão do GPS ruim"
+
+
+def test_redis_fora_do_ar_nao_perde_as_posicoes(client, db, mundo, monkeypatch):
+    """O caso da revisão: sem Redis o envio dava 500 e o lote já validado ia embora."""
+
+    def falha(*_):
+        raise redis.ConnectionError
+
+    monkeypatch.setattr(tempo_real, "guardar_posicao", falha)
+    monkeypatch.setattr(tempo_real, "ler_posicao", falha)
+    r = _enviar(client, mundo, _pos(0.001, 10), _pos(0.002, 20))
+    assert r.status_code == 200, r.text
+    assert [x["resultado"] for x in r.json()] == ["aceita", "aceita"]
+    assert db.scalar(select(func.count()).select_from(Posicao)) == 2
+
+
+def test_posicao_antiga_nao_tira_o_onibus_da_escola(client, db, mundo):
+    """O caso da revisão: ônibus parado na escola, chega um ponto de antes da chegada."""
+    _evento(client, mundo, "embarque", mundo["ana"], 5)
+    _enviar(client, mundo, _pos(LAT_ESCOLA - 0.0005, 200), _pos(LAT_ESCOLA - 0.0004, 230))
+    assert db.get(Viagem, mundo["viagem"]["id"]).dentro_da_cerca_escola is True
+    # Lote atrasado (offline, ou o rastreador do veículo): ainda longe da escola.
+    r = _enviar(client, mundo, _pos(LAT_ESCOLA - 0.005, 150), quem="hm")
+    assert [x["resultado"] for x in r.json()] == ["aceita"]
+    assert db.get(Viagem, mundo["viagem"]["id"]).dentro_da_cerca_escola is True
+    assert client.get("/alertas", headers=mundo["gestor"]).json() == []
+
+
+def test_posicao_adiantada_nao_cala_a_cerca_da_escola(client, db, mundo):
+    """Uma posição com relógio adiantado não pode fazer as reais seguintes parecerem antigas."""
+    _evento(client, mundo, "embarque", mundo["ana"], 5)
+    adiantada = {
+        "registrada_em": (datetime.now(UTC) + timedelta(seconds=240)).isoformat(),
+        "latitude": LAT_ESCOLA - 0.0005,
+        "longitude": 0.0,
+    }
+    _enviar(client, mundo, _pos(LAT_ESCOLA - 0.0004, 400), adiantada)
+    # Agora a posição real: o ônibus saiu da escola com a Ana a bordo.
+    _enviar(client, mundo, _pos(LAT_ESCOLA - 0.003, 470))
+    tipos = [a["tipo"] for a in client.get("/alertas", headers=mundo["gestor"]).json()]
+    assert "crianca_a_bordo_fora_da_escola" in tipos

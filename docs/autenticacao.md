@@ -103,7 +103,7 @@ Em qualquer ambiente, as respostas levam `X-Content-Type-Options: nosniff`, `X-F
 
 ## Convite de responsável
 
-Responsável não tem cadastro aberto. O gestor chama `POST /convites` com nome, e-mail, estudante e parentesco; a resposta traz o `codigo` uma única vez (o banco guarda só o hash, válido por 72 h). O responsável abre o link e chama `POST /auth/convites/{codigo}/aceitar` com a senha que escolheu. O convite cria a conta e o vínculo com o estudante e devolve os tokens. Depois do primeiro uso ele deixa de valer, e tentativas com código errado são limitadas por IP. O consentimento (LGPD, art. 14) continua pendente até o responsável aceitá-lo.
+Responsável não tem cadastro aberto. O gestor chama `POST /convites` com nome, e-mail, estudante e parentesco; a resposta traz o `codigo` uma única vez (o banco guarda só o hash, válido por 72 h). O responsável abre o link e chama `POST /auth/convites/aceitar` com o código e a senha que escolheu, os dois no corpo (no caminho da URL, o código iria para o log do nginx e do proxy). O convite cria a conta e o vínculo com o estudante e devolve os tokens. Depois do primeiro uso ele deixa de valer, e tentativas com código errado são limitadas por IP. O consentimento (LGPD, art. 14) continua pendente até o responsável aceitá-lo.
 
 ## Sessões e limites
 

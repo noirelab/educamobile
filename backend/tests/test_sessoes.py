@@ -131,3 +131,31 @@ def test_limpeza_apaga_so_o_que_passou_dos_30_dias(client, db, criar_usuario):
 def test_listar_e_revogar_exigem_login(client):
     assert client.get("/auth/sessoes").status_code == 401
     assert client.delete("/auth/sessoes/1").status_code == 401
+
+
+def test_renovar_com_dez_aparelhos_nao_derruba_outro(client, db, criar_usuario):
+    """O caso da revisão: com 10 sessões, renovar uma revogava a mais antiga (ficavam 9)."""
+    eu = criar_usuario(Perfil.RESPONSAVEL)
+    logins = [_login(client, eu, f"aparelho-{i}") for i in range(sessoes.MAX_SESSOES_ATIVAS)]
+    r = client.post("/auth/refresh", json={"refresh_token": logins[5]["refresh_token"]})
+    assert r.status_code == 200
+    assert len(sessoes.listar_ativas(db, eu)) == sessoes.MAX_SESSOES_ATIVAS
+    assert (
+        client.post("/auth/refresh", json={"refresh_token": logins[0]["refresh_token"]}).status_code
+        == 200
+    )
+
+
+def test_reuso_de_refresh_token_nao_apaga_os_aparelhos_de_push(client, db, criar_usuario):
+    """Quem guardou um token antigo não pode cortar os avisos do responsável."""
+    from app.models import Dispositivo
+
+    eu = criar_usuario(Perfil.RESPONSAVEL)
+    login = _login(client, eu)
+    db.add(Dispositivo(usuario_id=eu.id, token="d" * 40, plataforma="android"))
+    db.flush()
+    client.post("/auth/refresh", json={"refresh_token": login["refresh_token"]})
+    reuso = client.post("/auth/refresh", json={"refresh_token": login["refresh_token"]})
+    assert reuso.status_code == 401
+    assert sessoes.listar_ativas(db, eu) == []
+    assert len(db.scalars(select(Dispositivo)).all()) == 1

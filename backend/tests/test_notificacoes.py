@@ -477,3 +477,93 @@ def test_fcm_com_credencial_quebrada_tenta_de_novo():
     assert (
         EnviadorFcm("p", sem_token, cliente).enviar("t", "a", "b", {}) is Resultado.ERRO_TEMPORARIO
     )
+
+
+# Conta desativada
+
+
+def test_responsavel_desativado_nao_recebe_mais_avisos_do_filho(client, db, mundo):
+    """O caso da revisão: mãe desativada continuava recebendo `embarcou`."""
+    mae = mundo["maes"][mundo["ana"].id]
+    client.post("/dispositivos", json={"token": TOKEN, "plataforma": "android"}, headers=_h(mae))
+    admin = {"Authorization": f"Bearer {criar_token(_admin(db))}"}
+    assert client.post(f"/usuarios/{mae.id}/desativar", headers=admin).status_code == 200
+    assert db.scalars(select(Dispositivo).where(Dispositivo.usuario_id == mae.id)).all() == []
+    client.post(f"/viagens/{mundo['viagem']['id']}/iniciar", headers=mundo["hm"])
+    _evento(client, mundo, "embarque", mundo["ana"], 1)
+    assert db.scalars(select(Notificacao).where(Notificacao.usuario_id == mae.id)).all() == []
+
+
+def test_notificacao_de_quem_foi_desativado_nao_sai_por_push(db, criar_usuario):
+    mae = criar_usuario(Perfil.RESPONSAVEL)
+    n = _pendente(db, mae, TOKEN)
+    mae.ativo = False
+    db.flush()
+    enviador = Enviador()
+    assert enviar_pendentes(db, enviador) == 0
+    assert enviador.enviadas == []
+    assert n.erro == "conta_inativa"
+
+
+def test_logout_de_todos_apaga_os_aparelhos(client, db, criar_usuario):
+    mae = criar_usuario(Perfil.RESPONSAVEL)
+    client.post("/dispositivos", json={"token": TOKEN, "plataforma": "android"}, headers=_h(mae))
+    assert client.post("/auth/logout-todos", headers=_h(mae)).status_code == 204
+    assert db.scalars(select(Dispositivo)).all() == []
+
+
+def _admin(db):
+    from app.models import Usuario
+    from app.security import gerar_hash
+
+    admin = Usuario(
+        nome="Admin",
+        email="admin-notif@exemplo.com",
+        senha_hash=gerar_hash("x"),
+        perfil=Perfil.ADMIN,
+    )
+    db.add(admin)
+    db.flush()
+    return admin
+
+
+# Prioridade e prazo da rodada
+
+
+def test_emergencia_e_alerta_critico_saem_antes_dos_avisos_comuns(db, criar_usuario):
+    mae, gestor = criar_usuario(Perfil.RESPONSAVEL), criar_usuario(Perfil.GESTOR)
+    db.add(Dispositivo(usuario_id=mae.id, token="m" * 40, plataforma="android"))
+    db.add(Dispositivo(usuario_id=gestor.id, token="g" * 40, plataforma="android"))
+    for _ in range(3):
+        notificacoes.criar(db, mae.id, "embarcou", "Comum", "Comum")
+    notificacoes.criar(db, gestor.id, "alerta_crianca_a_bordo_fora_da_escola", "Crítico", "C")
+    notificacoes.criar(db, gestor.id, "emergencia", "Emergência", "E")
+    db.flush()
+    enviador = Enviador()
+    enviar_pendentes(db, enviador)
+    assert [t for _, t, _, _ in enviador.enviadas][:2] == ["Emergência", "Crítico"]
+
+
+def test_rodada_de_envio_respeita_o_prazo(db, criar_usuario):
+    mae = criar_usuario(Perfil.RESPONSAVEL)
+    db.add(Dispositivo(usuario_id=mae.id, token="m" * 40, plataforma="android"))
+    for _ in range(5):
+        notificacoes.criar(db, mae.id, "embarcou", "Comum", "Comum")
+    db.flush()
+    enviador = Enviador()
+    # Prazo zerado: a primeira sai, o resto fica para a próxima rodada.
+    assert enviar_pendentes(db, enviador, prazo_s=0) <= 1
+    restantes = db.scalars(select(Notificacao).where(Notificacao.enviada_em.is_(None))).all()
+    assert len(restantes) >= 4
+
+
+def test_token_de_outra_pessoa_registra_o_dono_anterior_na_auditoria(client, db, criar_usuario):
+    from app.models import Auditoria
+
+    antigo, novo = criar_usuario(Perfil.RESPONSAVEL), criar_usuario(Perfil.RESPONSAVEL)
+    corpo = {"token": TOKEN, "plataforma": "ios"}
+    client.post("/dispositivos", json=corpo, headers=_h(antigo))
+    client.post("/dispositivos", json=corpo, headers=_h(novo))
+    registro = db.scalar(select(Auditoria).where(Auditoria.acao == "dispositivo.transferir"))
+    assert registro is not None
+    assert registro.recurso_id == str(antigo.id) and registro.usuario_id == novo.id

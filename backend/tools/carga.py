@@ -202,7 +202,9 @@ def semear(api: str, email: str, senha: str, n: int, responsaveis: int) -> dict:
         )
         t = (
             httpx.post(
-                f"{api}/auth/convites/{conv['codigo']}/aceitar", json={"senha": SENHA}, timeout=30
+                f"{api}/auth/convites/aceitar",
+                json={"codigo": conv["codigo"], "senha": SENHA},
+                timeout=30,
             )
             .raise_for_status()
             .json()

@@ -63,6 +63,21 @@ def invalidar_tokens_de_acesso(usuario: Usuario) -> None:
     usuario.sessoes_validas_desde = datetime.now(UTC)
 
 
+def id_do_token(token: str) -> int | None:
+    """O usuário de um token de acesso com assinatura válida, sem ir ao banco. Só para contar
+    o limite de uso: quem autoriza a requisição continua sendo `autenticar_token`."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret,
+            algorithms=[ALGORITMO],
+            options={"require": ["exp", "sub", "typ"]},
+        )
+        return int(payload["sub"]) if payload["typ"] == TIPO_ACESSO else None
+    except (jwt.PyJWTError, ValueError, TypeError):
+        return None
+
+
 def autenticar_token(token: str, db: Session) -> tuple[Usuario, float]:
     """Valida o token de acesso e devolve o usuário e o instante (epoch) em que ele vence."""
     invalido = HTTPException(

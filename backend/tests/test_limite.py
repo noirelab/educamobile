@@ -203,3 +203,20 @@ def test_limite_no_redis_fora_do_ar_nao_derruba_o_login(monkeypatch, prefixo):
     lim.registrar_falha("a")
     assert lim.bloqueado("a") is False
     lim.limpar("a")
+
+
+def test_limite_geral_conta_por_usuario_e_nao_por_token(criar_usuario):
+    """O caso da revisão: cada token novo (renovação, aparelho) abria um contador novo."""
+    from starlette.requests import Request
+
+    def pedido(autorizacao):
+        cabecalhos = [(b"authorization", autorizacao.encode())] if autorizacao else []
+        return Request({"type": "http", "headers": cabecalhos, "client": ("10.0.0.1", 1)})
+
+    eu = criar_usuario(Perfil.MOTORISTA)
+    primeiro, segundo = criar_token(eu), criar_token(eu)
+    assert modulo._quem(pedido(f"Bearer {primeiro}")) == f"u:{eu.id}"
+    assert modulo._quem(pedido(f"Bearer {segundo}")) == f"u:{eu.id}"
+    # Cabeçalho inventado não abre contador próprio: conta no IP.
+    assert modulo._quem(pedido("Bearer inventado")).startswith("ip:")
+    assert modulo._quem(pedido(f"Bearer {uuid.uuid4()}")).startswith("ip:")

@@ -56,6 +56,8 @@ _STATUS_DO_TIPO = {
     TipoEvento.NAO_EMBARCOU: StatusAluno.NAO_EMBARCOU,
     TipoEvento.DESEMBARQUE: StatusAluno.DESEMBARCOU,
 }
+# Embarques fora da lista aceitos numa viagem: o teto limita a enumeração de ids da escola.
+MAX_FORA_DA_LISTA_POR_VIAGEM = 3
 # Quanto a hora do aparelho pode estar adiantada em relação ao servidor (relógio desregulado).
 TOLERANCIA_RELOGIO_S = 300
 
@@ -288,6 +290,11 @@ def _avaliar(
             return "Embarque fora da lista exige justificativa", None
         # Sem esta conferência o motorista leria nome, foto e observações de saúde de qualquer
         # criança do cadastro, só informando o id.
+        if evento.estudante_id in alunos:
+            # Já está na lista (ou já embarcou fora dela): vale como embarque comum.
+            return None, "fora_da_lista"
+        if sum(a.fora_da_lista for a in alunos.values()) >= MAX_FORA_DA_LISTA_POR_VIAGEM:
+            return "Limite de embarques fora da lista nesta viagem: fale com a gestão", None
         escola = db.scalar(select(Estudante.escola_id).where(Estudante.id == evento.estudante_id))
         if escola is None or escola != viagem.escola_id:
             return "Estudante inexistente ou de outra escola", None
@@ -636,9 +643,12 @@ def responsaveis_da_viagem(db: Session, viagem: Viagem) -> list[tuple[int, int]]
     return [
         (r.responsavel_id, r.estudante_id)
         for r in db.scalars(
-            select(ResponsavelEstudante).where(
+            select(ResponsavelEstudante)
+            .join(Usuario, Usuario.id == ResponsavelEstudante.responsavel_id)
+            .where(
                 ResponsavelEstudante.estudante_id.in_(estudantes),
                 consentimento.vigente(),
+                Usuario.ativo.is_(True),
             )
         )
     ]
@@ -713,7 +723,6 @@ def aviso_de_ausencia_tardia(db: Session, estudante_id: int, dia: date, sentido)
     if sentido is not None:
         consulta = consulta.where(Viagem.sentido == sentido)
     for aluno in db.scalars(consulta):
+        # O status continua `aguardando`: a criança só sai da lista com o toque de `nao_embarcou`
+        # do motorista, e a R2 não deixa concluir sem ele. O aviso aparece na lista.
         aluno.ausencia_avisada_em = agora()
-        if aluno.status == StatusAluno.AGUARDANDO:
-            aluno.status = StatusAluno.AUSENCIA_AVISADA
-            aluno.status_inicial = StatusAluno.AUSENCIA_AVISADA

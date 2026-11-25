@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import func, select
+from sqlalchemy import String, case, cast, func, select
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -76,12 +76,22 @@ def viagens(db: Session, f: Filtro) -> tuple[list[dict], dict]:
     ids = [v.id for v, _ in linhas_db]
     contagens: dict[int, dict[str, int]] = {i: {} for i in ids}
     if ids:
+        # Ausência avisada depois da saída termina em `nao_embarcou` (o motorista confirma), mas
+        # no relatório conta como ausência avisada, e não como falta sem aviso.
+        situacao = case(
+            (
+                (ViagemAluno.status == StatusAluno.NAO_EMBARCOU)
+                & ViagemAluno.ausencia_avisada_em.is_not(None),
+                StatusAluno.AUSENCIA_AVISADA.value,
+            ),
+            else_=cast(ViagemAluno.status, String),
+        )
         for viagem_id, status, n in db.execute(
-            select(ViagemAluno.viagem_id, ViagemAluno.status, func.count())
+            select(ViagemAluno.viagem_id, situacao, func.count())
             .where(ViagemAluno.viagem_id.in_(ids))
-            .group_by(ViagemAluno.viagem_id, ViagemAluno.status)
+            .group_by(ViagemAluno.viagem_id, situacao)
         ):
-            contagens[viagem_id][status.value] = n
+            contagens[viagem_id][status] = n
         fora = {
             i: n
             for i, n in db.execute(

@@ -7,12 +7,13 @@ que o Firebase recusa. O texto só fala do próprio filho: nunca de outras crian
 
 import enum
 import logging
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
 import httpx
-from sqlalchemy import delete, select
+from sqlalchemy import case, delete, select
 from sqlalchemy.orm import Session
 
 from app import consentimento
@@ -24,6 +25,15 @@ MAX_TENTATIVAS = 5
 ESPERA_BASE_S = 30
 ESPERA_MAXIMA_S = 3600
 LOTE = 100
+# Tempo máximo de uma rodada de envio. Com o FCM lento, o que sobrar fica para a próxima rodada
+# e o worker volta logo às regras de alerta.
+PRAZO_RODADA_S = 10.0
+# Emergência e alertas críticos saem antes dos avisos comuns.
+_PRIORIDADE = case(
+    (Notificacao.tipo == "emergencia", 0),
+    (Notificacao.tipo.startswith("alerta_", autoescape=True), 1),
+    else_=2,
+)
 FCM_ESCOPO = "https://www.googleapis.com/auth/firebase.messaging"
 
 
@@ -70,9 +80,12 @@ def para_responsaveis(
 ) -> int:
     """Avisa quem tem vínculo e consentimento com a criança. Devolve quantos."""
     ids = db.scalars(
-        select(ResponsavelEstudante.responsavel_id).where(
+        select(ResponsavelEstudante.responsavel_id)
+        .join(Usuario, Usuario.id == ResponsavelEstudante.responsavel_id)
+        .where(
             ResponsavelEstudante.estudante_id == estudante_id,
             consentimento.vigente(),
+            Usuario.ativo.is_(True),
         )
     ).all()
     for usuario_id in ids:
@@ -195,9 +208,15 @@ def _espera(tentativas: int) -> timedelta:
     return timedelta(seconds=min(ESPERA_BASE_S * 2**tentativas, ESPERA_MAXIMA_S))
 
 
-def enviar_pendentes(db: Session, enviador: Enviador, agora: datetime | None = None) -> int:
-    """Envia as notificações pendentes. Devolve quantas saíram nesta rodada."""
+def enviar_pendentes(
+    db: Session,
+    enviador: Enviador,
+    agora: datetime | None = None,
+    prazo_s: float = PRAZO_RODADA_S,
+) -> int:
+    """Envia as notificações pendentes, as urgentes primeiro. Devolve quantas saíram."""
     agora = agora or datetime.now(UTC)
+    fim = time.monotonic() + prazo_s
     pendentes = db.scalars(
         select(Notificacao)
         .where(
@@ -206,12 +225,26 @@ def enviar_pendentes(db: Session, enviador: Enviador, agora: datetime | None = N
             (Notificacao.proxima_tentativa_em.is_(None))
             | (Notificacao.proxima_tentativa_em <= agora),
         )
-        .order_by(Notificacao.id)
+        .order_by(_PRIORIDADE, Notificacao.id)
         .limit(LOTE)
         .with_for_update(skip_locked=True)
     ).all()
+    ativos = set(
+        db.scalars(
+            select(Usuario.id).where(
+                Usuario.id.in_({n.usuario_id for n in pendentes}), Usuario.ativo.is_(True)
+            )
+        )
+    )
     enviadas = 0
     for n in pendentes:
+        if time.monotonic() > fim:
+            break
+        if n.usuario_id not in ativos:
+            # Conta desativada depois de a notificação nascer: não sai push.
+            n.enviada_em = agora
+            n.erro = "conta_inativa"
+            continue
         dispositivos = db.scalars(
             select(Dispositivo).where(Dispositivo.usuario_id == n.usuario_id)
         ).all()

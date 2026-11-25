@@ -165,7 +165,7 @@ def test_validade_do_token_nao_passa_de_uma_hora():
 _ROTAS_DE_CONTA = {
     ("POST", "/auth/login"),
     ("POST", "/auth/refresh"),
-    ("POST", "/auth/convites/{codigo}/aceitar"),
+    ("POST", "/auth/convites/aceitar"),
     ("POST", "/auth/logout"),
     ("POST", "/auth/logout-todos"),
     ("PUT", "/auth/senha"),

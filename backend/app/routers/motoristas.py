@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import auditoria, habilitacao
 from app.cadastros import Db, Deslocamento, IdRota, Limite
-from app.models import Motorista, Perfil, Usuario
+from app.models import Motorista, Perfil, StatusViagem, Usuario, Viagem
 from app.schemas.motoristas import (
     DocumentoVencendo,
     Habilitacao,
@@ -184,6 +184,23 @@ def atualizar(
 @router.delete("/motoristas/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remover(usuario_id: IdRota, request: Request, db: Db, ator: Gestao) -> None:
     _, m = _buscar(db, usuario_id)
+    escalado = db.scalar(
+        select(Viagem.id)
+        .where(
+            Viagem.motorista_id == usuario_id,
+            (Viagem.status == StatusViagem.EM_ANDAMENTO)
+            # Agendada de dia que já passou não sai mais: não pode travar a remoção para sempre.
+            | ((Viagem.status == StatusViagem.AGENDADA) & (Viagem.data >= _hoje())),
+        )
+        .limit(1)
+    )
+    if escalado is not None:
+        # A remoção poria `motorista_id` em NULL: o celular tomaria 404 nas posições e o ônibus
+        # sumiria do painel no meio da viagem.
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Motorista escalado em viagem agendada ou em andamento: troque a escala antes",
+        )
     db.delete(m)
     auditoria.registrar(
         db,

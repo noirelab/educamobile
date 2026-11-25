@@ -304,7 +304,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/convites/{codigo}/aceitar": {
+    "/auth/convites/aceitar": {
         parameters: {
             query?: never;
             header?: never;
@@ -317,7 +317,7 @@ export interface paths {
          * Aceitar Convite
          * @description O responsável define a senha e entra. O convite já traz o vínculo com o estudante.
          */
-        post: operations["aceitar_convite_auth_convites__codigo__aceitar_post"];
+        post: operations["aceitar_convite_auth_convites_aceitar_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1530,6 +1530,8 @@ export interface components {
         };
         /** ConviteAceitar */
         ConviteAceitar: {
+            /** Codigo */
+            codigo: string;
             /** Senha */
             senha: string;
         };
@@ -3254,13 +3256,11 @@ export interface operations {
             };
         };
     };
-    aceitar_convite_auth_convites__codigo__aceitar_post: {
+    aceitar_convite_auth_convites_aceitar_post: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                codigo: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
