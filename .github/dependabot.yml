@@ -4,9 +4,11 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    # Menores e correções num PR só; versão maior chega em PR próprio, para revisar com calma.
     groups:
       python:
         patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -14,6 +16,7 @@ updates:
     groups:
       frontend:
         patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:
