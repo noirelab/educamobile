@@ -2,13 +2,13 @@
 
 import json
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
 from sqlalchemy import select
 
-from app import notificacoes
+from app import notificacoes, tempo
 from app.config import settings
 from app.models import (
     Dispositivo,
@@ -26,7 +26,7 @@ from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 from tests.test_rotas import _parada
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 AGORA = datetime.now(UTC)
 TOKEN = "t" * 40
 

@@ -2,6 +2,7 @@
 
 import pytest
 
+from app import tempo
 from app.models import Motorista, Perfil, Veiculo
 from tests.conftest import corpo_de_rota, escola_de_teste
 from tests.test_rotas import _parada
@@ -75,11 +76,10 @@ def test_escola_veiculo_ou_motorista_inexistente_da_409(client, db, cabecalhos):
 def test_veiculo_e_motorista_padrao_podem_ser_trocados_e_limpos(
     client, db, cabecalhos, criar_usuario
 ):
-    from datetime import date
 
     h = cabecalhos(Perfil.GESTOR)
     veiculo = Veiculo(
-        placa="AAA1A11", capacidade=40, modelo="A", ano=2020, vistoria_valida_ate=date.today()
+        placa="AAA1A11", capacidade=40, modelo="A", ano=2020, vistoria_valida_ate=tempo.hoje()
     )
     usuario = criar_usuario(Perfil.MOTORISTA)
     db.add_all(
@@ -89,8 +89,8 @@ def test_veiculo_e_motorista_padrao_podem_ser_trocados_e_limpos(
                 usuario_id=usuario.id,
                 cnh="11111111111",
                 categoria_cnh="D",
-                cnh_valida_ate=date.today(),
-                curso_transporte_escolar_ate=date.today(),
+                cnh_valida_ate=tempo.hoje(),
+                curso_transporte_escolar_ate=tempo.hoje(),
             ),
         ]
     )

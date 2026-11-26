@@ -1,10 +1,11 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 
+from app import tempo
 from app.models import Perfil, Veiculo
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 
 
 def _corpo(**extra):

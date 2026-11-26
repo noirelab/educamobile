@@ -1,7 +1,8 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 
+from app import tempo
 from app.models import Perfil
 from tests.conftest import estudante_de_teste
 
@@ -64,7 +65,7 @@ def test_campos_antigos_sao_ignorados_e_nao_gravados(client, cabecalhos, dados):
     [
         {"nome": ""},
         {"data_nascimento": "ontem"},
-        {"data_nascimento": (date.today() + timedelta(days=1)).isoformat()},
+        {"data_nascimento": (tempo.hoje() + timedelta(days=1)).isoformat()},
         {"turno": "madrugada"},
         {"escola_id": 0},
         {"observacoes_cuidado": "x" * 1001},

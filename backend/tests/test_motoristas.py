@@ -1,12 +1,13 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 
+from app import tempo
 from app.models import Motorista, Perfil, StatusViagem, Viagem
 from app.security import criar_token
 from tests.conftest import rota_de_teste
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 
 
 def _corpo(usuario, **extra):

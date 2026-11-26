@@ -1,16 +1,17 @@
 """Inscrição do estudante na rota e aviso de ausência do responsável."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from app import tempo
 from app.config import settings
 from app.models import Auditoria, Perfil, ResponsavelEstudante, Veiculo
 from app.security import criar_token
 from tests.conftest import corpo_de_rota, escola_de_teste, estudante_de_teste
 from tests.test_rotas import _parada
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 
 
 @pytest.fixture

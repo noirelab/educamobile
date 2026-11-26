@@ -2,13 +2,14 @@
 
 import io
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from PIL import Image
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 
+from app import tempo
 from app import viagens as viagens_mod
 from app.config import settings
 from app.geo import Coordenadas
@@ -33,7 +34,7 @@ from app.viagens import pendencias_para_concluir, verificar_saida_da_cerca
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 from tests.test_rotas import _parada
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 AGORA = datetime.now(UTC)
 
 
