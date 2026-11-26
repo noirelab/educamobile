@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from app.config import settings
 from app.models import Perfil
-from app.schemas.auth import UsuarioCriar
+from app.schemas.usuarios import UsuarioCriar
 from app.security import ALGORITMO, criar_token
 
 
@@ -15,14 +15,14 @@ def _token(client, email, senha):
 
 
 def test_login_e_me(client, criar_usuario):
-    usuario = criar_usuario(Perfil.COORDENADOR)
+    usuario = criar_usuario(Perfil.GESTOR)
     resposta = _token(client, usuario.email, "senha-forte-1")
     assert resposta.status_code == 200
     me = client.get(
         "/auth/me", headers={"Authorization": f"Bearer {resposta.json()['access_token']}"}
     )
     assert me.status_code == 200
-    assert me.json()["perfil"] == "coordenador"
+    assert me.json()["perfil"] == "gestor"
     assert "senha_hash" not in me.json()
 
 
@@ -79,29 +79,32 @@ NOVO = {
     "nome": "Ana",
     "email": "Ana@Exemplo.com",
     "senha": "senha-forte-1",
-    "perfil": "coordenador",
+    "perfil": "gestor",
 }
 
 
 def test_admin_cria_usuario_e_email_duplicado_conflita(client, cabecalhos):
     h = cabecalhos(Perfil.ADMIN)
-    resposta = client.post("/auth/usuarios", json=NOVO, headers=h)
+    resposta = client.post("/usuarios", json=NOVO, headers=h)
     assert resposta.status_code == 201
     assert resposta.json()["email"] == "ana@exemplo.com"
     assert _token(client, "ANA@exemplo.com".lower(), NOVO["senha"]).status_code == 200
-    assert client.post("/auth/usuarios", json=NOVO, headers=h).status_code == 409
+    assert client.post("/usuarios", json=NOVO, headers=h).status_code == 409
 
 
-@pytest.mark.parametrize("perfil", [Perfil.DIRETOR, Perfil.COORDENADOR])
+@pytest.mark.parametrize("perfil", [Perfil.GESTOR])
 def test_so_admin_cria_usuario(client, cabecalhos, perfil):
-    assert client.post("/auth/usuarios", json=NOVO, headers=cabecalhos(perfil)).status_code == 403
-
-
-def test_diretor_precisa_de_escola():
-    with pytest.raises(ValidationError):
-        UsuarioCriar(nome="D", email="d@exemplo.com", senha="senha-forte-1", perfil=Perfil.DIRETOR)
+    assert client.post("/usuarios", json=NOVO, headers=cabecalhos(perfil)).status_code == 403
 
 
 def test_senha_curta_rejeitada():
     with pytest.raises(ValidationError):
         UsuarioCriar(nome="D", email="d@exemplo.com", senha="curta", perfil=Perfil.ADMIN)
+
+
+def test_comandos_de_linha_importam():
+    """O script de criar o primeiro admin já quebrou em silêncio quando um schema mudou."""
+    import importlib
+
+    for modulo in ("app.criar_admin", "app.gerar_viagens", "app.worker"):
+        importlib.import_module(modulo)

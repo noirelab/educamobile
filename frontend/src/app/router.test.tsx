@@ -9,9 +9,9 @@ import { routes } from './router'
 
 const API = 'http://api.test'
 
-type Perfil = 'admin' | 'diretor' | 'coordenador'
+type Perfil = 'admin' | 'gestor' | 'motorista'
 
-function renderAt(path: string, perfil: Perfil = 'coordenador') {
+function renderAt(path: string, perfil: Perfil = 'gestor') {
   setToken('tok')
   server.use(
     http.get(`${API}/auth/me`, () =>
@@ -20,7 +20,6 @@ function renderAt(path: string, perfil: Perfil = 'coordenador') {
         nome: 'Ana',
         email: 'ana@educa.test',
         perfil,
-        escola_id: null,
         ativo: true,
       }),
     ),
@@ -42,29 +41,23 @@ describe('app router', () => {
     expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument()
   })
 
-  it('shows the coordenador role label', async () => {
+  it('shows the gestor role label', async () => {
     renderAt('/')
 
-    expect(await screen.findByText('Coordenador de logística')).toBeInTheDocument()
+    expect(await screen.findByText('Gestor de transporte')).toBeInTheDocument()
   })
 
   it('shows the page breadcrumb and the sidebar brand caption', async () => {
-    renderAt('/attendance', 'admin')
+    renderAt('/', 'admin')
 
-    expect(await screen.findByText('Escolha a turma e a data para fazer a chamada')).toBeInTheDocument()
+    expect(await screen.findByText('Transporte escolar seguro')).toBeInTheDocument()
     const crumbs = screen.getByRole('navigation', { name: 'Trilha de navegação' })
-    expect(within(crumbs).getByText('Frequência')).toBeInTheDocument()
+    expect(within(crumbs).getByText('Painel')).toBeInTheDocument()
     expect(screen.getByText('Secretaria de Educação')).toBeInTheDocument()
   })
 
-  it('renders the attendance page for an allowed role', async () => {
-    renderAt('/attendance', 'admin')
-
-    expect(await screen.findByRole('heading', { name: 'Frequência' })).toBeInTheDocument()
-  })
-
   it('renders the 403 copy when the role has no access', async () => {
-    renderAt('/teachers')
+    renderAt('/students', 'motorista')
 
     expect(
       await screen.findByText('Você não tem permissão para acessar esta página'),

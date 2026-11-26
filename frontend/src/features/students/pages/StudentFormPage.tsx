@@ -1,13 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useClassesInScope } from '@/features/classes/hooks'
+import { useAllSchools } from '@/features/schools/hooks'
 import { ApiError } from '@/shared/api/errors'
 import type { components } from '@/shared/api/schema'
-import { useAuth } from '@/shared/auth/useAuth'
-import { todayLocal } from '@/shared/lib/format'
-import { PointPicker } from '@/shared/map/PointPicker'
 import { Button } from '@/shared/ui/button'
 import { Field } from '@/shared/ui/Field'
 import { FloatingField } from '@/shared/ui/FloatingField'
@@ -16,68 +12,55 @@ import { Panel } from '@/shared/ui/Panel'
 import { PageState } from '@/shared/ui/PageState'
 import { notifyError, notifySuccess } from '@/shared/ui/toast'
 import { useSaveStudent, useStopOptions, useStudent } from '../hooks'
-import { buildStudentSchema, type StudentFormValues } from '../schemas'
+import { studentSchema, TURNO_LABEL, TURNOS, type StudentFormValues } from '../schemas'
 
 type EstudanteLer = components['schemas']['EstudanteLer']
-type EstudanteCadastrar = components['schemas']['EstudanteCadastrar']
+type EstudanteCriar = components['schemas']['EstudanteCriar']
 
-const FORM_FIELDS = ['nome', 'data_nascimento', 'nome_responsavel', 'localizacao', 'parada_id', 'turma_id', 'data_inicio'] as const
+const FORM_FIELDS = ['nome', 'data_nascimento', 'escola_id', 'turno', 'parada_id', 'observacoes_cuidado'] as const
 type FormField = (typeof FORM_FIELDS)[number]
 
 function isFormField(field: string): field is FormField {
   return (FORM_FIELDS as readonly string[]).includes(field)
 }
 
-function toPayload(values: StudentFormValues, isAdmin: boolean, isCreate: boolean): EstudanteCadastrar {
-  const nomeResponsavel = values.nome_responsavel.trim()
-  const base = {
+function toPayload(values: StudentFormValues): EstudanteCriar {
+  const observacoes = values.observacoes_cuidado.trim()
+  return {
     nome: values.nome.trim(),
     data_nascimento: values.data_nascimento,
-    nome_responsavel: nomeResponsavel === '' ? null : nomeResponsavel,
-    localizacao: values.localizacao,
-    ...(isAdmin ? { parada_id: values.parada_id === '' ? null : Number(values.parada_id) } : {}),
-  }
-  if (!isCreate || values.turma_id === '') return base
-  return {
-    ...base,
-    matricula: { turma_id: Number(values.turma_id), data_inicio: values.data_inicio },
+    escola_id: Number(values.escola_id),
+    turno: values.turno,
+    parada_id: values.parada_id === '' ? null : Number(values.parada_id),
+    observacoes_cuidado: observacoes === '' ? null : observacoes,
   }
 }
 
-type StudentFormProps = { student?: EstudanteLer }
-
-function StudentForm({ student }: StudentFormProps) {
+function StudentForm({ student }: { student?: EstudanteLer }) {
   const navigate = useNavigate()
-  const { role } = useAuth()
-  const isAdmin = role === 'admin'
-  const isDiretor = role === 'diretor'
-  const isCreate = student === undefined
-  const classes = useClassesInScope()
-  const stops = useStopOptions(isAdmin)
+  const schools = useAllSchools()
+  const stops = useStopOptions(true)
   const save = useSaveStudent(student?.id)
-  const schema = useMemo(() => buildStudentSchema({ isCreate, isDiretor }), [isCreate, isDiretor])
   const {
     register,
     handleSubmit,
     setError,
-    control,
     formState: { errors },
   } = useForm<StudentFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(studentSchema),
     defaultValues: {
       nome: student?.nome ?? '',
       data_nascimento: student?.data_nascimento ?? '',
-      nome_responsavel: student?.nome_responsavel ?? '',
-      localizacao: student?.localizacao ?? null,
-      turma_id: '',
-      data_inicio: todayLocal(),
+      escola_id: student ? String(student.escola_id) : '',
+      turno: student?.turno ?? 'manha',
       parada_id: String(student?.parada_id ?? ''),
+      observacoes_cuidado: student?.observacoes_cuidado ?? '',
     },
   })
 
-  if (classes.isPending || (isAdmin && stops.isPending)) return <PageState status="loading" />
-  if (classes.isError) {
-    return <PageState status="error" error={classes.error} onRetry={() => void classes.refetch()} />
+  if (schools.isPending || stops.isPending) return <PageState status="loading" />
+  if (schools.isError) {
+    return <PageState status="error" error={schools.error} onRetry={() => void schools.refetch()} />
   }
 
   function applyServerError(e: unknown) {
@@ -95,7 +78,7 @@ function StudentForm({ student }: StudentFormProps) {
 
   async function onSubmit(values: StudentFormValues) {
     try {
-      const saved = await save.mutateAsync(toPayload(values, isAdmin, isCreate))
+      const saved = await save.mutateAsync(toPayload(values))
       notifySuccess('Estudante salvo')
       navigate(`/students/${saved.id}`)
     } catch (e) {
@@ -106,71 +89,54 @@ function StudentForm({ student }: StudentFormProps) {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={isCreate ? 'Novo estudante' : 'Editar estudante'}
-        description="Dados do estudante e da sua matrícula"
+        title={student ? 'Editar estudante' : 'Novo estudante'}
+        description="Só o necessário para o transporte: sem endereço da casa"
       />
       <Panel dense className="max-w-[720px] p-6 lg:p-6">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-6">
-          <section className="grid gap-x-4 sm:grid-cols-2">
-            <h2 className="mb-2 text-section font-semibold text-ink sm:col-span-2">Dados do estudante</h2>
-            <div className="sm:col-span-2">
-              <FloatingField label="Nome" error={errors.nome?.message} {...register('nome')} />
-            </div>
-            <Field label="Data de nascimento" error={errors.data_nascimento?.message}>
-              <input type="date" {...register('data_nascimento')} />
-            </Field>
-            <FloatingField label="Responsável" error={errors.nome_responsavel?.message} {...register('nome_responsavel')} />
-            <div className="flex flex-col gap-2 sm:col-span-2">
-              <span className="text-label text-ink-muted">Localização (opcional)</span>
-              <Controller
-                name="localizacao"
-                control={control}
-                render={({ field }) => <PointPicker value={field.value} onChange={field.onChange} />}
-              />
-            </div>
-          </section>
-
-          {isCreate && (
-            <section className="grid gap-x-4 sm:grid-cols-2">
-              <h2 className="mb-2 text-section font-semibold text-ink sm:col-span-2">Matrícula</h2>
-              {isAdmin && <p className="mb-2 text-caption text-ink-muted sm:col-span-2">Opcional para administrador</p>}
-              <div className="sm:col-span-2">
-                <Field label="Turma" error={errors.turma_id?.message}>
-                  <select {...register('turma_id')}>
-                    <option value="">Selecione a turma</option>
-                    {(classes.data ?? []).map((turma) => (
-                      <option key={turma.id} value={String(turma.id)}>
-                        {turma.nome}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-              <Field label="Data de início" error={errors.data_inicio?.message}>
-                <input type="date" {...register('data_inicio')} />
-              </Field>
-            </section>
-          )}
-
-          {isAdmin && (
-            <section className="grid gap-x-4 sm:grid-cols-2">
-              <h2 className="mb-2 text-section font-semibold text-ink sm:col-span-2">Transporte</h2>
-              <div className="sm:col-span-2">
-                <Field label="Parada" error={errors.parada_id?.message}>
-                  <select {...register('parada_id')}>
-                    <option value="">Sem parada</option>
-                    {(stops.data ?? []).map((parada) => (
-                      <option key={parada.id} value={String(parada.id)}>
-                        {parada.nome}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-            </section>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-x-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <FloatingField label="Nome" error={errors.nome?.message} {...register('nome')} />
+          </div>
+          <Field label="Data de nascimento" error={errors.data_nascimento?.message}>
+            <input type="date" {...register('data_nascimento')} />
+          </Field>
+          <Field label="Turno" error={errors.turno?.message}>
+            <select {...register('turno')}>
+              {TURNOS.map((turno) => (
+                <option key={turno} value={turno}>
+                  {TURNO_LABEL[turno]}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Escola" error={errors.escola_id?.message}>
+            <select {...register('escola_id')}>
+              <option value="">Selecione a escola</option>
+              {(schools.data ?? []).map((escola) => (
+                <option key={escola.id} value={String(escola.id)}>
+                  {escola.nome}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Parada" error={errors.parada_id?.message}>
+            <select {...register('parada_id')}>
+              <option value="">Sem parada</option>
+              {(stops.data ?? []).map((parada) => (
+                <option key={parada.id} value={String(parada.id)}>
+                  {parada.nome}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div className="sm:col-span-2">
+            <FloatingField
+              label="Observações de cuidado (alergia, necessidade especial)"
+              error={errors.observacoes_cuidado?.message}
+              {...register('observacoes_cuidado')}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-6 sm:col-span-2">
             <Button variant="ghost" asChild>
               <Link to={student ? `/students/${student.id}` : '/students'}>Cancelar</Link>
             </Button>

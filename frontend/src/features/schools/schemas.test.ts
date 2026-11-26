@@ -5,8 +5,8 @@ const VALID = {
   nome: 'EMEF Centro',
   codigo_inep: '',
   endereco: '',
-  polo_id: '',
   localizacao: { latitude: -25.43, longitude: -49.27 },
+  raio_cerca_m: '150',
 }
 
 describe('schoolSchema', () => {

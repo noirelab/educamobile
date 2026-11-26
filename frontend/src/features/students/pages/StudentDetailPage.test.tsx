@@ -21,34 +21,50 @@ const ESTUDANTE = {
   id: 1,
   nome: 'Lucas Ferreira',
   data_nascimento: '2015-01-01',
-  nome_responsavel: 'Maria Ferreira',
-  localizacao: { latitude: -25.44, longitude: -49.28 },
+  escola_id: 2,
+  turno: 'tarde',
   parada_id: 5,
+  observacoes_cuidado: 'Alergia a amendoim',
+  tem_foto: false,
+}
+
+function mockApi() {
+  server.use(
+    http.get(`${API}/estudantes/1`, () => HttpResponse.json(ESTUDANTE)),
+    http.get(`${API}/escolas/2`, () =>
+      HttpResponse.json({
+        id: 2,
+        nome: 'EMEF Centro',
+        codigo_inep: null,
+        endereco: null,
+        localizacao: { latitude: -25.4, longitude: -49.2 },
+      }),
+    ),
+    http.get(`${API}/paradas`, () =>
+      HttpResponse.json([{ id: 5, nome: 'Parada Centro', localizacao: { latitude: -25.43, longitude: -49.27 } }]),
+    ),
+  )
 }
 
 describe('StudentDetailPage', () => {
-  it('coordenador sees no enrollment history and makes no /matriculas request', async () => {
-    let enrollmentRequests = 0
-    server.use(
-      http.get(`${API}/estudantes/1`, () => HttpResponse.json(ESTUDANTE)),
-      http.get(`${API}/paradas`, () =>
-        HttpResponse.json([{ id: 5, nome: 'Parada Centro', localizacao: { latitude: -25.43, longitude: -49.27 } }]),
-      ),
-      http.get(`${API}/matriculas/historico/:id`, () => {
-        enrollmentRequests += 1
-        return HttpResponse.json([])
-      }),
-      http.get(`${API}/matriculas`, () => {
-        enrollmentRequests += 1
-        return HttpResponse.json([])
-      }),
-    )
-    renderWithRoutes('/students/1', ROUTES, 'coordenador')
+  it('shows school, shift, stop and care notes, and never a home location', async () => {
+    mockApi()
+    renderWithRoutes('/students/1', ROUTES, 'gestor')
 
     expect(await screen.findByRole('heading', { name: 'Lucas Ferreira' })).toBeInTheDocument()
-    expect(await screen.findByText('Disponível em breve')).toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: 'Matrículas' })).not.toBeInTheDocument()
+    expect(await screen.findByText('EMEF Centro')).toBeInTheDocument()
+    expect(screen.getByText('Tarde')).toBeInTheDocument()
+    expect(await screen.findByText('Parada Centro')).toBeInTheDocument()
+    expect(screen.getByText('Alergia a amendoim')).toBeInTheDocument()
+    expect(screen.queryByText('Localização')).not.toBeInTheDocument()
+    expect(screen.queryByText('Responsável')).not.toBeInTheDocument()
+  })
+
+  it('lets only the admin delete', async () => {
+    mockApi()
+    renderWithRoutes('/students/1', ROUTES, 'gestor')
+
+    expect(await screen.findByRole('link', { name: 'Editar' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument()
-    expect(enrollmentRequests).toBe(0)
   })
 })

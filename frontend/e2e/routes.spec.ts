@@ -22,11 +22,11 @@ test('endereço inexistente mostra a página de não encontrado', async ({ page,
   await expect(page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible()
 })
 
-test('coordenador monta rota com três paradas e vê a distância em metros', async ({ page, request }) => {
+test('gestor monta rota com três paradas e vê a distância em metros', async ({ page, request }) => {
   const scenario = await seedScenario(request)
   const nomeRota = `${uniquePrefix()} rota`
 
-  await loginAs(page, scenario.coordenador.email, scenario.coordenador.password)
+  await loginAs(page, scenario.gestor.email, scenario.gestor.password)
   await page.goto('/routes')
   await page.getByRole('button', { name: 'Nova rota' }).click()
   await page.getByLabel('Nome', { exact: true }).fill(nomeRota)

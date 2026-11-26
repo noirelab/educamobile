@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
@@ -24,50 +24,30 @@ const ROUTES = [
 const LOCATION = { latitude: -25.43, longitude: -49.27 }
 
 const SCHOOLS = [
-  { id: 1, nome: 'EMEF Centro', codigo_inep: '41000011', endereco: 'Rua A', polo_id: 1, localizacao: LOCATION },
-  { id: 2, nome: 'EMEF Sul', codigo_inep: null, endereco: null, polo_id: null, localizacao: LOCATION },
+  { id: 1, nome: 'EMEF Centro', codigo_inep: '41000011', endereco: 'Rua A', localizacao: LOCATION },
+  { id: 2, nome: 'EMEF Sul', codigo_inep: null, endereco: null, localizacao: LOCATION },
 ]
 
-const POLES = [{ id: 1, nome: 'Polo Centro', area: null }]
-
-function mockLists(schools: unknown[] = SCHOOLS, onSchoolsRequest?: (url: URL) => void) {
+function mockLists(schools: unknown[] = SCHOOLS) {
   server.use(
-    http.get(`${API}/polos`, () => HttpResponse.json(POLES)),
-    http.get(`${API}/escolas`, ({ request }) => {
-      onSchoolsRequest?.(new URL(request.url))
-      return HttpResponse.json(schools)
-    }),
+    http.get(`${API}/escolas`, () => HttpResponse.json(schools)),
   )
 }
 
 describe('SchoolListPage', () => {
-  it('shows the pole name, or a dash when the school has no pole', async () => {
+  it('lists the schools with INEP and address, or a dash when missing', async () => {
     mockLists()
-    renderWithRoutes('/schools', ROUTES, 'coordenador')
+    renderWithRoutes('/schools', ROUTES, 'gestor')
 
     expect(await screen.findByText('EMEF Centro')).toBeInTheDocument()
     const table = screen.getByRole('table')
-    expect(within(table).getByText('Polo Centro')).toBeInTheDocument()
-    expect(within(table).getAllByText('—')).toHaveLength(3)
-  })
-
-  it('filters by pole sending polo_id and resets the page', async () => {
-    const requests: URL[] = []
-    mockLists(SCHOOLS, (url) => requests.push(url))
-    renderWithRoutes('/schools', ROUTES, 'coordenador')
-    const user = userEvent.setup()
-
-    await screen.findByText('EMEF Centro')
-    expect(requests[0]?.searchParams.has('polo_id')).toBe(false)
-
-    await user.selectOptions(screen.getByLabelText('Polo'), '1')
-
-    await waitFor(() => expect(requests.at(-1)?.searchParams.get('polo_id')).toBe('1'))
+    expect(within(table).getByText('41000011')).toBeInTheDocument()
+    expect(within(table).getAllByText('—')).toHaveLength(2)
   })
 
   it('switches to the map and renders one marker per school', async () => {
     mockLists()
-    renderWithRoutes('/schools', ROUTES, 'coordenador')
+    renderWithRoutes('/schools', ROUTES, 'gestor')
     const user = userEvent.setup()
 
     await screen.findByText('EMEF Centro')
@@ -83,9 +63,9 @@ describe('SchoolListPage', () => {
     expect(await screen.findByRole('link', { name: 'Nova escola' })).toBeInTheDocument()
   })
 
-  it('hides Nova escola for diretor', async () => {
+  it('hides Nova escola for gestor', async () => {
     mockLists()
-    renderWithRoutes('/schools', ROUTES, 'diretor')
+    renderWithRoutes('/schools', ROUTES, 'gestor')
 
     expect(await screen.findByText('EMEF Centro')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Nova escola' })).not.toBeInTheDocument()

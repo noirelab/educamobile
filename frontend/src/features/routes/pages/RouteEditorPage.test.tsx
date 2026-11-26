@@ -114,18 +114,6 @@ describe('RouteEditorPage', () => {
     expect(await screen.findByText('Adicione paradas clicando no mapa')).toBeInTheDocument()
   })
 
-  it('is read-only for diretor', async () => {
-    mockBase()
-    renderWithRoutes('/routes/4', ROUTES, 'diretor')
-
-    expect(await screen.findByText('Rota Norte', { selector: 'h1' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Renomear' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Salvar sequência' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Remover Parada Centro' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Marcador Parada Sul' })).not.toBeInTheDocument()
-  })
-
   it('adds a stop on map click without changing the saved order until saved', async () => {
     mockBase()
     renderWithRoutes('/routes/4', ROUTES, 'admin')

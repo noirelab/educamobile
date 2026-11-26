@@ -20,6 +20,8 @@ import { Panel } from '@/shared/ui/Panel'
 import { Reveal } from '@/shared/ui/Reveal'
 import { notifyError, notifySuccess } from '@/shared/ui/toast'
 import { RoutesMap } from '../components/RoutesMap'
+import { useAllSchools } from '@/features/schools/hooks'
+import { Field } from '@/shared/ui/Field'
 import { useAllRoutes, useCreateRoute } from '../hooks'
 import { parseRouteName } from '../schemas'
 import { routeColor } from '../sequence'
@@ -31,13 +33,20 @@ export function RoutesPage() {
   const routes = useAllRoutes()
   const create = useCreateRoute()
   const [creating, setCreating] = useState(false)
+  const schools = useAllSchools()
   const [name, setName] = useState('')
+  const [escolaId, setEscolaId] = useState('')
+  const [turno, setTurno] = useState<'manha' | 'tarde'>('manha')
+  const [sentido, setSentido] = useState<'ida' | 'volta'>('ida')
+  const [escolaError, setEscolaError] = useState<string | undefined>(undefined)
   const [nameError, setNameError] = useState<string | undefined>(undefined)
 
   function handleOpenChange(next: boolean) {
     if (next) {
       setName('')
       setNameError(undefined)
+      setEscolaId('')
+      setEscolaError(undefined)
     }
     setCreating(next)
   }
@@ -46,9 +55,15 @@ export function RoutesPage() {
     event.preventDefault()
     const parsed = parseRouteName(name)
     setNameError(parsed.error ?? undefined)
-    if (parsed.error) return
+    setEscolaError(escolaId === '' ? 'Informe a escola' : undefined)
+    if (parsed.error || escolaId === '') return
     try {
-      const route = await create.mutateAsync({ nome: parsed.nome })
+      const route = await create.mutateAsync({
+        nome: parsed.nome,
+        escola_id: Number(escolaId),
+        turno,
+        sentido,
+      })
       notifySuccess('Rota criada')
       setCreating(false)
       navigate(`/routes/${route.id}`)
@@ -135,6 +150,30 @@ export function RoutesPage() {
               error={nameError}
               onChange={(event) => setName(event.target.value)}
             />
+            <Field label="Escola de destino" error={escolaError}>
+              <select value={escolaId} onChange={(event) => setEscolaId(event.target.value)}>
+                <option value="">Selecione a escola</option>
+                {(schools.data ?? []).map((escola) => (
+                  <option key={escola.id} value={String(escola.id)}>
+                    {escola.nome}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="grid gap-x-4 sm:grid-cols-2">
+              <Field label="Turno">
+                <select value={turno} onChange={(event) => setTurno(event.target.value as 'manha' | 'tarde')}>
+                  <option value="manha">Manhã</option>
+                  <option value="tarde">Tarde</option>
+                </select>
+              </Field>
+              <Field label="Sentido">
+                <select value={sentido} onChange={(event) => setSentido(event.target.value as 'ida' | 'volta')}>
+                  <option value="ida">Ida (casa para a escola)</option>
+                  <option value="volta">Volta (escola para casa)</option>
+                </select>
+              </Field>
+            </div>
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={() => handleOpenChange(false)}>
                 Cancelar

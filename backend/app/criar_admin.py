@@ -8,7 +8,7 @@ import sys
 
 from app.db import SessionLocal
 from app.models import Perfil, Usuario
-from app.schemas.auth import UsuarioCriar
+from app.schemas.usuarios import UsuarioCriar
 from app.security import gerar_hash
 
 

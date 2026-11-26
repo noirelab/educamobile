@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from geoalchemy2 import Geography
-from sqlalchemy import cast, exists, func, select
+from sqlalchemy import cast, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -12,13 +12,10 @@ from app.geo import de_ponto, para_ponto
 from app.models import (
     SRID,
     Estudante,
-    Matricula,
     Parada,
     Perfil,
     Rota,
     RotaParada,
-    StatusMatricula,
-    Turma,
 )
 from app.routers.rotas import recalcular_trajeto
 from app.schemas.paradas import (
@@ -28,11 +25,11 @@ from app.schemas.paradas import (
     ParadaLer,
     ParadaProxima,
 )
-from app.security import UsuarioAtual, exigir_perfil
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/paradas", tags=["paradas"])
 Db = Annotated[Session, Depends(get_db)]
-PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.COORDENADOR)
+PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)
 RAIO_MAXIMO_M = 50_000
 
 
@@ -47,17 +44,10 @@ def _buscar(db: Session, parada_id: int) -> Parada:
     return parada
 
 
-def _buscar_estudante(db: Session, estudante_id: int) -> Estudante:
-    estudante = db.get(Estudante, estudante_id)
-    if estudante is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Estudante não encontrado")
-    return estudante
-
-
 @router.get("")
 def listar_paradas(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Deslocamento = 0,
 ) -> list[ParadaLer]:
@@ -77,7 +67,7 @@ def criar_parada(dados: ParadaCriar, db: Db) -> ParadaLer:
 @router.get("/proximas")
 def paradas_proximas(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     latitude: Annotated[float, Query(ge=-90, le=90)],
     longitude: Annotated[float, Query(ge=-180, le=180)],
     raio_m: Annotated[float, Query(gt=0, le=RAIO_MAXIMO_M)] = 1_000,
@@ -99,7 +89,7 @@ def paradas_proximas(
 
 
 @router.get("/{parada_id}")
-def obter_parada(parada_id: IdRota, db: Db, _: UsuarioAtual) -> ParadaLer:
+def obter_parada(parada_id: IdRota, db: Db, _: UsuarioInterno) -> ParadaLer:
     return _ler(_buscar(db, parada_id))
 
 
@@ -135,40 +125,7 @@ def remover_parada(parada_id: IdRota, db: Db) -> None:
 
 
 @router.get("/{parada_id}/estudantes")
-def listar_estudantes(parada_id: IdRota, db: Db, usuario: UsuarioAtual) -> list[EstudanteDaParada]:
+def listar_estudantes(parada_id: IdRota, db: Db, _: UsuarioInterno) -> list[EstudanteDaParada]:
     _buscar(db, parada_id)
     consulta = select(Estudante).where(Estudante.parada_id == parada_id).order_by(Estudante.id)
-    if usuario.perfil == Perfil.DIRETOR:
-        consulta = consulta.where(
-            exists().where(
-                Matricula.estudante_id == Estudante.id,
-                Matricula.status == StatusMatricula.ATIVA,
-                Matricula.turma_id == Turma.id,
-                Turma.escola_id == usuario.escola_id,
-            )
-        )
     return [EstudanteDaParada.model_validate(e) for e in db.scalars(consulta)]
-
-
-@router.put(
-    "/{parada_id}/estudantes/{estudante_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[PODE_ESCREVER],
-)
-def associar_estudante(parada_id: IdRota, estudante_id: IdRota, db: Db) -> None:
-    _buscar(db, parada_id)
-    _buscar_estudante(db, estudante_id).parada_id = parada_id
-    db.commit()
-
-
-@router.delete(
-    "/{parada_id}/estudantes/{estudante_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[PODE_ESCREVER],
-)
-def desassociar_estudante(parada_id: IdRota, estudante_id: IdRota, db: Db) -> None:
-    estudante = _buscar_estudante(db, estudante_id)
-    if estudante.parada_id != parada_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Estudante não associado a esta parada")
-    estudante.parada_id = None
-    db.commit()

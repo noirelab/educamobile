@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/server'
-import { setToken } from '@/shared/auth/session'
+import { getRefreshToken, getToken, saveSession, setToken } from '@/shared/auth/session'
 import { api, onUnauthorized } from '@/shared/api/client'
 
 describe('api client', () => {
@@ -78,5 +78,170 @@ describe('api client', () => {
     } finally {
       vi.unstubAllEnvs()
     }
+  })
+
+  describe('session renewal', () => {
+    const NOVO = { access_token: 'novo', refresh_token: 'refresh-2', expires_in: 900, token_type: 'bearer' }
+
+    function login(expiresIn = 900) {
+      saveSession({ access_token: 'velho', refresh_token: 'refresh-1', expires_in: expiresIn })
+    }
+
+    it('renews on 401 and repeats the request exactly once', async () => {
+      login()
+      const seen: string[] = []
+      server.use(
+        http.post('*/auth/refresh', async ({ request }) => {
+          expect(await request.json()).toEqual({ refresh_token: 'refresh-1' })
+          return HttpResponse.json(NOVO)
+        }),
+        http.get('*/escolas', ({ request }) => {
+          const auth = request.headers.get('Authorization') ?? ''
+          seen.push(auth)
+          return auth === 'Bearer novo' ? HttpResponse.json([{ id: 1 }]) : new HttpResponse(null, { status: 401 })
+        }),
+      )
+
+      await expect(api('/escolas')).resolves.toEqual([{ id: 1 }])
+
+      expect(seen).toEqual(['Bearer velho', 'Bearer novo'])
+      expect(getToken()).toBe('novo')
+      expect(getRefreshToken()).toBe('refresh-2')
+    })
+
+    it('gives up after one retry when the new token is also refused', async () => {
+      login()
+      const spy = vi.fn()
+      onUnauthorized(spy)
+      let calls = 0
+      server.use(
+        http.post('*/auth/refresh', () => HttpResponse.json(NOVO)),
+        http.get('*/escolas', () => {
+          calls += 1
+          return new HttpResponse(null, { status: 401 })
+        }),
+      )
+
+      await expect(api('/escolas')).rejects.toMatchObject({ status: 401 })
+
+      expect(calls).toBe(2)
+      expect(spy).toHaveBeenCalledOnce()
+    })
+
+    it('clears the session and signs out when the refresh token is refused', async () => {
+      login()
+      const spy = vi.fn()
+      onUnauthorized(spy)
+      server.use(
+        http.post('*/auth/refresh', () => HttpResponse.json({ detail: 'Sessão inválida' }, { status: 401 })),
+        http.get('*/escolas', () => new HttpResponse(null, { status: 401 })),
+      )
+
+      await expect(api('/escolas')).rejects.toMatchObject({ status: 401 })
+
+      expect(spy).toHaveBeenCalledOnce()
+      expect(getToken()).toBeNull()
+      expect(getRefreshToken()).toBeNull()
+    })
+
+    it('shares one renewal between simultaneous requests', async () => {
+      login()
+      let refreshCalls = 0
+      server.use(
+        http.post('*/auth/refresh', async () => {
+          refreshCalls += 1
+          await new Promise((resolve) => setTimeout(resolve, 20))
+          return HttpResponse.json(NOVO)
+        }),
+        http.get('*/escolas', ({ request }) =>
+          request.headers.get('Authorization') === 'Bearer novo'
+            ? HttpResponse.json([])
+            : new HttpResponse(null, { status: 401 }),
+        ),
+        http.get('*/paradas', ({ request }) =>
+          request.headers.get('Authorization') === 'Bearer novo'
+            ? HttpResponse.json([])
+            : new HttpResponse(null, { status: 401 }),
+        ),
+      )
+
+      await Promise.all([api('/escolas'), api('/paradas'), api('/escolas')])
+
+      expect(refreshCalls).toBe(1)
+    })
+
+    it('renews before the access token expires, without waiting for a 401', async () => {
+      login(10)
+      const seen: string[] = []
+      server.use(
+        http.post('*/auth/refresh', () => HttpResponse.json(NOVO)),
+        http.get('*/escolas', ({ request }) => {
+          seen.push(request.headers.get('Authorization') ?? '')
+          return HttpResponse.json([])
+        }),
+      )
+
+      await api('/escolas')
+
+      expect(seen).toEqual(['Bearer novo'])
+    })
+
+    it('does not renew when there is no refresh token', async () => {
+      setToken('so-acesso')
+      const spy = vi.fn()
+      onUnauthorized(spy)
+      let refreshCalls = 0
+      server.use(
+        http.post('*/auth/refresh', () => {
+          refreshCalls += 1
+          return HttpResponse.json(NOVO)
+        }),
+        http.get('*/escolas', () => new HttpResponse(null, { status: 401 })),
+      )
+
+      await expect(api('/escolas')).rejects.toMatchObject({ status: 401 })
+
+      expect(refreshCalls).toBe(0)
+      expect(spy).toHaveBeenCalledOnce()
+    })
+
+    it('keeps the session when the renewal fails with 429 or 5xx', async () => {
+      login(10)
+      server.use(
+        http.post('*/auth/refresh', () => new HttpResponse(null, { status: 503 })),
+        http.get('*/escolas', () => HttpResponse.json([])),
+      )
+
+      await api('/escolas')
+
+      expect(getToken()).toBe('velho')
+      expect(getRefreshToken()).toBe('refresh-1')
+    })
+
+    it('does not sign out on a 401 when the renewal itself is unavailable', async () => {
+      login()
+      const spy = vi.fn()
+      onUnauthorized(spy)
+      server.use(
+        http.post('*/auth/refresh', () => new HttpResponse(null, { status: 503 })),
+        http.get('*/escolas', () => new HttpResponse(null, { status: 401 })),
+      )
+
+      await expect(api('/escolas')).rejects.toMatchObject({ status: 0 })
+
+      expect(spy).not.toHaveBeenCalled()
+      expect(getRefreshToken()).toBe('refresh-1')
+    })
+
+    it('adopts the tokens another tab got by renewing the same refresh token', async () => {
+      login()
+      const outraAba = new BroadcastChannel('educamobile.sessao')
+      outraAba.postMessage({ previous: 'refresh-1', tokens: NOVO })
+      await vi.waitFor(() => expect(getRefreshToken()).toBe('refresh-2'))
+      outraAba.postMessage({ previous: 'refresh-de-outra-conta', tokens: { ...NOVO, refresh_token: 'x' } })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(getRefreshToken()).toBe('refresh-2')
+      outraAba.close()
+    })
   })
 })

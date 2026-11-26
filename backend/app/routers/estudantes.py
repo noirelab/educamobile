@@ -1,102 +1,69 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile, status
+from sqlalchemy import func, select
 
-from app.cadastros import Db, Deslocamento, IdRota, Limite, buscar, salvar
-from app.geo import para_ponto
-from app.models import Estudante, Matricula, Perfil, StatusMatricula, Turma, Usuario
-from app.routers.matriculas import carregar_turma, validar_ano_letivo
-from app.schemas.estudantes import EstudanteCadastrar, EstudanteCriar, EstudanteLer
-from app.security import UsuarioAtual, exigir_perfil, garantir_escola
+from app import auditoria, fotos
+from app.cadastros import Db, Deslocamento, IdFiltro, IdRota, Limite, buscar, salvar
+from app.models import Estudante, Perfil, Turno, Usuario
+from app.schemas.estudantes import EstudanteCriar, EstudanteLer, EstudantesPagina, FotoUrl
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/estudantes", tags=["estudantes"])
-Editor = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.DIRETOR)]
-CONFLITO = "Parada inexistente"
+Editor = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)]
+CONFLITO = "Escola ou parada inexistente"
 
 
-def _ids_da_escola(escola_id: int | None):
-    """Estudantes com matrícula ativa na escola."""
-    return (
-        select(Matricula.estudante_id)
-        .join(Turma, Matricula.turma_id == Turma.id)
-        .where(Matricula.status == StatusMatricula.ATIVA, Turma.escola_id == escola_id)
-    )
-
-
-def _buscar_no_escopo(db: Session, usuario: Usuario, estudante_id: int) -> Estudante:
-    # O escopo vem antes da existência, para o diretor não descobrir quais ids existem.
-    if usuario.perfil == Perfil.DIRETOR and not db.scalar(
-        _ids_da_escola(usuario.escola_id).where(Matricula.estudante_id == estudante_id)
-    ):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do escopo da sua escola")
-    return buscar(db, Estudante, estudante_id)
-
-
-def _garantir_parada_permitida(usuario: Usuario, atual: int | None, nova: int | None) -> None:
-    if usuario.perfil == Perfil.DIRETOR and nova != atual:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Associar parada cabe à logística")
+def _escapar_like(texto: str) -> str:
+    return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 @router.get("")
 def listar(
-    db: Db, usuario: UsuarioAtual, limit: Limite = 50, offset: Deslocamento = 0
-) -> list[EstudanteLer]:
-    consulta = select(Estudante).order_by(Estudante.id).limit(limit).offset(offset)
-    if usuario.perfil == Perfil.DIRETOR:
-        consulta = consulta.where(Estudante.id.in_(_ids_da_escola(usuario.escola_id)))
-    return [EstudanteLer.model_validate(e) for e in db.scalars(consulta)]
+    db: Db,
+    _: UsuarioInterno,
+    q: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
+    escola_id: IdFiltro = None,
+    turno: Turno | None = None,
+    limit: Limite = 50,
+    offset: Deslocamento = 0,
+) -> EstudantesPagina:
+    filtros = []
+    if q:
+        filtros.append(Estudante.nome.ilike(f"%{_escapar_like(q.strip())}%", escape="\\"))
+    if escola_id is not None:
+        filtros.append(Estudante.escola_id == escola_id)
+    if turno is not None:
+        filtros.append(Estudante.turno == turno)
+    total = db.scalar(select(func.count()).select_from(Estudante).where(*filtros))
+    itens = db.scalars(
+        select(Estudante)
+        .where(*filtros)
+        .order_by(Estudante.nome, Estudante.id)
+        .limit(limit)
+        .offset(offset)
+    )
+    return EstudantesPagina(total=total or 0, itens=[EstudanteLer.model_validate(e) for e in itens])
 
 
 @router.get("/{estudante_id}")
-def obter(estudante_id: IdRota, db: Db, usuario: UsuarioAtual) -> EstudanteLer:
-    return EstudanteLer.model_validate(_buscar_no_escopo(db, usuario, estudante_id))
+def obter(estudante_id: IdRota, db: Db, _: UsuarioInterno) -> EstudanteLer:
+    return EstudanteLer.model_validate(buscar(db, Estudante, estudante_id))
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-def criar(dados: EstudanteCadastrar, db: Db, usuario: Editor) -> EstudanteLer:
-    _garantir_parada_permitida(usuario, None, dados.parada_id)
-    if usuario.perfil == Perfil.DIRETOR and dados.matricula is None:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "Diretor cadastra o estudante já com matrícula"
-        )
-    turma = None
-    if dados.matricula:
-        turma = carregar_turma(db, dados.matricula.turma_id)
-        garantir_escola(usuario, turma.escola_id)
-        validar_ano_letivo(turma, dados.matricula.data_inicio)
-    estudante = Estudante(
-        **dados.model_dump(exclude={"localizacao", "matricula"}),
-        localizacao=para_ponto(dados.localizacao) if dados.localizacao else None,
-    )
+def criar(dados: EstudanteCriar, db: Db, _: Editor) -> EstudanteLer:
+    estudante = Estudante(**dados.model_dump())
     db.add(estudante)
-    if turma:
-        try:
-            db.flush()
-        except IntegrityError as erro:
-            db.rollback()
-            raise HTTPException(status.HTTP_409_CONFLICT, CONFLITO) from erro
-        db.add(
-            Matricula(
-                estudante_id=estudante.id,
-                turma_id=turma.id,
-                data_inicio=dados.matricula.data_inicio,
-                status=StatusMatricula.ATIVA,
-            )
-        )
     salvar(db, CONFLITO)
     return EstudanteLer.model_validate(estudante)
 
 
 @router.put("/{estudante_id}")
-def atualizar(estudante_id: IdRota, dados: EstudanteCriar, db: Db, usuario: Editor) -> EstudanteLer:
-    estudante = _buscar_no_escopo(db, usuario, estudante_id)
-    _garantir_parada_permitida(usuario, estudante.parada_id, dados.parada_id)
-    for campo, valor in dados.model_dump(exclude={"localizacao"}).items():
+def atualizar(estudante_id: IdRota, dados: EstudanteCriar, db: Db, _: Editor) -> EstudanteLer:
+    estudante = buscar(db, Estudante, estudante_id)
+    for campo, valor in dados.model_dump().items():
         setattr(estudante, campo, valor)
-    estudante.localizacao = para_ponto(dados.localizacao) if dados.localizacao else None
     salvar(db, CONFLITO)
     return EstudanteLer.model_validate(estudante)
 
@@ -107,5 +74,59 @@ def atualizar(estudante_id: IdRota, dados: EstudanteCriar, db: Db, usuario: Edit
     dependencies=[exigir_perfil(Perfil.ADMIN)],
 )
 def remover(estudante_id: IdRota, db: Db) -> None:
-    db.delete(buscar(db, Estudante, estudante_id))
-    salvar(db, "O estudante tem matrículas vinculadas")
+    estudante = buscar(db, Estudante, estudante_id)
+    arquivo = estudante.foto_arquivo
+    db.delete(estudante)
+    salvar(db, "O estudante tem registros vinculados")
+    fotos.apagar(arquivo)
+
+
+@router.put("/{estudante_id}/foto", status_code=status.HTTP_204_NO_CONTENT)
+def enviar_foto(
+    estudante_id: IdRota,
+    request: Request,
+    db: Db,
+    gestor: Editor,
+    foto: Annotated[UploadFile, File()],
+) -> None:
+    estudante = buscar(db, Estudante, estudante_id)
+    novo = fotos.salvar(foto.file.read(fotos.MAX_BYTES + 1))
+    antigo, estudante.foto_arquivo = estudante.foto_arquivo, novo
+    auditoria.registrar(
+        db,
+        "foto.enviar",
+        request=request,
+        usuario=gestor,
+        recurso="estudante",
+        recurso_id=estudante_id,
+    )
+    db.commit()
+    fotos.apagar(antigo)
+
+
+@router.delete("/{estudante_id}/foto", status_code=status.HTTP_204_NO_CONTENT)
+def remover_foto(estudante_id: IdRota, request: Request, db: Db, gestor: Editor) -> None:
+    estudante = buscar(db, Estudante, estudante_id)
+    antigo, estudante.foto_arquivo = estudante.foto_arquivo, None
+    auditoria.registrar(
+        db,
+        "foto.remover",
+        request=request,
+        usuario=gestor,
+        recurso="estudante",
+        recurso_id=estudante_id,
+    )
+    db.commit()
+    fotos.apagar(antigo)
+
+
+@router.get("/{estudante_id}/foto-url")
+def url_da_foto(estudante_id: IdRota, db: Db, _: UsuarioInterno) -> FotoUrl:
+    return url_assinada(buscar(db, Estudante, estudante_id))
+
+
+def url_assinada(estudante: Estudante) -> FotoUrl:
+    if estudante.foto_arquivo is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Estudante sem foto")
+    token, expira = fotos.assinar(estudante.id)
+    return FotoUrl(url=f"/fotos/{token}", expira_em=expira)

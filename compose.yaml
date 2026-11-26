@@ -15,22 +15,56 @@ services:
       timeout: 3s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    # Sem porta publicada: só a API conversa com ele.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   api:
     build: ./backend
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      FOTOS_DIR: /srv/fotos
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - fotos-data:/srv/fotos
     ports:
       - "127.0.0.1:8000:8000"
+
+  # Regras de alerta no tempo e envio de push. Mesma imagem da API, outro processo.
+  worker:
+    build: ./backend
+    command: [".venv/bin/python", "-m", "app.worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
 
   web:
     build:
       context: ./frontend
       args:
         VITE_API_URL: http://localhost:8000
+    environment:
+      API_ORIGIN: http://localhost:8000
+      WS_ORIGIN: ws://localhost:8000
     depends_on:
       - api
     ports:
@@ -38,3 +72,4 @@ services:
 
 volumes:
   db-data:
+  fotos-data:

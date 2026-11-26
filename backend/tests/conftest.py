@@ -5,6 +5,7 @@ Cada teste roda em uma transação desfeita ao final, então os testes não inte
 
 import uuid
 from collections.abc import Callable, Iterator
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -24,8 +25,64 @@ settings.database_url = _url_base.set(database=_nome_banco).render_as_string(hid
 from app import db as app_db  # noqa: E402
 from app.geo import Coordenadas, para_ponto  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Escola, Perfil, Usuario  # noqa: E402
+from app.models import Escola, Estudante, Perfil, Rota, Sentido, Turno, Usuario  # noqa: E402
 from app.security import criar_token, gerar_hash  # noqa: E402
+
+
+def estudante_de_teste(db: Session, nome: str = "Ana", **campos) -> Estudante:
+    """Estudante válido; cria uma escola própria quando `escola_id` não é informado."""
+    if "escola_id" not in campos:
+        escola = Escola(
+            nome=f"Escola de {nome}",
+            localizacao=para_ponto(Coordenadas(latitude=-25.4, longitude=-49.2)),
+        )
+        db.add(escola)
+        db.flush()
+        campos["escola_id"] = escola.id
+    campos.setdefault("data_nascimento", date(2015, 1, 1))
+    campos.setdefault("turno", Turno.MANHA)
+    estudante = Estudante(nome=nome, **campos)
+    db.add(estudante)
+    db.flush()
+    return estudante
+
+
+def escola_de_teste(
+    db: Session,
+    nome: str = "Escola",
+    latitude: float = -25.4,
+    longitude: float = -49.2,
+    raio_cerca_m: int = 10_000_000,
+) -> Escola:
+    """Escola com cerca enorme por padrão: testes de geometria não esbarram na regra da escola."""
+    escola = Escola(
+        nome=nome,
+        localizacao=para_ponto(Coordenadas(latitude=latitude, longitude=longitude)),
+        raio_cerca_m=raio_cerca_m,
+    )
+    db.add(escola)
+    db.flush()
+    return escola
+
+
+def rota_de_teste(db: Session, nome: str = "Linha 1", **campos) -> Rota:
+    """Rota válida no banco; cria uma escola própria quando `escola_id` não é informado."""
+    if "escola_id" not in campos:
+        campos["escola_id"] = escola_de_teste(db, f"Escola da {nome}").id
+    campos.setdefault("turno", Turno.MANHA)
+    campos.setdefault("sentido", Sentido.IDA)
+    rota = Rota(nome=nome, **campos)
+    db.add(rota)
+    db.flush()
+    return rota
+
+
+def corpo_de_rota(db: Session, nome: str = "Linha 1", **campos) -> dict:
+    """Corpo válido de POST /rotas, com uma escola criada no banco."""
+    if "escola_id" not in campos:
+        campos["escola_id"] = escola_de_teste(db, f"Escola da {nome}").id
+    return {"nome": nome, "turno": "manha", "sentido": "ida", **campos}
+
 
 BACKEND = Path(__file__).resolve().parent.parent
 
@@ -45,6 +102,36 @@ def banco_de_teste() -> Iterator[None]:
         with admin.connect() as conexao:
             conexao.execute(text(f'DROP DATABASE IF EXISTS "{_nome_banco}" WITH (FORCE)'))
         admin.dispose()
+
+
+@pytest.fixture(autouse=True)
+def redis_limpo() -> None:
+    """Última posição e pub/sub vivem no Redis: cada teste começa sem nada dos anteriores."""
+    from app import tempo_real
+
+    tempo_real.cliente().flushdb()
+
+
+@pytest.fixture(autouse=True)
+def limites_zerados(monkeypatch) -> None:
+    """Todos os testes vêm do mesmo cliente; sem isso, o limite por IP vazaria entre eles."""
+    from app.limite import LimiteEmMemoria
+    from app.routers import auth
+
+    for nome in (
+        "limite_login",
+        "limite_login_ip",
+        "limite_login_conta",
+        "limite_troca_senha",
+        "limite_convite",
+    ):
+        atual = getattr(auth, nome)
+        monkeypatch.setattr(auth, nome, LimiteEmMemoria(atual.maximo, atual.janela_s))
+    from app import limite
+
+    for nome in ("limite_escrita", "limite_posicoes", "limite_ip"):
+        atual = getattr(limite, nome)
+        monkeypatch.setattr(limite, nome, LimiteEmMemoria(atual.maximo, atual.janela_s))
 
 
 @pytest.fixture
@@ -85,15 +172,12 @@ def criar_escola(db: Session) -> Callable[..., Escola]:
 
 @pytest.fixture
 def criar_usuario(db: Session) -> Callable[..., Usuario]:
-    def criar(
-        perfil: Perfil = Perfil.ADMIN, escola_id: int | None = None, senha: str = "senha-forte-1"
-    ):
+    def criar(perfil: Perfil = Perfil.ADMIN, senha: str = "senha-forte-1"):
         usuario = Usuario(
             nome=f"Usuário {perfil.value}",
             email=f"{uuid.uuid4().hex[:10]}@exemplo.com",
             senha_hash=gerar_hash(senha),
             perfil=perfil,
-            escola_id=escola_id,
         )
         db.add(usuario)
         db.flush()
@@ -103,13 +187,11 @@ def criar_usuario(db: Session) -> Callable[..., Usuario]:
 
 
 @pytest.fixture
-def cabecalhos(criar_usuario, criar_escola) -> Callable[..., dict[str, str]]:
-    """Cabeçalho Authorization de um usuário do perfil pedido. Diretor sem escola ganha uma."""
+def cabecalhos(criar_usuario) -> Callable[..., dict[str, str]]:
+    """Cabeçalho Authorization de um usuário do perfil pedido."""
 
-    def criar(perfil: Perfil = Perfil.ADMIN, escola_id: int | None = None) -> dict[str, str]:
-        if perfil == Perfil.DIRETOR and escola_id is None:
-            escola_id = criar_escola().id
-        usuario = criar_usuario(perfil, escola_id)
+    def criar(perfil: Perfil = Perfil.ADMIN) -> dict[str, str]:
+        usuario = criar_usuario(perfil)
         return {"Authorization": f"Bearer {criar_token(usuario)}"}
 
     return criar

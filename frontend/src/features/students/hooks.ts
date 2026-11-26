@@ -2,14 +2,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { components } from '@/shared/api/schema'
 import { createStudent, deleteStudent, getStudent, listStopOptions, listStudents, updateStudent } from './api'
 
-type EstudanteCadastrar = components['schemas']['EstudanteCadastrar']
+type EstudanteCriar = components['schemas']['EstudanteCriar']
 
 type PageParams = { limit: number; offset: number }
 
-export function useStudents(pager: PageParams) {
+export function useStudents(pager: PageParams, q = '') {
   return useQuery({
-    queryKey: ['students', 'list', pager.limit, pager.offset],
-    queryFn: () => listStudents({ limit: pager.limit, offset: pager.offset }),
+    queryKey: ['students', 'list', pager.limit, pager.offset, q],
+    queryFn: () => listStudents({ limit: pager.limit, offset: pager.offset, q }),
     placeholderData: keepPreviousData,
   })
 }
@@ -32,7 +32,7 @@ export function useStopOptions(enabled = true) {
 export function useSaveStudent(id?: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: EstudanteCadastrar) => (id === undefined ? createStudent(body) : updateStudent(id, body)),
+    mutationFn: (body: EstudanteCriar) => (id === undefined ? createStudent(body) : updateStudent(id, body)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
   })
 }

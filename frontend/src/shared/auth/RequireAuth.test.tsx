@@ -18,7 +18,7 @@ const usuario = {
   id: 1,
   nome: 'Ana',
   email: 'ana@educa.test',
-  perfil: 'coordenador',
+  perfil: 'gestor',
   escola_id: null,
   ativo: true,
 }
@@ -82,7 +82,7 @@ describe('RequireAuth', () => {
 describe('RequireAccess', () => {
   it('renders the forbidden page when the role has no access', async () => {
     setToken('tok')
-    server.use(http.get(`${API}/auth/me`, () => HttpResponse.json(usuario)))
+    server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({ ...usuario, perfil: 'motorista' })))
 
     const queryClient = new QueryClient()
     render(

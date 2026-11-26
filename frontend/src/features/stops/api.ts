@@ -6,7 +6,6 @@ type ParadaCriar = components['schemas']['ParadaCriar']
 type ParadaAtualizar = components['schemas']['ParadaAtualizar']
 type ParadaProxima = components['schemas']['ParadaProxima']
 type EstudanteDaParada = components['schemas']['EstudanteDaParada']
-type EstudanteLer = components['schemas']['EstudanteLer']
 
 type PageParams = { limit: number; offset: number }
 type NearbyParams = { latitude: number; longitude: number; raio_m: number; limit: number }
@@ -39,16 +38,4 @@ export function nearbyStops(p: NearbyParams) {
 
 export function listStopStudents(id: number) {
   return api<EstudanteDaParada[]>(`/paradas/${id}/estudantes`)
-}
-
-export function attachStudent(stopId: number, studentId: number) {
-  return api<void>(`/paradas/${stopId}/estudantes/${studentId}`, { method: 'PUT' })
-}
-
-export function detachStudent(stopId: number, studentId: number) {
-  return api<void>(`/paradas/${stopId}/estudantes/${studentId}`, { method: 'DELETE' })
-}
-
-export function listStudents(p: PageParams) {
-  return api<EstudanteLer[]>('/estudantes', { query: { limit: p.limit, offset: p.offset } })
 }

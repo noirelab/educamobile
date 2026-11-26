@@ -9,14 +9,21 @@ from sqlalchemy.orm import Session
 from app.cadastros import Deslocamento, IdRota, Limite
 from app.db import get_db
 from app.geo import de_ponto
-from app.models import Parada, Perfil, Rota, RotaParada
+from app.models import Inscricao, Parada, Perfil, Rota, RotaParada, Sentido
 from app.schemas.paradas import ParadaLer
-from app.schemas.rotas import RotaAtualizar, RotaCriar, RotaLer, RotaSequencia, TrajetoGeoJSON
-from app.security import UsuarioAtual, exigir_perfil
+from app.schemas.rotas import (
+    ItemDoItinerario,
+    RotaAtualizar,
+    RotaCriar,
+    RotaLer,
+    RotaSequencia,
+    TrajetoGeoJSON,
+)
+from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/rotas", tags=["rotas"])
 Db = Annotated[Session, Depends(get_db)]
-PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.COORDENADOR)
+PODE_ESCREVER = exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)
 
 _RECALCULAR = text(
     """
@@ -49,22 +56,37 @@ def _trajeto(rota: Rota) -> TrajetoGeoJSON | None:
 
 def _ler(db: Session, rotas: list[Rota]) -> list[RotaLer]:
     linhas = db.execute(
-        select(RotaParada.rota_id, Parada)
+        select(RotaParada, Parada)
         .join(Parada, Parada.id == RotaParada.parada_id)
         .where(RotaParada.rota_id.in_([r.id for r in rotas]))
         .order_by(RotaParada.rota_id, RotaParada.ordem)
     ).all()
     paradas: dict[int, list[ParadaLer]] = {r.id: [] for r in rotas}
-    for rota_id, parada in linhas:
-        paradas[rota_id].append(
+    itinerario: dict[int, list[ItemDoItinerario]] = {r.id: [] for r in rotas}
+    for rp, parada in linhas:
+        paradas[rp.rota_id].append(
             ParadaLer(id=parada.id, nome=parada.nome, localizacao=de_ponto(parada.localizacao))
+        )
+        itinerario[rp.rota_id].append(
+            ItemDoItinerario(
+                parada_id=parada.id,
+                ordem=rp.ordem,
+                horario_previsto=rp.horario_previsto,
+                raio_cerca_m=rp.raio_cerca_m,
+            )
         )
     return [
         RotaLer(
             id=r.id,
             nome=r.nome,
+            escola_id=r.escola_id,
+            turno=r.turno,
+            sentido=r.sentido,
+            veiculo_id=r.veiculo_id,
+            motorista_id=r.motorista_id,
             distancia_m=r.distancia_m,
             paradas=paradas[r.id],
+            itinerario=itinerario[r.id],
             trajeto=_trajeto(r),
         )
         for r in rotas
@@ -83,13 +105,69 @@ def _confirmar(db: Session) -> None:
         db.commit()
     except IntegrityError as erro:
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Conflito com outra rota") from erro
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "Nome já usado, ou escola, veículo ou motorista inexistente"
+        ) from erro
+
+
+def _exigir_sem_inscricoes(db: Session, rota: Rota) -> None:
+    if db.scalar(
+        select(Inscricao.id).where(Inscricao.rota_id == rota.id, Inscricao.ativa.is_(True)).limit(1)
+    ):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "A rota tem inscrições ativas: mude escola, turno ou sentido só depois de encerrá-las",
+        )
+
+
+def _exigir_inscricoes_cobertas(db: Session, rota: Rota, novas: set[int]) -> None:
+    usadas = set(
+        db.scalars(
+            select(Inscricao.parada_id).where(
+                Inscricao.rota_id == rota.id, Inscricao.ativa.is_(True)
+            )
+        )
+    )
+    if usadas - novas:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Paradas com inscrições ativas não podem sair da rota: {sorted(usadas - novas)}",
+        )
+
+
+_PONTA_DA_ESCOLA = text(
+    """
+    SELECT ST_DWithin(p.localizacao::geography, e.localizacao::geography, e.raio_cerca_m)
+    FROM rota_parada rp
+    JOIN parada p ON p.id = rp.parada_id
+    JOIN escola e ON e.id = :escola
+    WHERE rp.rota_id = :rota
+    ORDER BY rp.ordem {sentido}
+    LIMIT 1
+    """
+)
+
+
+def _validar_ponto_da_escola(db: Session, rota: Rota) -> None:
+    """Na ida a última parada é a escola; na volta, a primeira. Rota vazia não tem o que validar."""
+    ordem = "DESC" if rota.sentido == Sentido.IDA else "ASC"
+    sql = text(_PONTA_DA_ESCOLA.text.format(sentido=ordem))
+    dentro = db.scalar(sql, {"rota": rota.id, "escola": rota.escola_id})
+    if dentro is False:
+        onde = "última" if rota.sentido == Sentido.IDA else "primeira"
+        # Nada do que foi alterado nesta requisição pode sobrar na sessão.
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            f"A {onde} parada da rota de {rota.sentido.value} precisa ser a escola "
+            "(dentro do raio da cerca da escola)",
+        )
 
 
 @router.get("")
 def listar_rotas(
     db: Db,
-    _: UsuarioAtual,
+    _: UsuarioInterno,
     limit: Limite = 50,
     offset: Deslocamento = 0,
 ) -> list[RotaLer]:
@@ -99,21 +177,33 @@ def listar_rotas(
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[PODE_ESCREVER])
 def criar_rota(dados: RotaCriar, db: Db) -> RotaLer:
-    rota = Rota(nome=dados.nome)
+    rota = Rota(**dados.model_dump())
     db.add(rota)
     _confirmar(db)
     return _ler(db, [rota])[0]
 
 
 @router.get("/{rota_id}")
-def obter_rota(rota_id: IdRota, db: Db, _: UsuarioAtual) -> RotaLer:
+def obter_rota(rota_id: IdRota, db: Db, _: UsuarioInterno) -> RotaLer:
     return _ler(db, [_buscar(db, rota_id)])[0]
 
 
 @router.patch("/{rota_id}", dependencies=[PODE_ESCREVER])
 def atualizar_rota(rota_id: IdRota, dados: RotaAtualizar, db: Db) -> RotaLer:
     rota = _buscar(db, rota_id)
-    rota.nome = dados.nome
+    mudancas = dados.model_dump(exclude_unset=True)
+    if {"escola_id", "turno", "sentido"} & mudancas.keys():
+        if any(
+            rota.__dict__[c] != v
+            for c, v in mudancas.items()
+            if c in {"escola_id", "turno", "sentido"}
+        ):
+            _exigir_sem_inscricoes(db, rota)
+    for campo, valor in mudancas.items():
+        setattr(rota, campo, valor)
+    if {"escola_id", "sentido"} & mudancas.keys():
+        db.flush()
+        _validar_ponto_da_escola(db, rota)
     _confirmar(db)
     return _ler(db, [rota])[0]
 
@@ -121,19 +211,29 @@ def atualizar_rota(rota_id: IdRota, dados: RotaAtualizar, db: Db) -> RotaLer:
 @router.put("/{rota_id}/paradas", dependencies=[PODE_ESCREVER])
 def definir_paradas(rota_id: IdRota, dados: RotaSequencia, db: Db) -> RotaLer:
     rota = _buscar(db, rota_id, travar=True)
-    encontradas = set(db.scalars(select(Parada.id).where(Parada.id.in_(dados.parada_ids))))
-    faltando = [i for i in dados.parada_ids if i not in encontradas]
+    itens = dados.itens()
+    ids = [i.parada_id for i in itens]
+    encontradas = set(db.scalars(select(Parada.id).where(Parada.id.in_(ids))))
+    faltando = [i for i in ids if i not in encontradas]
     if faltando:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, f"Paradas inexistentes: {faltando}"
         )
     # Esvaziar antes de inserir: a ordem nova pode reutilizar pares já gravados.
+    _exigir_inscricoes_cobertas(db, rota, set(ids))
     rota.paradas.clear()
     db.flush()
     rota.paradas.extend(
-        RotaParada(parada_id=parada_id, ordem=ordem)
-        for ordem, parada_id in enumerate(dados.parada_ids)
+        RotaParada(
+            parada_id=item.parada_id,
+            ordem=ordem,
+            horario_previsto=item.horario_previsto,
+            raio_cerca_m=item.raio_cerca_m,
+        )
+        for ordem, item in enumerate(itens)
     )
+    db.flush()
+    _validar_ponto_da_escola(db, rota)
     recalcular_trajeto(db, rota)
     _confirmar(db)
     return _ler(db, [rota])[0]

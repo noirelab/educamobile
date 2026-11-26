@@ -21,11 +21,6 @@ const ROUTES = [
   { path: '/schools/:id', element: <p>Detalhe da escola</p> },
 ]
 
-const POLES = [{ id: 1, nome: 'Polo Centro', area: null }]
-
-function mockPoles() {
-  server.use(http.get(`${API}/polos`, () => HttpResponse.json(POLES)))
-}
 
 async function fillLocation(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('Latitude'), '-25.43')
@@ -34,7 +29,6 @@ async function fillLocation(user: ReturnType<typeof userEvent.setup>) {
 
 describe('SchoolFormPage', () => {
   it('posts null for empty optional fields', async () => {
-    mockPoles()
     let body: unknown
     server.use(
       http.post(`${API}/escolas`, async ({ request }) => {
@@ -54,14 +48,13 @@ describe('SchoolFormPage', () => {
         nome: 'EMEF Centro',
         codigo_inep: null,
         endereco: null,
-        polo_id: null,
         localizacao: { latitude: -25.43, longitude: -49.27 },
+        raio_cerca_m: 150,
       }),
     )
   })
 
   it('blocks submit when codigo_inep does not have 8 digits', async () => {
-    mockPoles()
     let called = false
     server.use(
       http.post(`${API}/escolas`, () => {
@@ -82,7 +75,6 @@ describe('SchoolFormPage', () => {
   })
 
   it('requires the location on the map', async () => {
-    mockPoles()
     renderWithRoutes('/schools/new', ROUTES)
     const user = userEvent.setup()
 
@@ -93,11 +85,10 @@ describe('SchoolFormPage', () => {
   })
 
   it('shows the INEP conflict on the codigo_inep field', async () => {
-    mockPoles()
     server.use(
       http.post(`${API}/escolas`, () =>
         HttpResponse.json(
-          { detail: 'Código INEP já cadastrado ou polo inexistente' },
+          { detail: 'Código INEP já cadastrado' },
           { status: 409 },
         ),
       ),
@@ -111,13 +102,12 @@ describe('SchoolFormPage', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar' }))
 
     expect(
-      await screen.findByText('Código INEP já cadastrado ou polo inexistente'),
+      await screen.findByText('Código INEP já cadastrado'),
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Código INEP')).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('loads the school and sends PUT on edit', async () => {
-    mockPoles()
     let body: unknown
     server.use(
       http.get(`${API}/escolas/3`, () =>
@@ -126,8 +116,8 @@ describe('SchoolFormPage', () => {
           nome: 'EMEF Sul',
           codigo_inep: '41000011',
           endereco: 'Rua A, 10',
-          polo_id: 1,
           localizacao: { latitude: -25.5, longitude: -49.3 },
+          raio_cerca_m: 200,
         }),
       ),
       http.put(`${API}/escolas/3`, async ({ request }) => {
@@ -149,8 +139,8 @@ describe('SchoolFormPage', () => {
         nome: 'EMEF Sul II',
         codigo_inep: '41000011',
         endereco: 'Rua A, 10',
-        polo_id: 1,
         localizacao: { latitude: -25.5, longitude: -49.3 },
+        raio_cerca_m: 200,
       }),
     )
   })

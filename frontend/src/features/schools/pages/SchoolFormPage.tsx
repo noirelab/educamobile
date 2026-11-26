@@ -5,23 +5,21 @@ import { ApiError } from '@/shared/api/errors'
 import type { components } from '@/shared/api/schema'
 import { PointPicker } from '@/shared/map/PointPicker'
 import { Button } from '@/shared/ui/button'
-import { Field } from '@/shared/ui/Field'
 import { FloatingField } from '@/shared/ui/FloatingField'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Panel } from '@/shared/ui/Panel'
 import { PageState } from '@/shared/ui/PageState'
 import { notifyError, notifySuccess } from '@/shared/ui/toast'
-import { usePoleOptions, useSaveSchool, useSchool } from '../hooks'
+import { useSaveSchool, useSchool } from '../hooks'
 import { schoolSchema, type SchoolFormValues } from '../schemas'
 
 type EscolaLer = components['schemas']['EscolaLer']
 type EscolaCriar = components['schemas']['EscolaCriar']
 type Coordenadas = components['schemas']['Coordenadas']
-type PoloLer = components['schemas']['PoloLer']
 
-const INEP_CONFLICT = 'Código INEP já cadastrado ou polo inexistente'
+const INEP_CONFLICT = 'Código INEP já cadastrado'
 
-const FORM_FIELDS = ['nome', 'codigo_inep', 'endereco', 'polo_id', 'localizacao'] as const
+const FORM_FIELDS = ['nome', 'codigo_inep', 'endereco', 'localizacao', 'raio_cerca_m'] as const
 type FormField = (typeof FORM_FIELDS)[number]
 
 function isFormField(field: string): field is FormField {
@@ -33,14 +31,14 @@ function toPayload(values: SchoolFormValues, localizacao: Coordenadas): EscolaCr
     nome: values.nome,
     codigo_inep: values.codigo_inep === '' ? null : values.codigo_inep,
     endereco: values.endereco === '' ? null : values.endereco,
-    polo_id: values.polo_id === '' ? null : Number(values.polo_id),
     localizacao,
+    raio_cerca_m: Number(values.raio_cerca_m),
   }
 }
 
-type SchoolFormProps = { school?: EscolaLer; poles: PoloLer[] }
+type SchoolFormProps = { school?: EscolaLer }
 
-function SchoolForm({ school, poles }: SchoolFormProps) {
+function SchoolForm({ school }: SchoolFormProps) {
   const navigate = useNavigate()
   const save = useSaveSchool(school?.id)
   const {
@@ -55,8 +53,8 @@ function SchoolForm({ school, poles }: SchoolFormProps) {
       nome: school?.nome ?? '',
       codigo_inep: school?.codigo_inep ?? '',
       endereco: school?.endereco ?? '',
-      polo_id: school?.polo_id != null ? String(school.polo_id) : '',
       localizacao: school?.localizacao ?? null,
+      raio_cerca_m: String(school?.raio_cerca_m ?? 150),
     },
   })
 
@@ -106,16 +104,12 @@ function SchoolForm({ school, poles }: SchoolFormProps) {
             error={errors.codigo_inep?.message}
             {...register('codigo_inep')}
           />
-          <Field label="Polo" error={errors.polo_id?.message}>
-            <select id="school-polo" {...register('polo_id')}>
-              <option value="">Sem polo</option>
-              {poles.map((pole) => (
-                <option key={pole.id} value={String(pole.id)}>
-                  {pole.nome}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <FloatingField
+            label="Raio da cerca virtual (m)"
+            inputMode="numeric"
+            error={errors.raio_cerca_m?.message}
+            {...register('raio_cerca_m')}
+          />
           <div className="sm:col-span-2">
             <FloatingField label="Endereço" error={errors.endereco?.message} {...register('endereco')} />
           </div>
@@ -148,25 +142,19 @@ function SchoolForm({ school, poles }: SchoolFormProps) {
   )
 }
 
-function EditSchoolForm({ schoolId, poles }: { schoolId: number; poles: PoloLer[] }) {
+function EditSchoolForm({ schoolId }: { schoolId: number }) {
   const query = useSchool(schoolId)
 
   if (query.isPending) return <PageState status="loading" />
   if (query.isError) return <PageState status="error" error={query.error} />
 
-  return <SchoolForm school={query.data} poles={poles} />
+  return <SchoolForm school={query.data} />
 }
 
 export function SchoolFormPage() {
   const { id } = useParams()
-  const poles = usePoleOptions()
 
-  if (poles.isPending) return <PageState status="loading" />
-  if (poles.isError) {
-    return <PageState status="error" error={poles.error} onRetry={() => void poles.refetch()} />
-  }
+  if (id === undefined) return <SchoolForm />
 
-  if (id === undefined) return <SchoolForm poles={poles.data} />
-
-  return <EditSchoolForm schoolId={Number(id)} poles={poles.data} />
+  return <EditSchoolForm schoolId={Number(id)} />
 }

@@ -1,13 +1,9 @@
 import {
   Backpack,
-  CalendarCheck,
-  GraduationCap,
-  Hexagon,
   LayoutDashboard,
   MapPin,
   Route,
   School,
-  Users,
   UserRoundPlus,
   type LucideIcon,
 } from 'lucide-react'
@@ -17,12 +13,8 @@ export type NavItem = { label: string; path: string; resource: Resource; icon: L
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Painel', path: '/', resource: 'dashboard', icon: LayoutDashboard },
-  { label: 'Polos', path: '/poles', resource: 'poles', icon: Hexagon },
   { label: 'Escolas', path: '/schools', resource: 'schools', icon: School },
-  { label: 'Turmas', path: '/classes', resource: 'classes', icon: Users },
-  { label: 'Professores', path: '/teachers', resource: 'teachers', icon: GraduationCap },
   { label: 'Estudantes', path: '/students', resource: 'students', icon: Backpack },
-  { label: 'Frequência', path: '/attendance', resource: 'attendance', icon: CalendarCheck },
   { label: 'Paradas', path: '/stops', resource: 'stops', icon: MapPin },
   { label: 'Rotas', path: '/routes', resource: 'routes', icon: Route },
   { label: 'Usuários', path: '/users', resource: 'users', icon: UserRoundPlus },
@@ -30,8 +22,10 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: 'Administrador',
-  diretor: 'Diretor',
-  coordenador: 'Coordenador de logística',
+  gestor: 'Gestor de transporte',
+  motorista: 'Motorista',
+  monitor: 'Monitor',
+  responsavel: 'Responsável',
 }
 
 export function visibleNav(role: Role): typeof NAV_ITEMS {

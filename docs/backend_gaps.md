@@ -1,3 +1,5 @@
+> **Obsoleto.** Este documento descreve o escopo anterior à reformulação para transporte escolar seguro (ver `docs/reformulacao/README.md`). Mantido só como histórico.
+
 # O que falta no backend para o frontend
 
 Levantado em 02/11/2026, durante o planejamento do frontend. O frontend só consome a API que já existe. Nada desta lista é simulado ou calculado no navegador. Cada item fica fora do frontend até o backend entregar a rota.
