@@ -110,6 +110,12 @@ class Estudante(Base):
     """Só o necessário para o transporte. Sem endereço nem localização da casa: a parada basta."""
 
     __tablename__ = "estudante"
+    __table_args__ = (
+        CheckConstraint(
+            "(contato_emergencia_nome IS NULL) = (contato_emergencia_telefone IS NULL)",
+            name="ck_estudante_contato_emergencia",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str]
@@ -123,6 +129,11 @@ class Estudante(Base):
     observacoes_cuidado: Mapped[str | None]
     # Nome do arquivo no disco, nunca devolvido pela API.
     foto_arquivo: Mapped[str | None]
+    # Opcional: alguém para a gestão ligar quando o responsável não tem smartphone ou não atende.
+    # Só a gestão e os responsáveis da criança leem. Nome e telefone vêm juntos ou não vêm.
+    contato_emergencia_nome: Mapped[str | None]
+    contato_emergencia_telefone: Mapped[str | None]
+    contato_emergencia_parentesco: Mapped[str | None]
 
 
 class Veiculo(Base):

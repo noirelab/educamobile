@@ -64,9 +64,19 @@ As regras de atraso, desvio e falta de sinal dependem do tempo passar, não de u
 
 O navegador do celular não envia GPS de forma confiável com a tela apagada, principalmente no iOS. Isso não muda o backend, mas muda o trabalho do frontend, e por isso entrou no relatório.
 
-### O que ficou para o grupo decidir
+### O que o grupo decidiu
 
-Viagem de volta, monitor no ônibus, forma de confirmar embarque, confirmação pela escola, pais sem smartphone, prazo de guarda dos dados e validação do responsável. Cada uma tem uma recomendação no relatório (seção 11) e uma issue própria no GitHub.
+Os pontos em aberto do relatório (seção 11, issue #25):
+
+| Ponto | Decisão |
+| --- | --- |
+| Viagem de volta | Entra. Ida e volta funcionam com as mesmas regras; na volta, sair da escola com crianças a bordo é o normal e não gera alerta. |
+| Monitor no ônibus | Opcional. A viagem inicia, registra embarques e conclui só com o motorista; o monitor, quando escalado, registra eventos e conclui junto, mas não inicia a viagem. |
+| Pais sem smartphone | Contato de emergência opcional por criança (nome, telefone e parentesco), para a gestão ligar. O responsável cadastra pelo app e a gestão pelo cadastro do aluno. Equipe da viagem não vê. |
+| Validação do responsável | Como está: o gestor convida, e o convite é de uso único e com prazo. |
+| Confirmação do embarque, app nativo, celular do motorista, prazo de guarda | Seguem a recomendação do relatório: toque na lista, app nativo, celular com a API do rastreador pronta, 90 dias para posições. |
+
+Ainda sem decisão: se a emergência avisa os pais (`emergencia_avisa_responsaveis`, hoje desligado) e se a escola confirma o recebimento do aluno.
 
 ## O que esta branch já prepara
 

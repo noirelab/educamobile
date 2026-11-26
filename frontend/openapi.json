@@ -836,34 +836,23 @@
         ]
       }
     },
-    "/auth/convites/{codigo}/aceitar": {
+    "/auth/convites/aceitar": {
       "post": {
         "tags": [
           "auth"
         ],
         "summary": "Aceitar Convite",
         "description": "O responsável define a senha e entra. O convite já traz o vínculo com o estudante.",
-        "operationId": "aceitar_convite_auth_convites__codigo__aceitar_post",
-        "parameters": [
-          {
-            "name": "codigo",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Codigo"
-            }
-          }
-        ],
+        "operationId": "aceitar_convite_auth_convites_aceitar_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ConviteAceitar"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "201": {
@@ -4789,6 +4778,106 @@
         }
       }
     },
+    "/responsavel/filhos/{estudante_id}/contato-emergencia": {
+      "put": {
+        "tags": [
+          "responsáveis"
+        ],
+        "summary": "Definir Contato",
+        "description": "O responsável cadastra ou troca o contato de emergência do filho. Vai para a auditoria\n(sem o telefone), porque numa disputa de guarda importa saber quem mudou.",
+        "operationId": "definir_contato_responsavel_filhos__estudante_id__contato_emergencia_put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estudante_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Estudante Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContatoEmergencia"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContatoEmergencia"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "responsáveis"
+        ],
+        "summary": "Remover Contato",
+        "operationId": "remover_contato_responsavel_filhos__estudante_id__contato_emergencia_delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estudante_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Estudante Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/responsavel/filhos/{estudante_id}/foto-url": {
       "get": {
         "tags": [
@@ -6389,8 +6478,51 @@
         ],
         "title": "Consentimento"
       },
+      "ContatoEmergencia": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[^\\x00]+$",
+            "title": "Nome"
+          },
+          "telefone": {
+            "type": "string",
+            "maxLength": 25,
+            "title": "Telefone"
+          },
+          "parentesco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[^\\x00]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentesco"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "telefone"
+        ],
+        "title": "ContatoEmergencia",
+        "description": "Para quem não tem smartphone ou quando o responsável não atende. É opcional."
+      },
       "ConviteAceitar": {
         "properties": {
+          "codigo": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Codigo"
+          },
           "senha": {
             "type": "string",
             "maxLength": 128,
@@ -6400,6 +6532,7 @@
         },
         "type": "object",
         "required": [
+          "codigo",
           "senha"
         ],
         "title": "ConviteAceitar"
@@ -6915,6 +7048,46 @@
               }
             ],
             "title": "Observacoes Cuidado"
+          },
+          "contato_emergencia_nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[^\\x00]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato Emergencia Nome"
+          },
+          "contato_emergencia_telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 25
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato Emergencia Telefone"
+          },
+          "contato_emergencia_parentesco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[^\\x00]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato Emergencia Parentesco"
           }
         },
         "type": "object",
@@ -6987,6 +7160,39 @@
               }
             ],
             "title": "Observacoes Cuidado"
+          },
+          "contato_emergencia_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato Emergencia Nome"
+          },
+          "contato_emergencia_telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato Emergencia Telefone"
+          },
+          "contato_emergencia_parentesco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contato Emergencia Parentesco"
           },
           "tem_foto": {
             "type": "boolean",
@@ -7217,6 +7423,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/ParadaDoFilho"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contato_emergencia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContatoEmergencia"
               },
               {
                 "type": "null"

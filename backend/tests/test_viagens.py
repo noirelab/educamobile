@@ -1040,3 +1040,63 @@ def test_limite_de_embarques_fora_da_lista_por_viagem(client, db, mundo, em_anda
     ]
     resultados = [r["resultado"] for r in _eventos(client, mundo, em_andamento, *eventos).json()]
     assert resultados == ["aceito"] * limite + ["rejeitado"]
+
+
+# Volta (escola → casa), operada só pelo motorista
+
+
+def test_volta_completa_sem_monitor(client, db, mundo):
+    """Decisão do grupo: a volta entra e o monitor é opcional. O motorista embarca todos na
+    escola, desembarca cada um na sua parada e conclui sozinho."""
+    m = mundo
+    rota = rota_de_teste(
+        db,
+        "Linha volta",
+        escola_id=m["escola"].id,
+        turno=Turno.MANHA,
+        sentido=Sentido.VOLTA,
+        veiculo_id=m["veiculo"].id,
+        motorista_id=m["motorista"].id,
+    )
+    ok = client.put(
+        f"/rotas/{rota.id}/paradas",
+        json={"parada_ids": [m["na_escola"].id, m["a"].id, m["b"].id]},
+        headers=m["gestor"],
+    )
+    assert ok.status_code == 200, ok.text
+    for estudante, parada in ((m["ana"], m["a"]), (m["beto"], m["b"])):
+        db.add(
+            Inscricao(
+                estudante_id=estudante.id,
+                rota_id=rota.id,
+                parada_id=parada.id,
+                turno=Turno.MANHA,
+                sentido=Sentido.VOLTA,
+                dias_semana=[0, 1, 2, 3, 4, 5, 6],
+                vigencia_inicio=HOJE,
+            )
+        )
+    db.flush()
+    r = client.post("/viagens/gerar", json={"rota_id": rota.id}, headers=m["gestor"])
+    assert r.status_code == 201, r.text
+    viagem = r.json()[0]
+    assert viagem["sentido"] == "volta"
+    assert viagem["monitor_id"] is None
+    assert _iniciar(client, m, viagem).status_code == 200
+
+    lista = client.get(f"/viagens/{viagem['id']}/lista", headers=m["hm"]).json()
+    assert lista["modo"] == "embarque"
+    _eventos(client, m, viagem, _ev("embarque", m["ana"], 1), _ev("embarque", m["beto"], 2))
+    # Sair da escola com as crianças é o normal na volta.
+    v = db.get(Viagem, viagem["id"])
+    verificar_saida_da_cerca(db, v, _ponto(0.0005))
+    assert verificar_saida_da_cerca(db, v, _ponto(0.01)) is None
+
+    _eventos(client, m, viagem, _ev("desembarque", m["ana"], 20))
+    nao_pode = client.post(f"/viagens/{viagem['id']}/concluir", headers=m["hm"])
+    assert nao_pode.status_code == 409
+    _eventos(client, m, viagem, _ev("desembarque", m["beto"], 30), _ev("onibus_vazio", minutos=35))
+    r = client.post(f"/viagens/{viagem['id']}/concluir", headers=m["hm"])
+    assert r.status_code == 200, r.text
+    assert r.json()["viagem"]["status"] == "concluida"
+    assert _status(client, m, viagem) == {"Ana": "desembarcou", "Beto": "desembarcou"}

@@ -15,7 +15,7 @@ from app.cadastros import Db, IdRota, buscar
 from app.config import settings
 from app.models import Estudante, Parada, Perfil, ResponsavelEstudante, Usuario
 from app.routers.estudantes import url_assinada
-from app.schemas.estudantes import FotoUrl
+from app.schemas.estudantes import ContatoEmergencia, FotoUrl
 from app.schemas.responsaveis import (
     Consentimento,
     FilhoDetalhe,
@@ -151,7 +151,66 @@ def meu_filho(estudante_id: IdRota, db: Db, usuario: Responsavel) -> FilhoDetalh
         estudante_id=estudante.id,
         nome=estudante.nome,
         parada=ParadaDoFilho(id=parada.id, nome=parada.nome) if parada else None,
+        contato_emergencia=_contato(estudante),
     )
+
+
+def _contato(estudante: Estudante) -> ContatoEmergencia | None:
+    if estudante.contato_emergencia_nome is None:
+        return None
+    return ContatoEmergencia(
+        nome=estudante.contato_emergencia_nome,
+        telefone=estudante.contato_emergencia_telefone,
+        parentesco=estudante.contato_emergencia_parentesco,
+    )
+
+
+@router.put("/responsavel/filhos/{estudante_id}/contato-emergencia")
+def definir_contato(
+    estudante_id: IdRota, dados: ContatoEmergencia, request: Request, db: Db, usuario: Responsavel
+) -> ContatoEmergencia:
+    """O responsável cadastra ou troca o contato de emergência do filho. Vai para a auditoria
+    (sem o telefone), porque numa disputa de guarda importa saber quem mudou."""
+    garantir_responsavel(db, usuario, estudante_id)
+    estudante = buscar(db, Estudante, estudante_id)
+    estudante.contato_emergencia_nome = dados.nome
+    estudante.contato_emergencia_telefone = dados.telefone
+    estudante.contato_emergencia_parentesco = dados.parentesco
+    auditoria.registrar(
+        db,
+        "estudante.contato_emergencia",
+        request=request,
+        usuario=usuario,
+        recurso="estudante",
+        recurso_id=estudante_id,
+        removido=False,
+    )
+    db.commit()
+    return dados
+
+
+@router.delete(
+    "/responsavel/filhos/{estudante_id}/contato-emergencia",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remover_contato(estudante_id: IdRota, request: Request, db: Db, usuario: Responsavel) -> None:
+    garantir_responsavel(db, usuario, estudante_id)
+    estudante = buscar(db, Estudante, estudante_id)
+    if estudante.contato_emergencia_nome is None:
+        return
+    estudante.contato_emergencia_nome = None
+    estudante.contato_emergencia_telefone = None
+    estudante.contato_emergencia_parentesco = None
+    auditoria.registrar(
+        db,
+        "estudante.contato_emergencia",
+        request=request,
+        usuario=usuario,
+        recurso="estudante",
+        recurso_id=estudante_id,
+        removido=True,
+    )
+    db.commit()
 
 
 @router.get("/responsavel/filhos/{estudante_id}/foto-url")

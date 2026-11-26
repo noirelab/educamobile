@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.cadastros import IdBanco, Texto
+from app.schemas.estudantes import ContatoEmergencia
 
 
 class VinculoCriar(BaseModel):
@@ -46,3 +47,4 @@ class FilhoDetalhe(BaseModel):
     estudante_id: int
     nome: str
     parada: ParadaDoFilho | None
+    contato_emergencia: ContatoEmergencia | None = None

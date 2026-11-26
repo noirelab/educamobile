@@ -322,6 +322,7 @@ def test_responsavel_so_ve_o_filho_depois_do_consentimento(client, cabecalhos, f
         "estudante_id": filho_id,
         "nome": "Bia",
         "parada": {"id": familia["parada"].id, "nome": "Parada da Praça"},
+        "contato_emergencia": None,
     }
 
 
