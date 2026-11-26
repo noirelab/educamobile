@@ -1,7 +1,8 @@
 """Regras de alerta que dependem do tempo passar, executadas pelo worker.
 
 R6 viagem não iniciada, R7 sem sinal, R8 desvio de rota, R9 parada não prevista, R10 velocidade
-e a regra crítica de criança possivelmente esquecida a bordo.
+e as regras críticas de criança possivelmente esquecida a bordo e de criança que desceu na escola
+sem a escola confirmar o recebimento.
 Os limites vêm da tabela `configuracao`. Cada regra abre no máximo um alerta aberto por viagem.
 """
 
@@ -10,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import redis
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app import notificacoes, tempo_real
@@ -18,11 +19,15 @@ from app.config import settings
 from app.models import (
     Alerta,
     Configuracao,
+    Escola,
     Estudante,
+    EventoViagem,
     RotaParada,
+    Sentido,
     Severidade,
     StatusAluno,
     StatusViagem,
+    TipoEvento,
     Viagem,
     ViagemAluno,
 )
@@ -38,8 +43,10 @@ PADRAO = {
     "parado_raio_m": 30,
     "velocidade_max_kmh": 80,
     "atraso_aviso_min": 10,
-    "emergencia_avisa_responsaveis": 0,
+    # Decisão do grupo: a emergência avisa os responsáveis (0 deixa só a gestão).
+    "emergencia_avisa_responsaveis": 1,
     "crianca_a_bordo_min": 15,
+    "recebimento_escola_min": 15,
 }
 
 
@@ -55,6 +62,7 @@ FAIXAS: dict[str, tuple[float, float]] = {
     "atraso_aviso_min": (1, 120),
     "emergencia_avisa_responsaveis": (0, 1),
     "crianca_a_bordo_min": (5, 60),
+    "recebimento_escola_min": (5, 120),
     "retencao_posicoes_dias": (7, 3650),
     "retencao_dados_dias": (7, 3650),
     "retencao_auditoria_dias": (7, 3650),
@@ -361,6 +369,85 @@ def crianca_a_bordo(db: Session, agora: datetime, lim: dict) -> list[Alerta]:
     return criados
 
 
+# Criança que desceu na escola sem a escola confirmar o recebimento (crítico)
+
+TIPO_NAO_RECEBIDO = "crianca_nao_recebida_pela_escola"
+
+
+def pendentes_de_recebimento(db: Session, viagem_id: int) -> list[tuple[int, datetime]]:
+    """(estudante, hora em que o servidor recebeu o desembarque) de quem desceu na escola e
+    ainda não teve o recebimento confirmado. A hora do servidor, e não a do aparelho: um
+    desembarque que chega atrasado do modo offline não pode disparar o alerta na hora."""
+    desceu_em = (
+        select(EventoViagem.estudante_id, func.max(EventoViagem.recebido_em).label("em"))
+        .where(EventoViagem.viagem_id == viagem_id, EventoViagem.tipo == TipoEvento.DESEMBARQUE)
+        .group_by(EventoViagem.estudante_id)
+        .subquery()
+    )
+    return [
+        (estudante_id, em)
+        for estudante_id, em in db.execute(
+            select(ViagemAluno.estudante_id, desceu_em.c.em)
+            .join(desceu_em, desceu_em.c.estudante_id == ViagemAluno.estudante_id)
+            .where(
+                ViagemAluno.viagem_id == viagem_id,
+                ViagemAluno.status == StatusAluno.DESEMBARCOU,
+                ViagemAluno.recebido_em.is_(None),
+            )
+        )
+    ]
+
+
+def nao_recebido_pela_escola(db: Session, agora: datetime, lim: dict) -> list[Alerta]:
+    """Na ida, a criança desceu na escola e ninguém da escola confirmou que a recebeu dentro do
+    prazo. Vale também com a viagem já concluída: o motorista vai embora e a criança pode não
+    ter entrado. Resolve sozinho quando a escola confirma todas."""
+    prazo = timedelta(minutes=lim["recebimento_escola_min"])
+    hoje = agora.astimezone(ZoneInfo(settings.fuso_horario)).date()
+    viagens = db.scalars(
+        select(Viagem)
+        .join(Escola, Escola.id == Viagem.escola_id)
+        .where(
+            Viagem.sentido == Sentido.IDA,
+            Viagem.data == hoje,
+            Viagem.status.in_([StatusViagem.EM_ANDAMENTO, StatusViagem.CONCLUIDA]),
+            Escola.confirma_recebimento.is_(True),
+        )
+    )
+    criados = []
+    for viagem in viagens:
+        pendentes = pendentes_de_recebimento(db, viagem.id)
+        atrasados = [e for e, em in pendentes if agora - em > prazo]
+        aberto = _aberto(db, viagem.id, TIPO_NAO_RECEBIDO)
+        if not pendentes and aberto is not None:
+            _resolver_sozinho(db, aberto, agora)
+            continue
+        if not atrasados:
+            continue
+        alerta = _abrir(
+            db,
+            viagem,
+            TIPO_NAO_RECEBIDO,
+            Severidade.CRITICO,
+            f"{len(atrasados)} criança(s) desceram na escola há mais de "
+            f"{int(lim['recebimento_escola_min'])} min e a escola não confirmou o recebimento",
+            {"estudante_ids": atrasados, "limite_min": lim["recebimento_escola_min"]},
+        )
+        if alerta:
+            # A gestão já recebe o push do alerta crítico; a escola é quem pode ir conferir.
+            notificacoes.para_equipe_da_escola(
+                db,
+                viagem.escola_id,
+                "confirmar_recebimento",
+                "Confirme o recebimento",
+                f"{len(atrasados)} criança(s) desceram do ônibus e o recebimento ainda não foi "
+                "confirmado. Confira e confirme no app.",
+                viagem_id=viagem.id,
+            )
+            criados.append(alerta)
+    return criados
+
+
 # Aviso de atraso aos responsáveis
 
 
@@ -417,6 +504,7 @@ def avisar_atraso(db: Session, agora: datetime, lim: dict) -> int:
 # A crítica vem primeiro: uma falha nas outras não pode atrasá-la.
 REGRAS = (
     crianca_a_bordo,
+    nao_recebido_pela_escola,
     viagem_nao_iniciada,
     sem_sinal,
     desvio_de_rota,

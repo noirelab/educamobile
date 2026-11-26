@@ -3515,6 +3515,97 @@
         }
       }
     },
+    "/escola/chegadas": {
+      "get": {
+        "tags": [
+          "recebimento na escola"
+        ],
+        "summary": "Chegadas",
+        "description": "As viagens de ida de hoje da escola, com quem está a caminho, quem desceu e quem já foi\nrecebido. Quem não embarcou não aparece.",
+        "operationId": "chegadas_escola_chegadas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChegadaDaViagem"
+                  },
+                  "type": "array",
+                  "title": "Response Chegadas Escola Chegadas Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/viagens/{viagem_id}/recebimentos": {
+      "post": {
+        "tags": [
+          "recebimento na escola"
+        ],
+        "summary": "Confirmar",
+        "description": "Confirma as crianças que a escola recebeu. Repetir não muda nada (idempotente).",
+        "operationId": "confirmar_viagens__viagem_id__recebimentos_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "viagem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Viagem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Recebimento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecebimentoResultado"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auditoria": {
       "get": {
         "tags": [
@@ -6138,6 +6229,61 @@
         ],
         "title": "AlertaLer"
       },
+      "AlunoChegando": {
+        "properties": {
+          "estudante_id": {
+            "type": "integer",
+            "title": "Estudante Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "situacao": {
+            "type": "string",
+            "enum": [
+              "a_caminho",
+              "aguardando",
+              "recebido"
+            ],
+            "title": "Situacao"
+          },
+          "desembarcou_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desembarcou Em"
+          },
+          "recebido_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recebido Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_id",
+          "nome",
+          "situacao",
+          "desembarcou_em",
+          "recebido_em"
+        ],
+        "title": "AlunoChegando",
+        "description": "Só o nome: a equipe da escola não precisa de foto, saúde nem parada para conferir."
+      },
       "AusenciaCriar": {
         "properties": {
           "estudante_id": {
@@ -6309,6 +6455,49 @@
           "responsaveis_avisados"
         ],
         "title": "CancelamentoResultado"
+      },
+      "ChegadaDaViagem": {
+        "properties": {
+          "viagem_id": {
+            "type": "integer",
+            "title": "Viagem Id"
+          },
+          "rota": {
+            "type": "string",
+            "title": "Rota"
+          },
+          "placa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placa"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "alunos": {
+            "items": {
+              "$ref": "#/components/schemas/AlunoChegando"
+            },
+            "type": "array",
+            "title": "Alunos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "viagem_id",
+          "rota",
+          "placa",
+          "status",
+          "alunos"
+        ],
+        "title": "ChegadaDaViagem"
       },
       "ConclusaoResultado": {
         "properties": {
@@ -6809,6 +6998,17 @@
             "minimum": 20.0,
             "title": "Raio Cerca M",
             "default": 150
+          },
+          "confirma_recebimento": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirma Recebimento"
           }
         },
         "type": "object",
@@ -6856,6 +7056,10 @@
           "raio_cerca_m": {
             "type": "integer",
             "title": "Raio Cerca M"
+          },
+          "confirma_recebimento": {
+            "type": "boolean",
+            "title": "Confirma Recebimento"
           }
         },
         "type": "object",
@@ -6865,7 +7069,8 @@
           "codigo_inep",
           "endereco",
           "localizacao",
-          "raio_cerca_m"
+          "raio_cerca_m",
+          "confirma_recebimento"
         ],
         "title": "EscolaLer"
       },
@@ -8477,7 +8682,8 @@
           "gestor",
           "motorista",
           "monitor",
-          "responsavel"
+          "responsavel",
+          "escola"
         ],
         "title": "Perfil"
       },
@@ -8727,6 +8933,44 @@
           "previsao"
         ],
         "title": "ProximaParada"
+      },
+      "Recebimento": {
+        "properties": {
+          "estudante_ids": {
+            "items": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Estudante Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estudante_ids"
+        ],
+        "title": "Recebimento"
+      },
+      "RecebimentoResultado": {
+        "properties": {
+          "recebidos": {
+            "type": "integer",
+            "title": "Recebidos"
+          },
+          "ja_recebidos": {
+            "type": "integer",
+            "title": "Ja Recebidos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recebidos",
+          "ja_recebidos"
+        ],
+        "title": "RecebimentoResultado"
       },
       "RefreshTokenEntrada": {
         "properties": {
@@ -9457,6 +9701,19 @@
           },
           "perfil": {
             "$ref": "#/components/schemas/Perfil"
+          },
+          "escola_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escola Id"
           }
         },
         "type": "object",
@@ -9489,6 +9746,17 @@
           "ativo": {
             "type": "boolean",
             "title": "Ativo"
+          },
+          "escola_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escola Id"
           }
         },
         "type": "object",

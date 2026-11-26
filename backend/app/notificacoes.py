@@ -108,6 +108,28 @@ def para_gestores(
     return len(ids)
 
 
+def para_equipe_da_escola(
+    db: Session,
+    escola_id: int,
+    tipo: str,
+    titulo: str,
+    mensagem: str,
+    *,
+    viagem_id: int | None = None,
+) -> int:
+    """Avisa a equipe ativa de uma escola (perfil escola)."""
+    ids = db.scalars(
+        select(Usuario.id).where(
+            Usuario.perfil == Perfil.ESCOLA,
+            Usuario.escola_id == escola_id,
+            Usuario.ativo.is_(True),
+        )
+    ).all()
+    for usuario_id in ids:
+        criar(db, usuario_id, tipo, titulo, mensagem, viagem_id=viagem_id)
+    return len(ids)
+
+
 # Envio
 
 

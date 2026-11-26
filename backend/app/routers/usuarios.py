@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import auditoria, sessoes
 from app.cadastros import Db, Deslocamento, IdRota, Limite, buscar
-from app.models import Convite, Estudante, Perfil, Usuario
+from app.models import Convite, Escola, Estudante, Perfil, Usuario
 from app.schemas.usuarios import (
     ConviteCriar,
     ConviteLer,
@@ -30,7 +30,9 @@ router = APIRouter(tags=["usuários"])
 Gestao = Annotated[Usuario, exigir_perfil(Perfil.ADMIN, Perfil.GESTOR)]
 VALIDADE_CONVITE = timedelta(hours=72)
 # Perfis que o gestor pode criar e gerir.
-GERIDOS_PELO_GESTOR = frozenset({Perfil.MOTORISTA, Perfil.MONITOR, Perfil.RESPONSAVEL})
+GERIDOS_PELO_GESTOR = frozenset(
+    {Perfil.MOTORISTA, Perfil.MONITOR, Perfil.RESPONSAVEL, Perfil.ESCOLA}
+)
 
 
 def _pode_gerir(ator: Usuario, perfil: Perfil) -> bool:
@@ -86,11 +88,14 @@ def listar(
 def criar(dados: UsuarioCriar, request: Request, db: Db, ator: Gestao) -> UsuarioLer:
     if not _pode_gerir(ator, dados.perfil):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Só o administrador cria esse perfil")
+    if dados.escola_id is not None and db.get(Escola, dados.escola_id) is None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Escola inexistente")
     usuario = Usuario(
         nome=dados.nome,
         email=dados.email.lower(),
         senha_hash=gerar_hash(dados.senha),
         perfil=dados.perfil,
+        escola_id=dados.escola_id,
     )
     db.add(usuario)
     try:

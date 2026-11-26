@@ -8,7 +8,9 @@ from app.models import Perfil
 from app.schemas.auth import Senha, UsuarioLer
 
 # Responsável nunca é criado direto: entra por convite, com o vínculo já definido.
-PERFIS_CRIAVEIS = frozenset({Perfil.ADMIN, Perfil.GESTOR, Perfil.MOTORISTA, Perfil.MONITOR})
+PERFIS_CRIAVEIS = frozenset(
+    {Perfil.ADMIN, Perfil.GESTOR, Perfil.MOTORISTA, Perfil.MONITOR, Perfil.ESCOLA}
+)
 
 
 class UsuarioCriar(BaseModel):
@@ -16,11 +18,15 @@ class UsuarioCriar(BaseModel):
     email: EmailStr
     senha: str = Senha
     perfil: Perfil
+    # Obrigatória para o perfil escola (a escola em que a pessoa trabalha); proibida nos outros.
+    escola_id: IdBanco | None = None
 
     @model_validator(mode="after")
     def perfil_criavel(self) -> Self:
         if self.perfil not in PERFIS_CRIAVEIS:
             raise ValueError("Responsável entra por convite (POST /convites)")
+        if (self.perfil == Perfil.ESCOLA) != (self.escola_id is not None):
+            raise ValueError("Informe escola_id para o perfil escola, e só para ele")
         return self
 
 

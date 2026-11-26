@@ -38,6 +38,7 @@ class UsuarioLer(BaseModel):
     email: EmailStr
     perfil: Perfil
     ativo: bool
+    escola_id: int | None = None
 
 
 class SessaoLer(BaseModel):

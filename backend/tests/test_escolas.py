@@ -79,3 +79,14 @@ def test_perfis(client, cabecalhos, criar_escola):
         assert client.post("/escolas", json=DADOS, headers=h).status_code == 403
         assert client.put(url, json=DADOS, headers=h).status_code == 403
         assert client.delete(url, headers=h).status_code == 403
+
+
+def test_confirmacao_de_recebimento_liga_por_padrao_e_o_formulario_nao_religa(client, cabecalhos):
+    h = cabecalhos()
+    criada = client.post("/escolas", json=DADOS, headers=h).json()
+    assert criada["confirma_recebimento"] is True
+    url = f"/escolas/{criada['id']}"
+    desligada = client.put(url, json={**DADOS, "confirma_recebimento": False}, headers=h).json()
+    assert desligada["confirma_recebimento"] is False
+    # Formulário sem o campo: fica como está.
+    assert client.put(url, json=DADOS, headers=h).json()["confirma_recebimento"] is False

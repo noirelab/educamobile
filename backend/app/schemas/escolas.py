@@ -12,6 +12,8 @@ class EscolaCriar(BaseModel):
     endereco: Texto | None = None
     localizacao: Coordenadas
     raio_cerca_m: int = Field(default=150, ge=20, le=2000)
+    # Omitido: liga ao criar e fica como está ao editar.
+    confirma_recebimento: bool | None = None
 
 
 class EscolaLer(BaseModel):
@@ -23,3 +25,4 @@ class EscolaLer(BaseModel):
     endereco: str | None
     localizacao: LocalizacaoLida
     raio_cerca_m: int
+    confirma_recebimento: bool

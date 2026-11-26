@@ -30,6 +30,8 @@ class Perfil(enum.StrEnum):
     MOTORISTA = "motorista"
     MONITOR = "monitor"
     RESPONSAVEL = "responsavel"
+    # Equipe da escola: só confirma o recebimento das crianças que chegam na ida.
+    ESCOLA = "escola"
 
 
 # Perfis da equipe da secretaria. Os demais só acessam o que for liberado por vínculo.
@@ -96,6 +98,9 @@ class Escola(Base):
     localizacao = mapped_column(Geometry("POINT", srid=SRID), nullable=False)
     # Raio da cerca virtual da escola: chegar dentro dele conta como chegada.
     raio_cerca_m: Mapped[int] = mapped_column(default=150, server_default=text("150"))
+    # A equipe da escola confirma que recebeu cada criança da ida. Desligado, a regra de alerta
+    # de recebimento não vale para esta escola.
+    confirma_recebimento: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
 
 
 class Parada(Base):
@@ -262,12 +267,21 @@ class Ausencia(Base):
 
 class Usuario(Base):
     __tablename__ = "usuario"
+    __table_args__ = (
+        # Equipe da escola sempre presa a uma escola; os outros perfis, a nenhuma.
+        CheckConstraint(
+            "(perfil = 'escola') = (escola_id IS NOT NULL)", name="ck_usuario_escola_do_perfil"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True)
     senha_hash: Mapped[str]
     perfil: Mapped[Perfil] = mapped_column(_enum(Perfil, "perfil"))
+    escola_id: Mapped[int | None] = mapped_column(
+        ForeignKey("escola.id", ondelete="RESTRICT"), index=True
+    )
     ativo: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
     # Tokens de acesso emitidos antes deste instante deixam de valer (troca de senha, logout geral).
     sessoes_validas_desde: Mapped[datetime] = mapped_column(
@@ -433,6 +447,11 @@ class ViagemAluno(Base):
     fora_da_lista: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
     # Ausência avisada pelo responsável depois do início da viagem (regra R12).
     ausencia_avisada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Confirmação da equipe da escola de que recebeu a criança (só na ida).
+    recebido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recebido_por_id: Mapped[int | None] = mapped_column(
+        ForeignKey("usuario.id", ondelete="RESTRICT")
+    )
 
 
 class EventoViagem(Base):

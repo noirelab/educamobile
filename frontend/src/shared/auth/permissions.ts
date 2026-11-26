@@ -1,6 +1,8 @@
 // Perfis da API. Só admin e gestor usam o painel; motorista, monitor e responsável
 // acessam o que um vínculo libera (viagem escalada, filho) e não veem telas de cadastro.
-export type Role = 'admin' | 'gestor' | 'motorista' | 'monitor' | 'responsavel'
+// Novo na reformulação: 'escola' (equipe da escola). Só usa GET /escola/chegadas e
+// POST /viagens/{id}/recebimentos, para confirmar que recebeu as crianças da ida; não usa o painel.
+export type Role = 'admin' | 'gestor' | 'motorista' | 'monitor' | 'responsavel' | 'escola'
 
 export type Resource = 'dashboard' | 'schools' | 'students' | 'stops' | 'routes' | 'users'
 
@@ -31,6 +33,7 @@ const matrix: Record<Role, Record<Resource, Access>> = {
   motorista: NONE,
   monitor: NONE,
   responsavel: NONE,
+  escola: NONE,
 }
 
 export function access(role: Role, resource: Resource): Access {
