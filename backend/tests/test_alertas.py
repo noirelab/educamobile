@@ -23,6 +23,7 @@ from app.models import (
     Turno,
     Veiculo,
     Viagem,
+    ViagemAluno,
 )
 from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
@@ -439,9 +440,8 @@ def test_emergencia_so_a_equipe_escalada_e_com_viagem_em_andamento(
     assert client.post(url, json={}).status_code == 401
 
 
-def test_emergencia_avisa_responsaveis_so_se_a_opcao_estiver_ligada(
-    client, db, mundo, criar_usuario
-):
+def test_emergencia_avisa_os_responsaveis_e_pode_ser_desligada(client, db, mundo, criar_usuario):
+    """Decisão do grupo: por padrão a emergência avisa as famílias. A gestão pode desligar."""
     mae = criar_usuario(Perfil.RESPONSAVEL)
     db.add(
         ResponsavelEstudante(
@@ -456,26 +456,42 @@ def test_emergencia_avisa_responsaveis_so_se_a_opcao_estiver_ligada(
     _iniciar(client, mundo)
     url = f"/viagens/{mundo['viagem']['id']}/emergencia"
     r = client.post(url, json={}, headers=mundo["hm"]).json()
-    assert r["responsaveis_avisados"] == 0
-    assert not db.scalars(
-        select(Notificacao).where(
-            Notificacao.usuario_id == mae.id, Notificacao.tipo == "ocorrencia"
-        )
-    ).all()
-
-    # O grupo decide ligar: um novo alerta (o anterior é resolvido) avisa as famílias.
-    client.post(f"/alertas/{r['alerta_id']}/resolver", headers=mundo["gestor"])
-    db.get(Configuracao, "emergencia_avisa_responsaveis").valor = 1
-    db.flush()
-    r2 = client.post(url, json={}, headers=mundo["hm"]).json()
-    assert r2["responsaveis_avisados"] == 1
+    assert r["responsaveis_avisados"] == 1
     aviso = db.scalar(
         select(Notificacao).where(
             Notificacao.usuario_id == mae.id, Notificacao.tipo == "ocorrencia"
         )
     )
+    # Ana ainda espera o ônibus: o aviso fala do atraso. E nunca cita o nome da criança.
+    assert "sua parada" in aviso.mensagem
     assert "Ana" not in aviso.mensagem
     assert "Souza" not in aviso.mensagem
+
+    client.post(f"/alertas/{r['alerta_id']}/resolver", headers=mundo["gestor"])
+    db.get(Configuracao, "emergencia_avisa_responsaveis").valor = 0
+    db.flush()
+    r2 = client.post(url, json={}, headers=mundo["hm"]).json()
+    assert r2["responsaveis_avisados"] == 0
+
+
+def test_emergencia_nao_avisa_quem_ja_desceu_ou_nao_vai(client, db, mundo, criar_usuario):
+    mae = criar_usuario(Perfil.RESPONSAVEL)
+    db.add(
+        ResponsavelEstudante(
+            responsavel_id=mae.id,
+            estudante_id=mundo["ana"].id,
+            parentesco="mãe",
+            consentimento_em=datetime.now(UTC),
+            consentimento_versao=settings.versao_termo_consentimento,
+        )
+    )
+    db.flush()
+    _iniciar(client, mundo)
+    aluno = db.get(ViagemAluno, (mundo["viagem"]["id"], mundo["ana"].id))
+    aluno.ausencia_avisada_em = datetime.now(UTC)
+    db.flush()
+    url = f"/viagens/{mundo['viagem']['id']}/emergencia"
+    assert client.post(url, json={}, headers=mundo["hm"]).json()["responsaveis_avisados"] == 0
 
 
 # Atraso aos responsáveis

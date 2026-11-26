@@ -32,6 +32,7 @@ const expected: Record<Role, Record<Resource, Access>> = {
   motorista: NONE,
   monitor: NONE,
   responsavel: NONE,
+  escola: NONE,
 }
 
 const cases = (Object.keys(expected) as Role[]).flatMap((role) =>
@@ -39,8 +40,8 @@ const cases = (Object.keys(expected) as Role[]).flatMap((role) =>
 )
 
 describe('permissions matrix', () => {
-  it('covers all 30 role x resource pairs', () => {
-    expect(cases).toHaveLength(30)
+  it('covers all 36 role x resource pairs', () => {
+    expect(cases).toHaveLength(36)
   })
 
   it.each(cases)('%s on %s grants %s', (role, resource, level) => {

@@ -863,6 +863,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/escola/chegadas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Chegadas
+         * @description As viagens de ida de hoje da escola, com quem está a caminho, quem desceu e quem já foi
+         *     recebido. Quem não embarcou não aparece.
+         */
+        get: operations["chegadas_escola_chegadas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/viagens/{viagem_id}/recebimentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirmar
+         * @description Confirma as crianças que a escola recebeu. Repetir não muda nada (idempotente).
+         */
+        post: operations["confirmar_viagens__viagem_id__recebimentos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auditoria": {
         parameters: {
             query?: never;
@@ -1439,6 +1480,25 @@ export interface components {
             /** Situacao */
             readonly situacao: string;
         };
+        /**
+         * AlunoChegando
+         * @description Só o nome: a equipe da escola não precisa de foto, saúde nem parada para conferir.
+         */
+        AlunoChegando: {
+            /** Estudante Id */
+            estudante_id: number;
+            /** Nome */
+            nome: string;
+            /**
+             * Situacao
+             * @enum {string}
+             */
+            situacao: "a_caminho" | "aguardando" | "recebido";
+            /** Desembarcou Em */
+            desembarcou_em: string | null;
+            /** Recebido Em */
+            recebido_em: string | null;
+        };
         /** AusenciaCriar */
         AusenciaCriar: {
             /** Estudante Id */
@@ -1502,6 +1562,19 @@ export interface components {
             viagem: components["schemas"]["ViagemLer"];
             /** Responsaveis Avisados */
             responsaveis_avisados: number;
+        };
+        /** ChegadaDaViagem */
+        ChegadaDaViagem: {
+            /** Viagem Id */
+            viagem_id: number;
+            /** Rota */
+            rota: string;
+            /** Placa */
+            placa: string | null;
+            /** Status */
+            status: string;
+            /** Alunos */
+            alunos: components["schemas"]["AlunoChegando"][];
         };
         /** ConclusaoResultado */
         ConclusaoResultado: {
@@ -1697,6 +1770,8 @@ export interface components {
              * @default 150
              */
             raio_cerca_m: number;
+            /** Confirma Recebimento */
+            confirma_recebimento?: boolean | null;
         };
         /** EscolaLer */
         EscolaLer: {
@@ -1711,6 +1786,8 @@ export interface components {
             localizacao: components["schemas"]["Coordenadas"];
             /** Raio Cerca M */
             raio_cerca_m: number;
+            /** Confirma Recebimento */
+            confirma_recebimento: boolean;
         };
         /** EstadoAoVivo */
         EstadoAoVivo: {
@@ -2252,7 +2329,7 @@ export interface components {
          * Perfil
          * @enum {string}
          */
-        Perfil: "admin" | "gestor" | "motorista" | "monitor" | "responsavel";
+        Perfil: "admin" | "gestor" | "motorista" | "monitor" | "responsavel" | "escola";
         /** PontoDoPercurso */
         PontoDoPercurso: {
             /**
@@ -2333,6 +2410,18 @@ export interface components {
             /** Horario Previsto */
             horario_previsto: string | null;
             previsao: components["schemas"]["Previsao"] | null;
+        };
+        /** Recebimento */
+        Recebimento: {
+            /** Estudante Ids */
+            estudante_ids: number[];
+        };
+        /** RecebimentoResultado */
+        RecebimentoResultado: {
+            /** Recebidos */
+            recebidos: number;
+            /** Ja Recebidos */
+            ja_recebidos: number;
         };
         /** RefreshTokenEntrada */
         RefreshTokenEntrada: {
@@ -2589,6 +2678,8 @@ export interface components {
             /** Senha */
             senha: string;
             perfil: components["schemas"]["Perfil"];
+            /** Escola Id */
+            escola_id?: number | null;
         };
         /** UsuarioLer */
         UsuarioLer: {
@@ -2604,6 +2695,8 @@ export interface components {
             perfil: components["schemas"]["Perfil"];
             /** Ativo */
             ativo: boolean;
+            /** Escola Id */
+            escola_id?: number | null;
         };
         /** UsuariosPagina */
         UsuariosPagina: {
@@ -4820,6 +4913,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ItemDaFrota"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chegadas_escola_chegadas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChegadaDaViagem"][];
+                };
+            };
+        };
+    };
+    confirmar_viagens__viagem_id__recebimentos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viagem_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Recebimento"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecebimentoResultado"];
                 };
             };
             /** @description Validation Error */

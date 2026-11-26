@@ -13,7 +13,7 @@ from app import auditoria
 from app.config import Settings, settings
 from app.geo import Coordenadas, para_ponto
 from app.main import app, criar_app
-from app.models import Auditoria, Parada, Perfil, Sessao
+from app.models import Auditoria, Parada, Perfil, Sessao, Usuario
 from app.security import ALGORITMO, criar_token
 from tests.conftest import corpo_de_rota, estudante_de_teste
 
@@ -203,10 +203,29 @@ def _rotas_da_api():
             yield metodo.upper(), caminho
 
 
-@pytest.mark.parametrize("perfil", [Perfil.RESPONSAVEL, Perfil.MOTORISTA, Perfil.MONITOR])
-def test_perfis_externos_barrados_em_todas_as_rotas_de_cadastro(client, cabecalhos, perfil):
-    h = cabecalhos(perfil)
+@pytest.mark.parametrize(
+    "perfil", [Perfil.RESPONSAVEL, Perfil.MOTORISTA, Perfil.MONITOR, Perfil.ESCOLA]
+)
+def test_perfis_externos_barrados_em_todas_as_rotas_de_cadastro(
+    client, db, cabecalhos, criar_escola, perfil
+):
+    if perfil == Perfil.ESCOLA:
+        equipe = Usuario(
+            nome="Secretaria",
+            email="secretaria@escola.exemplo.com",
+            senha_hash="x",
+            perfil=Perfil.ESCOLA,
+            escola_id=criar_escola().id,
+        )
+        db.add(equipe)
+        db.flush()
+        h = {"Authorization": f"Bearer {criar_token(equipe)}"}
+    else:
+        h = cabecalhos(perfil)
     liberadas = set(_ROTAS_DE_CONTA)
+    if perfil == Perfil.ESCOLA:
+        # Viagem de outra escola some (404), como para a equipe do ônibus.
+        liberadas |= {("GET", "/escola/chegadas"), ("POST", "/viagens/{viagem_id}/recebimentos")}
     if perfil == Perfil.RESPONSAVEL:
         liberadas |= {
             (m, p)

@@ -30,7 +30,9 @@ def obter(escola_id: IdRota, db: Db, _: UsuarioInterno) -> EscolaLer:
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[exigir_perfil(Perfil.ADMIN)])
 def criar(dados: EscolaCriar, db: Db) -> EscolaLer:
     escola = Escola(
-        **dados.model_dump(exclude={"localizacao"}), localizacao=para_ponto(dados.localizacao)
+        **dados.model_dump(exclude={"localizacao", "confirma_recebimento"}),
+        localizacao=para_ponto(dados.localizacao),
+        confirma_recebimento=dados.confirma_recebimento is not False,
     )
     db.add(escola)
     salvar(db, CONFLITO)
@@ -40,7 +42,12 @@ def criar(dados: EscolaCriar, db: Db) -> EscolaLer:
 @router.put("/{escola_id}", dependencies=[exigir_perfil(Perfil.ADMIN)])
 def atualizar(escola_id: IdRota, dados: EscolaCriar, db: Db) -> EscolaLer:
     escola = buscar(db, Escola, escola_id)
-    for campo, valor in dados.model_dump(exclude={"localizacao"}).items():
+    # Novo na reformulação: `confirma_recebimento` omitido fica como está, para o formulário que
+    # ainda não tem o campo não religar a confirmação de uma escola que a desligou.
+    ignorar = {"localizacao"} | (
+        {"confirma_recebimento"} if dados.confirma_recebimento is None else set()
+    )
+    for campo, valor in dados.model_dump(exclude=ignorar).items():
         setattr(escola, campo, valor)
     escola.localizacao = para_ponto(dados.localizacao)
     salvar(db, CONFLITO)

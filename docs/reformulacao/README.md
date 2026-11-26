@@ -75,8 +75,8 @@ Os pontos em aberto do relatório (seção 11, issue #25):
 | Pais sem smartphone | Contato de emergência opcional por criança (nome, telefone e parentesco), para a gestão ligar. Só a gestão grava, quando o responsável cadastrado pede a troca; o responsável vê pelo app, mas não altera. Equipe da viagem não vê. |
 | Validação do responsável | Como está: o gestor convida, e o convite é de uso único e com prazo. |
 | Confirmação do embarque, app nativo, celular do motorista, prazo de guarda | Seguem a recomendação do relatório: toque na lista, app nativo, celular com a API do rastreador pronta, 90 dias para posições. |
-
-Ainda sem decisão: se a emergência avisa os pais (`emergencia_avisa_responsaveis`, hoje desligado) e se a escola confirma o recebimento do aluno.
+| Emergência avisa os pais | Sim. Avisa as famílias de quem está a bordo ou ainda espera o ônibus; quem já desceu, não embarcou ou avisou ausência não recebe. O texto não cita o nome da criança. A gestão pode desligar em `emergencia_avisa_responsaveis`. |
+| Escola confirma o recebimento | Sim, na ida. Um perfil novo, `escola`, preso a uma escola, vê as chegadas do dia e confirma quem recebeu; a família é avisada. Criança que desceu e não foi confirmada em 15 min (`recebimento_escola_min`) vira alerta crítico para a gestão e aviso para a escola. Cada escola pode desligar (`confirma_recebimento`). A confirmação não substitui o toque de desembarque do motorista. |
 
 ## O que esta branch já prepara
 

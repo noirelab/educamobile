@@ -26,6 +26,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   motorista: 'Motorista',
   monitor: 'Monitor',
   responsavel: 'Responsável',
+  escola: 'Equipe da escola',
 }
 
 export function visibleNav(role: Role): typeof NAV_ITEMS {

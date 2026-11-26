@@ -15,6 +15,7 @@ from app.models import (
     Notificacao,
     Perfil,
     Severidade,
+    StatusAluno,
     StatusViagem,
     Usuario,
     Veiculo,
@@ -214,20 +215,39 @@ def emergencia(
     )
 
 
+_AVISO_A_BORDO = (
+    "Houve uma ocorrência com o ônibus e a gestão do transporte já foi acionada. "
+    "Você será avisado assim que houver novidades."
+)
+_AVISO_ESPERANDO = (
+    "Houve uma ocorrência com o ônibus que ainda vai passar na sua parada, e ele pode atrasar. "
+    "A gestão do transporte já foi acionada."
+)
+
+
 def _avisar_responsaveis(db: Db, viagem_id: int) -> int:
+    """Só as famílias de quem está a bordo ou ainda espera o ônibus. Quem já desceu, não
+    embarcou ou teve a ausência avisada não tem por que receber o alarme. O texto não cita o
+    nome da criança, que apareceria na tela bloqueada do celular."""
     from app.models import ViagemAluno
 
     total = 0
-    for estudante_id in db.scalars(
-        select(ViagemAluno.estudante_id).where(ViagemAluno.viagem_id == viagem_id)
+    for estudante_id, situacao in db.execute(
+        select(ViagemAluno.estudante_id, ViagemAluno.status).where(
+            ViagemAluno.viagem_id == viagem_id,
+            (ViagemAluno.status == StatusAluno.EMBARCOU)
+            | (
+                (ViagemAluno.status == StatusAluno.AGUARDANDO)
+                & ViagemAluno.ausencia_avisada_em.is_(None)
+            ),
+        )
     ):
         total += notificacoes.para_responsaveis(
             db,
             estudante_id,
             "ocorrencia",
             "Ocorrência com o ônibus",
-            "Houve uma ocorrência com o ônibus e a gestão do transporte já foi acionada. "
-            "Você será avisado assim que houver novidades.",
+            _AVISO_A_BORDO if situacao == StatusAluno.EMBARCOU else _AVISO_ESPERANDO,
             viagem_id=viagem_id,
         )
     return total
