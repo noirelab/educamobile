@@ -70,7 +70,9 @@ def atualizar(
     estudante_id: IdRota, dados: EstudanteCriar, request: Request, db: Db, gestor: Editor
 ) -> EstudanteLer:
     estudante = buscar(db, Estudante, estudante_id)
-    # O contato de emergência só muda quando vem no corpo (com os três campos, como um bloco).
+    # Novo na reformulação: contato de emergência. Só a gestão grava, a pedido do responsável
+    # cadastrado. Ele só muda quando vem no corpo (os três campos, como um bloco); omitido, fica
+    # como está, para o formulário que ainda não tem os campos não apagar o contato.
     mexe_no_contato = bool(dados.model_fields_set & set(CAMPOS_CONTATO))
     for campo, valor in dados.model_dump().items():
         if campo in CAMPOS_CONTATO and not mexe_no_contato:

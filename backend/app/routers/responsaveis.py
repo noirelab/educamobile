@@ -156,6 +156,9 @@ def meu_filho(estudante_id: IdRota, db: Db, usuario: Responsavel) -> FilhoDetalh
 
 
 def _contato(estudante: Estudante) -> ContatoEmergencia | None:
+    """Novo na reformulação. O responsável só lê o contato de emergência: para trocar, ele pede
+    à gestão, que confere quem está pedindo e grava pelo cadastro do aluno (`PUT /estudantes`).
+    Assim um responsável não troca o contato que outro informou."""
     if estudante.contato_emergencia_nome is None:
         return None
     return ContatoEmergencia(
@@ -163,54 +166,6 @@ def _contato(estudante: Estudante) -> ContatoEmergencia | None:
         telefone=estudante.contato_emergencia_telefone,
         parentesco=estudante.contato_emergencia_parentesco,
     )
-
-
-@router.put("/responsavel/filhos/{estudante_id}/contato-emergencia")
-def definir_contato(
-    estudante_id: IdRota, dados: ContatoEmergencia, request: Request, db: Db, usuario: Responsavel
-) -> ContatoEmergencia:
-    """O responsável cadastra ou troca o contato de emergência do filho. Vai para a auditoria
-    (sem o telefone), porque numa disputa de guarda importa saber quem mudou."""
-    garantir_responsavel(db, usuario, estudante_id)
-    estudante = buscar(db, Estudante, estudante_id)
-    estudante.contato_emergencia_nome = dados.nome
-    estudante.contato_emergencia_telefone = dados.telefone
-    estudante.contato_emergencia_parentesco = dados.parentesco
-    auditoria.registrar(
-        db,
-        "estudante.contato_emergencia",
-        request=request,
-        usuario=usuario,
-        recurso="estudante",
-        recurso_id=estudante_id,
-        removido=False,
-    )
-    db.commit()
-    return dados
-
-
-@router.delete(
-    "/responsavel/filhos/{estudante_id}/contato-emergencia",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-def remover_contato(estudante_id: IdRota, request: Request, db: Db, usuario: Responsavel) -> None:
-    garantir_responsavel(db, usuario, estudante_id)
-    estudante = buscar(db, Estudante, estudante_id)
-    if estudante.contato_emergencia_nome is None:
-        return
-    estudante.contato_emergencia_nome = None
-    estudante.contato_emergencia_telefone = None
-    estudante.contato_emergencia_parentesco = None
-    auditoria.registrar(
-        db,
-        "estudante.contato_emergencia",
-        request=request,
-        usuario=usuario,
-        recurso="estudante",
-        recurso_id=estudante_id,
-        removido=True,
-    )
-    db.commit()
 
 
 @router.get("/responsavel/filhos/{estudante_id}/foto-url")

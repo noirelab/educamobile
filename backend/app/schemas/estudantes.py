@@ -49,7 +49,8 @@ CAMPOS_CONTATO = (
 
 
 class ContatoEmergencia(BaseModel):
-    """Para quem não tem smartphone ou quando o responsável não atende. É opcional."""
+    """Para quem não tem smartphone ou quando o responsável não atende. É opcional.
+    O responsável lê em `GET /responsavel/filhos/{id}`; só a gestão grava."""
 
     model_config = ConfigDict(extra="forbid")
 

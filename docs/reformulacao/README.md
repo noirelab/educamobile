@@ -72,7 +72,7 @@ Os pontos em aberto do relatório (seção 11, issue #25):
 | --- | --- |
 | Viagem de volta | Entra. Ida e volta funcionam com as mesmas regras; na volta, sair da escola com crianças a bordo é o normal e não gera alerta. |
 | Monitor no ônibus | Opcional. A viagem inicia, registra embarques e conclui só com o motorista; o monitor, quando escalado, registra eventos e conclui junto, mas não inicia a viagem. |
-| Pais sem smartphone | Contato de emergência opcional por criança (nome, telefone e parentesco), para a gestão ligar. O responsável cadastra pelo app e a gestão pelo cadastro do aluno. Equipe da viagem não vê. |
+| Pais sem smartphone | Contato de emergência opcional por criança (nome, telefone e parentesco), para a gestão ligar. Só a gestão grava, quando o responsável cadastrado pede a troca; o responsável vê pelo app, mas não altera. Equipe da viagem não vê. |
 | Validação do responsável | Como está: o gestor convida, e o convite é de uso único e com prazo. |
 | Confirmação do embarque, app nativo, celular do motorista, prazo de guarda | Seguem a recomendação do relatório: toque na lista, app nativo, celular com a API do rastreador pronta, 90 dias para posições. |
 

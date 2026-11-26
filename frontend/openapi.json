@@ -4778,106 +4778,6 @@
         }
       }
     },
-    "/responsavel/filhos/{estudante_id}/contato-emergencia": {
-      "put": {
-        "tags": [
-          "responsáveis"
-        ],
-        "summary": "Definir Contato",
-        "description": "O responsável cadastra ou troca o contato de emergência do filho. Vai para a auditoria\n(sem o telefone), porque numa disputa de guarda importa saber quem mudou.",
-        "operationId": "definir_contato_responsavel_filhos__estudante_id__contato_emergencia_put",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "estudante_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Estudante Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ContatoEmergencia"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContatoEmergencia"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "responsáveis"
-        ],
-        "summary": "Remover Contato",
-        "operationId": "remover_contato_responsavel_filhos__estudante_id__contato_emergencia_delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "estudante_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2147483647,
-              "minimum": 1,
-              "title": "Estudante Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/responsavel/filhos/{estudante_id}/foto-url": {
       "get": {
         "tags": [
@@ -6514,7 +6414,7 @@
           "telefone"
         ],
         "title": "ContatoEmergencia",
-        "description": "Para quem não tem smartphone ou quando o responsável não atende. É opcional."
+        "description": "Para quem não tem smartphone ou quando o responsável não atende. É opcional.\nO responsável lê em `GET /responsavel/filhos/{id}`; só a gestão grava."
       },
       "ConviteAceitar": {
         "properties": {

@@ -1088,28 +1088,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/responsavel/filhos/{estudante_id}/contato-emergencia": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Definir Contato
-         * @description O responsável cadastra ou troca o contato de emergência do filho. Vai para a auditoria
-         *     (sem o telefone), porque numa disputa de guarda importa saber quem mudou.
-         */
-        put: operations["definir_contato_responsavel_filhos__estudante_id__contato_emergencia_put"];
-        post?: never;
-        /** Remover Contato */
-        delete: operations["remover_contato_responsavel_filhos__estudante_id__contato_emergencia_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/responsavel/filhos/{estudante_id}/foto-url": {
         parameters: {
             query?: never;
@@ -1553,6 +1531,7 @@ export interface components {
         /**
          * ContatoEmergencia
          * @description Para quem não tem smartphone ou quando o responsável não atende. É opcional.
+         *     O responsável lê em `GET /responsavel/filhos/{id}`; só a gestão grava.
          */
         ContatoEmergencia: {
             /** Nome */
@@ -5397,70 +5376,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["FilhoDetalhe"];
                 };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    definir_contato_responsavel_filhos__estudante_id__contato_emergencia_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                estudante_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ContatoEmergencia"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContatoEmergencia"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remover_contato_responsavel_filhos__estudante_id__contato_emergencia_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                estudante_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
             /** @description Validation Error */
             422: {
