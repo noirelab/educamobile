@@ -1528,6 +1528,19 @@ export interface components {
             /** Versao Termo */
             versao_termo: string;
         };
+        /**
+         * ContatoEmergencia
+         * @description Para quem não tem smartphone ou quando o responsável não atende. É opcional.
+         *     O responsável lê em `GET /responsavel/filhos/{id}`; só a gestão grava.
+         */
+        ContatoEmergencia: {
+            /** Nome */
+            nome: string;
+            /** Telefone */
+            telefone: string;
+            /** Parentesco */
+            parentesco?: string | null;
+        };
         /** ConviteAceitar */
         ConviteAceitar: {
             /** Codigo */
@@ -1720,6 +1733,12 @@ export interface components {
             parada_id?: number | null;
             /** Observacoes Cuidado */
             observacoes_cuidado?: string | null;
+            /** Contato Emergencia Nome */
+            contato_emergencia_nome?: string | null;
+            /** Contato Emergencia Telefone */
+            contato_emergencia_telefone?: string | null;
+            /** Contato Emergencia Parentesco */
+            contato_emergencia_parentesco?: string | null;
         };
         /** EstudanteDaParada */
         EstudanteDaParada: {
@@ -1749,6 +1768,12 @@ export interface components {
             parada_id: number | null;
             /** Observacoes Cuidado */
             observacoes_cuidado: string | null;
+            /** Contato Emergencia Nome */
+            contato_emergencia_nome?: string | null;
+            /** Contato Emergencia Telefone */
+            contato_emergencia_telefone?: string | null;
+            /** Contato Emergencia Parentesco */
+            contato_emergencia_parentesco?: string | null;
             /** Tem Foto */
             readonly tem_foto: boolean;
         };
@@ -1820,6 +1845,7 @@ export interface components {
             /** Nome */
             nome: string;
             parada: components["schemas"]["ParadaDoFilho"] | null;
+            contato_emergencia?: components["schemas"]["ContatoEmergencia"] | null;
         };
         /** FilhoHoje */
         FilhoHoje: {

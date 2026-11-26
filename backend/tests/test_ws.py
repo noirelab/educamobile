@@ -3,7 +3,7 @@
 import contextlib
 import time
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketDisconnect
 
 from app import db as app_db
+from app import tempo
 from app.config import settings
 from app.db import Base
 from app.main import app
@@ -29,7 +30,7 @@ from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 from tests.test_rotas import _parada
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 AGORA = datetime.now(UTC)
 
 

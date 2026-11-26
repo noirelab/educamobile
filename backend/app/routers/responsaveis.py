@@ -15,7 +15,7 @@ from app.cadastros import Db, IdRota, buscar
 from app.config import settings
 from app.models import Estudante, Parada, Perfil, ResponsavelEstudante, Usuario
 from app.routers.estudantes import url_assinada
-from app.schemas.estudantes import FotoUrl
+from app.schemas.estudantes import ContatoEmergencia, FotoUrl
 from app.schemas.responsaveis import (
     Consentimento,
     FilhoDetalhe,
@@ -151,6 +151,20 @@ def meu_filho(estudante_id: IdRota, db: Db, usuario: Responsavel) -> FilhoDetalh
         estudante_id=estudante.id,
         nome=estudante.nome,
         parada=ParadaDoFilho(id=parada.id, nome=parada.nome) if parada else None,
+        contato_emergencia=_contato(estudante),
+    )
+
+
+def _contato(estudante: Estudante) -> ContatoEmergencia | None:
+    """Novo na reformulação. O responsável só lê o contato de emergência: para trocar, ele pede
+    à gestão, que confere quem está pedindo e grava pelo cadastro do aluno (`PUT /estudantes`).
+    Assim um responsável não troca o contato que outro informou."""
+    if estudante.contato_emergencia_nome is None:
+        return None
+    return ContatoEmergencia(
+        nome=estudante.contato_emergencia_nome,
+        telefone=estudante.contato_emergencia_telefone,
+        parentesco=estudante.contato_emergencia_parentesco,
     )
 
 

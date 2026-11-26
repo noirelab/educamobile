@@ -2,7 +2,7 @@
 
 import csv
 import io
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -10,6 +10,7 @@ from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 from sqlalchemy import select
 
+from app import tempo
 from app.config import settings
 from app.models import (
     Alerta,
@@ -29,7 +30,7 @@ from app.models import (
 from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 FUSO = ZoneInfo(settings.fuso_horario)
 
 

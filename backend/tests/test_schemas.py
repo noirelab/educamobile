@@ -1,10 +1,11 @@
 """Validação dos schemas, sem banco nem HTTP."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from pydantic import ValidationError
 
+from app import tempo
 from app.geo import Coordenadas, de_ponto, para_ponto
 from app.schemas.estudantes import EstudanteCriar
 from app.schemas.rotas import RotaSequencia
@@ -30,7 +31,7 @@ def test_ponto_nulo():
 @pytest.mark.parametrize("dias", [0, -1])
 def test_nascimento_precisa_estar_no_passado(dias):
     with pytest.raises(ValidationError):
-        EstudanteCriar(nome="Ana", data_nascimento=date.today() - timedelta(days=dias))
+        EstudanteCriar(nome="Ana", data_nascimento=tempo.hoje() - timedelta(days=dias))
 
 
 def test_sequencia_aceita_lista_de_ids():

@@ -1,13 +1,13 @@
 """Posições do ônibus, cercas, previsão, acompanhamento do responsável e painel da frota."""
 
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import redis
 from sqlalchemy import func, select, text
 
-from app import tempo_real
+from app import tempo, tempo_real
 from app.config import settings
 from app.models import (
     Auditoria,
@@ -26,7 +26,7 @@ from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 from tests.test_rotas import _parada
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 AGORA = datetime.now(UTC)
 # 0,001 grau de latitude mede cerca de 110 m. O trajeto segue o meridiano: lat 0.00 a 0.03.
 LAT_ESCOLA = 0.03

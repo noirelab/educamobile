@@ -6,7 +6,13 @@ from sqlalchemy import func, select
 from app import auditoria, fotos
 from app.cadastros import Db, Deslocamento, IdFiltro, IdRota, Limite, buscar, salvar
 from app.models import Estudante, Perfil, Turno, Usuario
-from app.schemas.estudantes import EstudanteCriar, EstudanteLer, EstudantesPagina, FotoUrl
+from app.schemas.estudantes import (
+    CAMPOS_CONTATO,
+    EstudanteCriar,
+    EstudanteLer,
+    EstudantesPagina,
+    FotoUrl,
+)
 from app.security import UsuarioInterno, exigir_perfil
 
 router = APIRouter(prefix="/estudantes", tags=["estudantes"])
@@ -60,10 +66,28 @@ def criar(dados: EstudanteCriar, db: Db, _: Editor) -> EstudanteLer:
 
 
 @router.put("/{estudante_id}")
-def atualizar(estudante_id: IdRota, dados: EstudanteCriar, db: Db, _: Editor) -> EstudanteLer:
+def atualizar(
+    estudante_id: IdRota, dados: EstudanteCriar, request: Request, db: Db, gestor: Editor
+) -> EstudanteLer:
     estudante = buscar(db, Estudante, estudante_id)
+    # Novo na reformulação: contato de emergência. Só a gestão grava, a pedido do responsável
+    # cadastrado. Ele só muda quando vem no corpo (os três campos, como um bloco); omitido, fica
+    # como está, para o formulário que ainda não tem os campos não apagar o contato.
+    mexe_no_contato = bool(dados.model_fields_set & set(CAMPOS_CONTATO))
     for campo, valor in dados.model_dump().items():
+        if campo in CAMPOS_CONTATO and not mexe_no_contato:
+            continue
         setattr(estudante, campo, valor)
+    if mexe_no_contato:
+        auditoria.registrar(
+            db,
+            "estudante.contato_emergencia",
+            request=request,
+            usuario=gestor,
+            recurso="estudante",
+            recurso_id=estudante.id,
+            removido=dados.contato_emergencia_nome is None,
+        )
     salvar(db, CONFLITO)
     return EstudanteLer.model_validate(estudante)
 

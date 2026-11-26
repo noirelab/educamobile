@@ -1,13 +1,13 @@
 """LGPD: retenção, consulta à auditoria e novo aceite quando o termo muda."""
 
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 
-from app import retencao
+from app import retencao, tempo
 from app.config import settings
 from app.models import (
     Alerta,
@@ -243,7 +243,7 @@ def test_nova_versao_do_termo_obriga_novo_aceite(client, mae, monkeypatch):
     assert (
         client.post(
             "/ausencias",
-            json={"estudante_id": filho.id, "data": date.today().isoformat()},
+            json={"estudante_id": filho.id, "data": tempo.hoje().isoformat()},
             headers=h,
         ).status_code
         == 403

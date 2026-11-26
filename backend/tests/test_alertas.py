@@ -1,13 +1,13 @@
 """Worker de alertas: uma regra por teste, mais reconhecer, resolver, limites e emergência."""
 
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import select, text
 
-from app import alertas, tempo_real
+from app import alertas, tempo, tempo_real
 from app.config import settings
 from app.models import (
     Alerta,
@@ -28,7 +28,7 @@ from app.security import criar_token
 from tests.conftest import escola_de_teste, estudante_de_teste, rota_de_teste
 from tests.test_rotas import _parada
 
-HOJE = date.today()
+HOJE = tempo.hoje()
 AGORA = datetime.now(UTC)
 LAT_ESCOLA = 0.03
 

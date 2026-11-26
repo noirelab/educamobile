@@ -197,6 +197,9 @@ export function UserCreatePage() {
       <PageHeader title="Usuários" description="Criar acesso para a equipe" />
       <div className="flex max-w-[720px] items-start gap-3 rounded-[14px] bg-accent-soft px-4 py-3 text-body text-accent">
         <Info size={18} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0" />
+        {/* Reformulado: o responsável aceita o convite em POST /auth/convites/aceitar, com o
+            código no corpo ({ codigo, ... }), não mais na URL. Perfis novos: gestor, motorista,
+            monitor (opcional na viagem) e responsável. */}
         <p>Responsáveis não são cadastrados aqui: eles entram por convite, vinculados ao estudante</p>
       </div>
       {created ? (

@@ -17,6 +17,9 @@ import { studentSchema, TURNO_LABEL, TURNOS, type StudentFormValues } from '../s
 type EstudanteLer = components['schemas']['EstudanteLer']
 type EstudanteCriar = components['schemas']['EstudanteCriar']
 
+// Novo na API: contato de emergência (ver features/students/api.ts). O formulário ainda não tem os
+// campos; enquanto não tiver, não os inclua no payload: omitidos, o backend mantém o contato salvo.
+// Ao criar a seção, mande nome e telefone juntos (e os três como null para remover).
 const FORM_FIELDS = ['nome', 'data_nascimento', 'escola_id', 'turno', 'parada_id', 'observacoes_cuidado'] as const
 type FormField = (typeof FORM_FIELDS)[number]
 
